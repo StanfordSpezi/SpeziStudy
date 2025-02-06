@@ -24,6 +24,12 @@ public struct StudyDefinition: Identifiable, StudyDefinitionElement {
     public var schedule: Schedule
     
     public var id: UUID { metadata.id }
+    
+    public init(metadata: Metadata, components: [Component], schedule: Schedule) {
+        self.metadata = metadata
+        self.components = components
+        self.schedule = schedule
+    }
 }
 
 
@@ -58,6 +64,28 @@ extension StudyDefinition {
         
         /// The condition by which it is determined whether someone who satisfies the ``participationCriteria`` is allowed to enroll into the study.
         public var enrollmentConditions: EnrollmentConditions
+        
+        public init(
+            id: UUID,
+            title: String,
+            shortTitle: String? = nil,
+            icon: Icon? = nil,
+            shortExplanationText: String,
+            explanationText: String,
+            studyDependency: StudyDefinition.ID? = nil,
+            participationCriteria: ParticipationCriteria,
+            enrollmentConditions: EnrollmentConditions
+        ) {
+            self.id = id
+            self.title = title
+            self.shortTitle = shortTitle
+            self.icon = icon
+            self.shortExplanationText = shortExplanationText
+            self.explanationText = explanationText
+            self.studyDependency = studyDependency
+            self.participationCriteria = participationCriteria
+            self.enrollmentConditions = enrollmentConditions
+        }
     }
 }
 
@@ -147,6 +175,10 @@ extension StudyDefinition {
                 try! JSONDecoder().decode(Criterion.self, from: criterionData)
             }
         }
+        
+        public init(criterion: Criterion) {
+            self.criterion = criterion
+        }
     }
 }
 
@@ -215,12 +247,24 @@ extension StudyDefinition {
         public let title: String
         public let headerImage: String // TODO find smth better here!!!
         public let body: String
+        
+        public init(id: UUID, title: String, headerImage: String, body: String) {
+            self.id = id
+            self.title = title
+            self.headerImage = headerImage
+            self.body = body
+        }
     }
     
     
     public struct HealthDataCollectionComponent: Identifiable, StudyDefinitionElement {
         public let id: UUID
         public let sampleTypes: HealthSampleTypesCollection
+        
+        public init(id: UUID, sampleTypes: HealthSampleTypesCollection) {
+            self.id = id
+            self.sampleTypes = sampleTypes
+        }
     }
 }
 
@@ -232,6 +276,10 @@ extension StudyDefinition {
 extension StudyDefinition {
     public struct Schedule: StudyDefinitionElement { // TODO just use an array instead?
         public var elements: [ScheduleElement]
+        
+        public init(elements: [ScheduleElement]) {
+            self.elements = elements
+        }
     }
     
     
@@ -306,6 +354,12 @@ extension StudyDefinition {
         public var scheduleKind: ScheduleKind
         public var completionPolicy: SpeziScheduler.AllowedCompletionPolicy
         
+        
+        public init(componentId: StudyDefinition.Component.ID, scheduleKind: ScheduleKind, completionPolicy: SpeziScheduler.AllowedCompletionPolicy) {
+            self.componentId = componentId
+            self.scheduleKind = scheduleKind
+            self.completionPolicy = completionPolicy
+        }
     }
 }
 
