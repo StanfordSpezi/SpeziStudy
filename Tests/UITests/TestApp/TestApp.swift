@@ -7,7 +7,7 @@
 //
 
 import SwiftUI
-import TemplatePackage
+import SpeziStudy
 
 
 @main
