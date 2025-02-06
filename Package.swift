@@ -15,20 +15,31 @@ import PackageDescription
 let package = Package(
     name: "SpeziStudy",
     platforms: [
-        .iOS(.v17),
-        .watchOS(.v10),
-        .visionOS(.v1),
-        .tvOS(.v17),
-        .macOS(.v14)
+        .iOS(.v18),
+        .watchOS(.v11),
+        .visionOS(.v2),
+        .tvOS(.v18),
+        .macOS(.v15)
     ],
     products: [
         .library(name: "SpeziStudy", targets: ["SpeziStudy"])
     ],
     dependencies: [
+        .package(url: "https://github.com/apple/FHIRModels", .upToNextMinor(from: "0.5.0")),
+        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", branch: "lukas/deferred-sample-collection"),
+//        .package(url: "https://github.com/StanfordSpezi/SpeziQuestionnaire.git", from: "1.2.3"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", branch: "lukas/hashable-schedule")
     ] + swiftLintPackage(),
     targets: [
         .target(
             name: "SpeziStudy",
+            dependencies: [
+                .product(name: "ModelsR4", package: "FHIRModels"),
+//                .product(name: "SpeziQuestionnaire", package: "SpeziQuestionnaire"),
+                .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
+                .product(name: "SpeziScheduler", package: "SpeziScheduler")
+            ],
+            swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
             plugins: [] + swiftLintPlugin()
         ),
         .testTarget(
@@ -36,6 +47,7 @@ let package = Package(
             dependencies: [
                 .target(name: "SpeziStudy")
             ],
+            swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
             plugins: [] + swiftLintPlugin()
         )
     ]
