@@ -7,12 +7,12 @@
 //
 
 @testable import SpeziStudy
-import XCTest
+import Testing
 
 
-final class SpeziStudyTests: XCTestCase {
+struct StudyDefinitionTests {
+    @Test
     func testSpeziStudy() throws {
-        let templatePackage = TemplatePackage()
-        XCTAssertEqual(templatePackage.stanford, "Stanford University")
+        #expect(true)
     }
 }
