@@ -1,9 +1,9 @@
 // swift-tools-version:6.0
 
 //
-// This source file is part of the TemplatePackage open source project
+// This source file is part of the Stanford Spezi open source project
 // 
-// SPDX-FileCopyrightText: 2022 Stanford University and the project authors (see CONTRIBUTORS.md)
+// SPDX-FileCopyrightText: 2025 Stanford University and the project authors (see CONTRIBUTORS.md)
 // 
 // SPDX-License-Identifier: MIT
 //
@@ -13,7 +13,7 @@ import PackageDescription
 
 
 let package = Package(
-    name: "TemplatePackage",
+    name: "SpeziStudy",
     platforms: [
         .iOS(.v17),
         .watchOS(.v10),
@@ -22,19 +22,19 @@ let package = Package(
         .macOS(.v14)
     ],
     products: [
-        .library(name: "TemplatePackage", targets: ["TemplatePackage"])
+        .library(name: "SpeziStudy", targets: ["SpeziStudy"])
     ],
     dependencies: [
     ] + swiftLintPackage(),
     targets: [
         .target(
-            name: "TemplatePackage",
+            name: "SpeziStudy",
             plugins: [] + swiftLintPlugin()
         ),
         .testTarget(
-            name: "TemplatePackageTests",
+            name: "SpeziStudyTests",
             dependencies: [
-                .target(name: "TemplatePackage")
+                .target(name: "SpeziStudy")
             ],
             plugins: [] + swiftLintPlugin()
         )
