@@ -404,6 +404,7 @@ public struct HealthSampleTypesCollection: StudyDefinitionElement {
         case quantityTypes
         case correlationTypes
         case categoryTypes
+//        case other
     }
     
     private enum CodingError: Error {
@@ -413,22 +414,26 @@ public struct HealthSampleTypesCollection: StudyDefinitionElement {
     public let quantityTypes: Set<SampleType<HKQuantitySample>>
     public let correlationTypes: Set<SampleType<HKCorrelation>>
     public let categoryTypes: Set<SampleType<HKCategorySample>>
+//    public let other: Set<HKObjectType>
     
     public init(
         quantityTypes: Set<SampleType<HKQuantitySample>> = [],
         correlationTypes: Set<SampleType<HKCorrelation>> = [],
-        categoryTypes: Set<SampleType<HKCategorySample>> = []
+        categoryTypes: Set<SampleType<HKCategorySample>> = []//,
+//        other: Set<HKObjectType> = []
     ) {
         self.quantityTypes = quantityTypes
         self.correlationTypes = correlationTypes
         self.categoryTypes = categoryTypes
+//        self.other = other
     }
     
     public func merging(with other: Self) -> Self {
         Self(
             quantityTypes: self.quantityTypes.union(other.quantityTypes),
             correlationTypes: self.correlationTypes.union(other.correlationTypes),
-            categoryTypes: self.categoryTypes.union(other.categoryTypes)
+            categoryTypes: self.categoryTypes.union(other.categoryTypes)//,
+            //other: self.other.union(other.other)
         )
     }
     
@@ -438,7 +443,7 @@ public struct HealthSampleTypesCollection: StudyDefinitionElement {
     
     
     public var isEmpty: Bool {
-        quantityTypes.isEmpty && correlationTypes.isEmpty && categoryTypes.isEmpty
+        quantityTypes.isEmpty && correlationTypes.isEmpty && categoryTypes.isEmpty //&& other.isEmpty
     }
     
     
@@ -471,6 +476,7 @@ public struct HealthSampleTypesCollection: StudyDefinitionElement {
             makeSampleType: { SampleType<HKCategorySample>(HKCategoryTypeIdentifier(rawValue: $0)) },
             rawIdentifiers: try container.decode(Set<String>.self, forKey: .categoryTypes)
         )
+//        other = try container.decode(Set<String>.self, forKey: .other).map { HKWorkoutType }
     }
     
     public func encode(to encoder: any Encoder) throws {
@@ -572,6 +578,12 @@ extension StudyDefinition {
             case .informational, .questionnaire:
                 nil
             }
+        }
+    }
+    
+    public var allCollectedHealthData: HealthSampleTypesCollection {
+        healthDataCollectionComponents.reduce(into: HealthSampleTypesCollection.init()) { acc, component in
+            acc.merge(with: component.sampleTypes)
         }
     }
 }
