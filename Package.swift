@@ -28,7 +28,8 @@ let package = Package(
         .package(url: "https://github.com/apple/FHIRModels", .upToNextMinor(from: "0.5.0")),
         .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", .upToNextMajor(from: "1.0.0-beta.3")),
 //        .package(url: "https://github.com/StanfordSpezi/SpeziQuestionnaire.git", from: "1.2.3"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", from: "1.1.2")
+        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", from: "1.1.2"),
+        .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4")
     ] + swiftLintPackage(),
     targets: [
         .target(
@@ -37,7 +38,8 @@ let package = Package(
                 .product(name: "ModelsR4", package: "FHIRModels"),
 //                .product(name: "SpeziQuestionnaire", package: "SpeziQuestionnaire"),
                 .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
-                .product(name: "SpeziScheduler", package: "SpeziScheduler")
+                .product(name: "SpeziScheduler", package: "SpeziScheduler"),
+                .product(name: "DequeModule", package: "swift-collections")
             ],
             swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
             plugins: [] + swiftLintPlugin()

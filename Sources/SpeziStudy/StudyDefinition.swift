@@ -11,6 +11,7 @@ import Foundation
 import SpeziHealthKit
 import SpeziScheduler
 import HealthKit
+import DequeModule
 
 
 
@@ -115,8 +116,8 @@ extension StudyDefinition {
         public indirect enum Criterion: StudyDefinitionElement {
             /// a criterion which evaluates to true if the user is at least of the specified age
             case ageAtLeast(Int)
-            /// a criterion which evaluates to true if the user is from the specified region
-            case isFromRegion(Locale.Region)
+            /// a criterion which evaluates to true if the user is from any of the specified regions
+            case isFromRegion(Set<Locale.Region>)
 //            /// a criterion which evaluates to true if the user is overweight
 //            case isOverweight
             /// a criterion which evaluates to true based on a custom condition
@@ -124,23 +125,62 @@ extension StudyDefinition {
 //            /// a criterion which always evaluates to true
 //            case `true`
             
-            /// a criterion which evaluates to true iff its contained criterion evaluates to false.
-            case not(Criterion)
+//            /// a criterion which evaluates to true iff its contained criterion evaluates to false.
+//            case not(Criterion)
             /// a criterion which evaluates to true iff all of its contained criteria evaluate to true
             /// - Note: if the list of contained criteria is empty, the criterion will evaluate to true
             case all([Criterion])
-            /// a criterion which evaluates to true iff any of its contained criteria evaluates to true
-            /// - Note: if the list of contained criteria is empty, the criterion will evaluate to false
-            case any([Criterion])
+//            /// a criterion which evaluates to true iff any of its contained criteria evaluates to true
+//            /// - Note: if the list of contained criteria is empty, the criterion will evaluate to false
+//            case any([Criterion])
             
-            public static prefix func ! (rhs: Self) -> Self {
-                .not(rhs)
-            }
+//            public static prefix func ! (rhs: Self) -> Self {
+//                .not(rhs)
+//            }
             public static func && (lhs: Self, rhs: Self) -> Self {
                 .all([lhs, rhs])
             }
-            public static func || (lhs: Self, rhs: Self) -> Self {
-                .any([lhs, rhs])
+//            public static func || (lhs: Self, rhs: Self) -> Self {
+//                .any([lhs, rhs])
+//            }
+            
+            /// whether the criterion is a leaf element, i.e. doesn't contain any nested further criteria
+            public var isLeaf: Bool {
+                switch self {
+                case .ageAtLeast, .isFromRegion, .custom:
+                    true
+                case /*.not, .any,*/ .all:
+                    false
+                }
+            }
+            
+            public var children: [Criterion] {
+                switch self {
+                case .ageAtLeast, .isFromRegion, .custom:
+                    []
+//                case .not(let inner):
+//                    [inner]
+                case /*.any(let nested),*/ .all(let nested):
+                    nested
+                }
+            }
+            
+            public func reduce<Result>(into initialResult: Result, _ visitor: (inout Result, Criterion) throws -> Void) rethrows -> Result {
+                var result = initialResult
+                var deque: Deque<Self> = [self]
+                while let node = deque.popFirst() {
+                    try visitor(&result, node)
+                    deque.append(contentsOf: node.children)
+                }
+                return result
+            }
+            
+            public var allLeafs: Set<Criterion> {
+                reduce(into: []) { leafs, criterion in
+                    if criterion.isLeaf {
+                        leafs.insert(criterion)
+                    }
+                }
             }
             
             public struct CustomCriterionKey: Codable, Hashable, Sendable {
@@ -150,14 +190,6 @@ extension StudyDefinition {
                     self.keyValue = keyValue
                     self.displayTitle = displayTitle
                 }
-//                public init(from decoder: any Decoder) throws {
-//                    let container = try decoder.singleValueContainer()
-//                    self.keyValue = try container.decode(String.self)
-//                }
-//                public func encode(to encoder: any Encoder) throws {
-//                    var container = encoder.singleValueContainer()
-//                    try container.encode(self.keyValue)
-//                }
             }
         }
         
@@ -488,6 +520,21 @@ public struct HealthSampleTypesCollection: StudyDefinitionElement {
 }
 
 
+extension HealthKit.DataAccessRequirements {
+    public init(_ other: HealthSampleTypesCollection) {
+//        await setupSampleCollection(component.sampleTypes.quantityTypes)
+//        await setupSampleCollection(component.sampleTypes.correlationTypes.flatMap(\.associatedQuantityTypes))
+//        await setupSampleCollection(component.sampleTypes.categoryTypes)
+        let sampleTypes = Set<HKSampleType> {
+            other.quantityTypes.lazy.map(\.hkSampleType)
+            other.categoryTypes.lazy.map(\.hkSampleType)
+            other.correlationTypes.lazy.flatMap(\.associatedQuantityTypes).map(\.hkSampleType)
+        }
+        self.init(read: sampleTypes)
+    }
+}
+
+
 
 
 // MARK: Criterion Eval
@@ -514,18 +561,19 @@ extension StudyDefinition.ParticipationCriteria.Criterion {
             } else {
                 return false
             }
-        case .isFromRegion(let allowedRegion):
+        case .isFromRegion(let allowedRegions):
             if let region = environment.region {
-                return region == allowedRegion
+                //return region == allowedRegion
+                return allowedRegions.contains(region)
             } else {
                 return false
             }
         case .custom(let key):
             return environment.enabledCustomKeys.contains(key)
-        case .not(let criterion):
-            return !criterion.evaluate(environment)
-        case .any(let criteria):
-            return criteria.contains { $0.evaluate(environment) }
+//        case .not(let criterion):
+//            return !criterion.evaluate(environment)
+//        case .any(let criteria):
+//            return criteria.contains { $0.evaluate(environment) }
         case .all(let criteria):
             return criteria.allSatisfy { $0.evaluate(environment) }
         }
