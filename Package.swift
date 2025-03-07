@@ -28,17 +28,19 @@ let package = Package(
         .package(url: "https://github.com/apple/FHIRModels", .upToNextMinor(from: "0.5.0")),
         .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", branch: "lukas/mhc-changes"),
 //        .package(url: "https://github.com/StanfordSpezi/SpeziQuestionnaire.git", from: "1.2.3"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", branch: "lukas/mhc-changes"),
-        .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4")
+        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler", from: "1.2.1"),
+        .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziViews.git", from: "1.9.1")
     ] + swiftLintPackage(),
     targets: [
         .target(
             name: "SpeziStudy",
             dependencies: [
                 .product(name: "ModelsR4", package: "FHIRModels"),
-//                .product(name: "SpeziQuestionnaire", package: "SpeziQuestionnaire"),
                 .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
                 .product(name: "SpeziScheduler", package: "SpeziScheduler"),
+                .product(name: "SpeziSchedulerUI", package: "SpeziScheduler"),
+                .product(name: "SpeziViews", package: "SpeziViews"),
                 .product(name: "DequeModule", package: "swift-collections")
             ],
             swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
