@@ -12,7 +12,6 @@ import class ModelsR4.Questionnaire
 import class ModelsR4.QuestionnaireResponse
 import Observation
 import PDFKit
-//import SFSafeSymbols
 import Spezi
 import SpeziHealthKit
 import SpeziScheduler
@@ -118,15 +117,6 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
                     consume(notification)
                 }
             }
-    }
-    
-    
-    var mhcStudy: StudyDefinition {
-        get async {
-            // TODO IRL this would be fetched from a server! (or a local cache, as a fallback)
-            //mockMHCStudy
-            fatalError("TODO")
-        }
     }
 }
 
@@ -263,6 +253,16 @@ extension StudyManager {
         //   immediately check as completed everything up to today?
         //   or would that be irrelevant since the event list only looks at today+ already?
     }
+    
+    
+    public func SPC(withId id: PersistentIdentifier) -> StudyParticipationContext? {
+        modelContext.registeredModel(for: id)
+    }
+    
+    public func saveQuestionnaireResponse(_ response: QuestionnaireResponse, for SPC: StudyParticipationContext) throws {
+        let entry = SPCQuestionnaireEntry(SPC: SPC, response: response)
+        modelContext.insert(entry) // TODO QUESTION: does this cause the property in the SPC class to get updated???
+    }
 }
 
 
@@ -307,12 +307,6 @@ extension SpeziScheduler.Schedule {
     /// - parameter other: the study definition schedule element which should be turned into a `Schedule`
     /// - parameter participationStartDate: the date at which the user started to participate in the study.
     init(_ other: StudyDefinition.ScheduleElement, participationStartDate: Date) throws {
-//        switch other.scheduleKind {
-//        case .onceAtEnrollment:
-//            throw SimpleError(".onceAtEnrollment not (yet?) supported")
-//        case .atEndOfStudy:
-//            throw SimpleError(".atEndOfStudy not (yet?) supported")
-//        }
         switch other.scheduleKind {
         case .once(.studyBegin, let offset):
             self = .once(at: participationStartDate.advanced(by: offset.totalSeconds))
@@ -346,15 +340,6 @@ extension SpeziScheduler.Schedule {
         default:
             fatalError()
         }
-//        case .repeated(., startOffset: <#T##Int#>)
-//        case .repeated(<#T##Calendar.RecurrenceRule#>, startOffset: <#T##Int#>)
-//        case .repeated(let recurrence, let startOffsetInDays):
-//            //self = .init(startingAt: <#T##Date#>, duration: <#T##Duration#>, recurrence: <#T##Calendar.RecurrenceRule?#>)
-//            self = .init(
-//                startingAt: participationStartDate.addingTimeInterval(60 * 60 * 24 * TimeInterval(startOffsetInDays)),
-//                recurrence: recurrence
-//            )
-//        }
     }
 }
 
