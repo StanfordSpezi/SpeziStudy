@@ -157,29 +157,30 @@ struct StudyParticipationCriteriaView: View {
     }
     
     
-    @ViewBuilder
-    private func subView(for criterion: StudyDefinition.ParticipationCriteria.Criterion, indentLevel: Int) -> some View {
-        switch criterion {
-        case .ageAtLeast(let minAge):
-            Text(indent: indentLevel, "- Age ≥ \(minAge)")
-        case .isFromRegion(let region):
-            Text(indent: indentLevel, "- From Region \(region.identifier)")
-        case .speaksLanguage(let language):
-            Text(indent: indentLevel, "- Speaks Language \(language.maximalIdentifier)")
-        case .custom(let customCriterionKey):
-            Text(indent: indentLevel, customCriterionKey.displayTitle)
-        case .not(let criterion):
-            Text(indent: indentLevel, "- NOT:")
-            subView(for: criterion, indentLevel: indentLevel + 1)
-        case .all(let criteria):
-            Text(indent: indentLevel, "- All of the following:")
-            ForEach(0..<criteria.endIndex, id: \.self) { idx in
-                subView(for: criteria[idx], indentLevel: indentLevel + 1)
-            }
-        case .any(let criteria):
-            Text(indent: indentLevel, "- Any of the following:")
-            ForEach(0..<criteria.endIndex, id: \.self) { idx in
-                subView(for: criteria[idx], indentLevel: indentLevel + 1)
+    private func subView(for criterion: StudyDefinition.ParticipationCriteria.Criterion, indentLevel: Int) -> AnyView {
+        AnyView {
+            switch criterion {
+            case .ageAtLeast(let minAge):
+                Text(indent: indentLevel, "- Age ≥ \(minAge)")
+            case .isFromRegion(let region):
+                Text(indent: indentLevel, "- From Region \(region.identifier)")
+            case .speaksLanguage(let language):
+                Text(indent: indentLevel, "- Speaks Language \(language.maximalIdentifier)")
+            case .custom(let customCriterionKey):
+                Text(indent: indentLevel, customCriterionKey.displayTitle)
+            case .not(let criterion):
+                Text(indent: indentLevel, "- NOT:")
+                subView(for: criterion, indentLevel: indentLevel + 1)
+            case .all(let criteria):
+                Text(indent: indentLevel, "- All of the following:")
+                ForEach(0..<criteria.endIndex, id: \.self) { idx in
+                    subView(for: criteria[idx], indentLevel: indentLevel + 1)
+                }
+            case .any(let criteria):
+                Text(indent: indentLevel, "- Any of the following:")
+                ForEach(0..<criteria.endIndex, id: \.self) { idx in
+                    subView(for: criteria[idx], indentLevel: indentLevel + 1)
+                }
             }
         }
     }
@@ -191,5 +192,12 @@ struct StudyParticipationCriteriaView: View {
 extension Text {
     init(indent: Int, _ string: some StringProtocol) {
         self.init(verbatim: String(repeating: "\t", count: indent) + string)
+    }
+}
+
+
+extension AnyView {
+    init(@ViewBuilder _ content: () -> some View) {
+        self.init(erasing: content())
     }
 }
