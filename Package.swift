@@ -26,7 +26,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/FHIRModels", .upToNextMinor(from: "0.5.0")),
-        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", branch: "lukas/mhc-changes"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", exact: "1.0.0-beta.4"),
 //        .package(url: "https://github.com/StanfordSpezi/SpeziQuestionnaire.git", from: "1.2.3"),
         .package(url: "https://github.com/StanfordSpezi/SpeziScheduler", from: "1.2.1"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4"),
