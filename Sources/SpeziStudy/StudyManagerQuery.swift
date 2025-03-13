@@ -12,20 +12,21 @@ import SwiftData
 import SwiftUI
 
 
+/// Performs a SwiftData query in the StudyManager's ModelContext
 @propertyWrapper @MainActor
 public struct StudyManagerQuery<T: PersistentModel>: DynamicProperty {
-    public struct _State {
-        let predicate: Predicate<T>?
-        let sortDescriptors: [SortDescriptor<T>]
-        fileprivate(set) var fetchError: (any Error)?
+    public struct QueryState {
+        public let fetchError: (any Error)?
     }
     
     @Environment(StudyManager.self) private var studyManager
+    private let predicate: Predicate<T>?
+    private let sortDescriptors: [SortDescriptor<T>]
     @State private var storage = Storage<T>()
-    @State private var state: _State
     
     public init(_: T.Type = T.self, predicate: Predicate<T>? = nil, sortBy sortDescriptors: [SortDescriptor<T>] = []) {
-        state = .init(predicate: predicate, sortDescriptors: sortDescriptors) // TODO allow further customoization!
+        self.predicate = predicate
+        self.sortDescriptors = sortDescriptors
     }
     
     nonisolated public func update() {
@@ -41,24 +42,19 @@ public struct StudyManagerQuery<T: PersistentModel>: DynamicProperty {
                     $storage.wrappedValue.viewUpdate &+= 1
                 }
             } catch {
-                state.fetchError = error
+                storage.fetchResult = .failure(error)
             }
         }
-        do {
-            let descriptor = FetchDescriptor<T>.init(predicate: state.predicate, sortBy: state.sortDescriptors)
-            storage.results = try studyManager.modelContext.fetch(descriptor)
-            state.fetchError = nil
-        } catch {
-            state.fetchError = error
-        }
+        let descriptor = FetchDescriptor<T>(predicate: predicate, sortBy: sortDescriptors)
+        storage.fetchResult = Result { try studyManager.modelContext.fetch(descriptor) }
     }
     
     public var wrappedValue: [T] {
-        storage.results
+        storage.fetchResult.value ?? []
     }
     
-    public var projectedValue: _State {
-        state
+    public var projectedValue: QueryState {
+        QueryState(fetchError: storage.fetchResult.error)
     }
 }
 
@@ -67,7 +63,26 @@ public struct StudyManagerQuery<T: PersistentModel>: DynamicProperty {
 private final class Storage<T> {
     var viewUpdate: UInt8 = 0
     @ObservationIgnored var cancellable: AnyCancellable?
-    @ObservationIgnored var results: [T] = []
+    @ObservationIgnored var fetchResult: Result<[T], any Error> = .success([])
 }
 
 
+extension Result {
+    var value: Success? {
+        switch self {
+        case .success(let value):
+            value
+        case .failure:
+            nil
+        }
+    }
+    
+    var error: Failure? {
+        switch self {
+        case .success:
+            nil
+        case .failure(let error):
+            error
+        }
+    }
+}
