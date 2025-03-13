@@ -66,8 +66,8 @@ public struct StudyManagerQuery<T: PersistentModel>: DynamicProperty {
 @Observable
 private final class Storage<T> {
     var viewUpdate: UInt8 = 0
-    var cancellable: AnyCancellable?
-    var results: [T] = []
+    @ObservationIgnored var cancellable: AnyCancellable?
+    @ObservationIgnored var results: [T] = []
 }
 
 
