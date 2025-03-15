@@ -134,13 +134,13 @@ extension StudyManager {
 // MARK: Study Participation and Lifrecycle Management
 
 extension StudyManager {
-    enum StudyEnrollmentError: Error, LocalizedError {
+    public enum StudyEnrollmentError: Error, LocalizedError {
         /// The user tried to enroll into a study they are already enrolled in.
         case alreadyEnrolledInStudy
         /// The user tried to enroll into a study which defines a depdenency on some other study, which the user isn't enrolled in.
         case notEnrolledInDependency // TODO missingEnrollmentInStudyDependency?
         
-        var errorDescription: String? {
+        public var errorDescription: String? {
             switch self {
             case .alreadyEnrolledInStudy:
                 "You already are enrolled in this study"
