@@ -59,6 +59,7 @@ let package = Package(
                 .product(name: "SpeziSchedulerUI", package: "SpeziScheduler"),
                 .product(name: "SpeziViews", package: "SpeziViews"),
                 .product(name: "SpeziAccount", package: "SpeziAccount"),
+                .product(name: "SpeziFirebaseAccount", package: "SpeziFirebase"),
                 .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseStorage", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),

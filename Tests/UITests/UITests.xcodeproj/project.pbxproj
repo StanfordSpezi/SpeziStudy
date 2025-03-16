@@ -20,6 +20,7 @@
 		2FB5B6E12C2F6DBC009162E6 /* OperatingSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FB5B6DF2C2F6C50009162E6 /* OperatingSystem.swift */; };
 		2FB5B6E22C2F707A009162E6 /* OperatingSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FB5B6DF2C2F6C50009162E6 /* OperatingSystem.swift */; };
 		2FB5B6E32C2F707B009162E6 /* OperatingSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FB5B6DF2C2F6C50009162E6 /* OperatingSystem.swift */; };
+		65ED9EDA2D8799FB00937BCC /* SpeziStudyDefinition in Frameworks */ = {isa = PBXBuildFile; productRef = 65ED9ED92D8799FB00937BCC /* SpeziStudyDefinition */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -87,6 +88,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2F68C3C8292EA52000B3E12C /* SpeziStudy in Frameworks */,
+				65ED9EDA2D8799FB00937BCC /* SpeziStudyDefinition in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -184,6 +186,7 @@
 			name = TestApp;
 			packageProductDependencies = (
 				2F68C3C7292EA52000B3E12C /* SpeziStudy */,
+				65ED9ED92D8799FB00937BCC /* SpeziStudyDefinition */,
 			);
 			productName = Example;
 			productReference = 2F6D139228F5F384007C25D6 /* TestApp.app */;
@@ -968,6 +971,10 @@
 		2F9CBED92A76C795009818FF /* SpeziStudy */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SpeziStudy;
+		};
+		65ED9ED92D8799FB00937BCC /* SpeziStudyDefinition */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SpeziStudyDefinition;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
