@@ -22,7 +22,8 @@ let package = Package(
         .macOS(.v15)
     ],
     products: [
-        .library(name: "SpeziStudy", targets: ["SpeziStudy"])
+        .library(name: "SpeziStudy", targets: ["SpeziStudy"]),
+        .library(name: "SpeziStudyDefinition", targets: ["SpeziStudyDefinition"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/FHIRModels", .upToNextMinor(from: "0.5.0")),
@@ -30,18 +31,38 @@ let package = Package(
 //        .package(url: "https://github.com/StanfordSpezi/SpeziQuestionnaire.git", from: "1.2.3"),
         .package(url: "https://github.com/StanfordSpezi/SpeziScheduler", from: "1.2.1"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziViews.git", from: "1.9.1")
+        .package(url: "https://github.com/StanfordSpezi/SpeziViews.git", from: "1.9.1"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziFirebase.git", from: "2.0.4"),
+        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", from: "11.9.0"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziAccount.git", from: "2.1.3"),
+        .package(url: "https://github.com/StanfordBDHG/HealthKitOnFHIR.git", .upToNextMinor(from: "0.2.13"))
     ] + swiftLintPackage(),
     targets: [
         .target(
+            name: "SpeziStudyDefinition",
+            dependencies: [
+                .product(name: "ModelsR4", package: "FHIRModels"),
+                .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
+                .product(name: "SpeziScheduler", package: "SpeziScheduler"),
+                .product(name: "DequeModule", package: "swift-collections")
+            ],
+            swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
+            plugins: [] + swiftLintPlugin()
+        ),
+        .target(
             name: "SpeziStudy",
             dependencies: [
+                .target(name: "SpeziStudyDefinition"),
                 .product(name: "ModelsR4", package: "FHIRModels"),
                 .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
                 .product(name: "SpeziScheduler", package: "SpeziScheduler"),
                 .product(name: "SpeziSchedulerUI", package: "SpeziScheduler"),
                 .product(name: "SpeziViews", package: "SpeziViews"),
-                .product(name: "DequeModule", package: "swift-collections")
+                .product(name: "SpeziAccount", package: "SpeziAccount"),
+                .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseStorage", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
+                .product(name: "HealthKitOnFHIR", package: "HealthKitOnFHIR")
             ],
             swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
             plugins: [] + swiftLintPlugin()

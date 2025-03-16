@@ -13,6 +13,7 @@ import SpeziStudy
 // NOTE: we need to import it like this, since if we were to import the whole of ModelsR4, we'd have a name collision
 // between the `Observation` type defines in ModelsR4, and Apple's `Observation` framework, and the @Model macro expansion would fail to compile...
 import class ModelsR4.QuestionnaireResponse
+import SpeziStudyDefinition
 
 
 

@@ -11,6 +11,7 @@ import SpeziStudy
 import SpeziViews
 import SpeziHealthKit
 import SwiftData
+import SpeziStudyDefinition
 
 
 /// View that lets you pick a study (or multiple) to enroll in.

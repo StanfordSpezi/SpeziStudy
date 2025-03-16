@@ -7,18 +7,23 @@
 //
 
 import Combine
+@preconcurrency import FirebaseFirestore
+@preconcurrency import FirebaseStorage
 import Foundation
 import class ModelsR4.Questionnaire
 import class ModelsR4.QuestionnaireResponse
 import Observation
 import PDFKit
 import Spezi
+import SpeziAccount
+import SpeziFirebaseConfiguration
 import SpeziHealthKit
 import SpeziScheduler
 import SpeziSchedulerUI
-import SpeziStudy
+@_exported import SpeziStudyDefinition
 import SwiftData
 import SwiftUI
+import HealthKitOnFHIR
 
 
 public struct SimpleError: Error, LocalizedError {
@@ -37,15 +42,19 @@ public struct SimpleError: Error, LocalizedError {
 @Observable
 @MainActor // TODO can we easily make this sendable w/out it also being MainActor-constrained?
 public final class StudyManager: Module, EnvironmentAccessible, Sendable {
+    @ObservationIgnored @Dependency(Account.self) private var account
     @ObservationIgnored @Dependency(HealthKit.self) private var healthKit
     @ObservationIgnored @Dependency(Scheduler.self) private var scheduler
+    @ObservationIgnored @Dependency(FirebaseConfiguration.self) private var firebaseConfiguration
     
     @ObservationIgnored @Application(\.logger) private var logger
     
+    #if targetEnvironment(simulator)
     @ObservationIgnored private var autosaveTask: _Concurrency.Task<Void, Never>?
+    #endif
     
-//    @ObservationIgnored @NotNilAssignable var modelContext: ModelContext?
     let modelContainer: ModelContainer
+    
     var modelContext: ModelContext {
         modelContainer.mainContext
     }
@@ -67,7 +76,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
             let config = ModelConfiguration(
                 "SpeziStudy",
                 schema: schema,
-                url: URL.documentsDirectory.appendingPathComponent("edu.stanford.spezi.scheduler.storage.sqlite"),
+                url: URL.documentsDirectory.appendingPathComponent("edu.stanford.spezi.studymanager.storage.sqlite"),
                 allowsSave: true,
                 cloudKitDatabase: .none
             )
@@ -88,10 +97,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
             // TODO(@lukas) we need a thing (not here, probably in -configre or in the function that fetches the current study versions from the server) that deletes/stops all Tasks registered w/ the scheduler that don't correspond to valid study components anymore! eg: imagine we remove an informational component (or replace it w/ smth completely new). in that case we want to disable the schedule for that, instead of having it continue to run in the background!
             updateActionCards()
             
-            // start autosave task
-            // TODO THIS SHOULD NOT BE NECESSARY
-            // WHY IS THIS REQUIRED??????
-            // WHY DOESN'T THE MODELCONTEXT AUTOSAVE, EVEN THOUGH THAT'S ENABLED BY DEFAULT????
+            #if targetEnvironment(simulator)
             guard autosaveTask == nil else {
                 return
             }
@@ -100,10 +106,10 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
                     await MainActor.run {
                         try? self.modelContext.save()
                     }
-//                    try? await self.scheduler._saveModelContext()
                     try? await _Concurrency.Task.sleep(for: .seconds(0.25))
                 }
             }
+            #endif
         }
     }
     
@@ -276,10 +282,60 @@ extension StudyManager {
         case studyEnrolment(StudyDefinition)
     }
     
-    public func importConsentDocument(_ pdf: PDFDocument, for context: ConsentDocumentContext) {
-        // TODO do smth w/ the consent documents!
+    public func importConsentDocument(_ pdf: PDFDocument, for context: ConsentDocumentContext) async throws {
+        guard let accountId = account.details?.accountId else {
+            logger.error("Unable to get account id. not uploading consent form.")
+            return
+        }
+        guard let pdfData = pdf.dataRepresentation() else {
+            logger.error("Unable to get PDF data. not uploading consent form.")
+            return
+        }
+        let storageRef = Storage.storage().reference(withPath: "users/\(accountId)/consent/\(UUID().uuidString).pdf")
+        let metadata = StorageMetadata()
+        metadata.contentType = "application/pdf"
+        // TODO add some more metadata?
+        try await storageRef.putDataAsync(pdfData, metadata: metadata)
     }
 }
+
+
+// MARK: Health Import
+
+extension StudyManager {
+    public func handleNewHealthSample(_ sample: HKSample) async {
+        // TODO instead of performing the upload right in here, maybe add it to a queue and
+        // have a background task that just goes over the queue until its empty?
+        do {
+            try await healthKitDocument(id: sample.uuid)
+                .setData(from: sample.resource)
+        } catch {
+            logger.error("Error saving HealthKit sample to Firebase: \(error)")
+            // TODO queue sample for later retry?
+        }
+    }
+    
+    
+    public func handleDeletedHealthObject(_ object: HKDeletedObject) async {
+        // TODO
+        do {
+            try await healthKitDocument(id: object.uuid).delete()
+        } catch {
+            logger.error("Error saving HealthKit sample to Firebase: \(error)")
+            // TODO queue for later retry?
+        }
+    }
+    
+    
+    private func healthKitDocument(id uuid: UUID) async throws -> DocumentReference {
+        try await firebaseConfiguration.userDocumentReference
+            .collection("questionnaireResponses") // Add all HealthKit sources in a /HealthKit collection.
+            .document(uuid.uuidString) // Set the document identifier to the UUID of the document.
+    }
+}
+
+
+// MARK: Other
 
 
 extension Task.Context {

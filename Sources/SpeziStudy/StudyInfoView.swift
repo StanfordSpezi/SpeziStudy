@@ -11,6 +11,7 @@ import SpeziHealthKit
 import SpeziViews
 import SwiftData
 import SwiftUI
+import SpeziStudyDefinition
 
 
 public struct StudyInfoView: View {

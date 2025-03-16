@@ -11,6 +11,7 @@ import class ModelsR4.Questionnaire
 import SpeziScheduler
 import SwiftData
 import SwiftUI
+import SpeziStudyDefinition
 
 
 // MARK: ActionCards
