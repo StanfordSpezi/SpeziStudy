@@ -12,7 +12,7 @@ import SwiftData
 import SwiftUI
 
 
-/// Performs a SwiftData query in the StudyManager's ModelContext
+/// Performs a SwiftData query in the ``StudyManager``'s `ModelContext`
 @propertyWrapper @MainActor
 public struct StudyManagerQuery<T: PersistentModel>: DynamicProperty {
     public struct QueryState {

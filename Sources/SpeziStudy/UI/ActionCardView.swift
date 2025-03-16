@@ -47,7 +47,6 @@ public struct ActionCardView: View {
         } more: {
             Text("MORE")
         }
-//            .taskCategoryAppearance(for: .questionnaire, label: "Hola")
     }
     
     

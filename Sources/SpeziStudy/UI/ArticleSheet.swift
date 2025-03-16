@@ -12,8 +12,6 @@ import SpeziViews
 import SpeziStudyDefinition
 
 
-
-// TODO also use this for the NewsEntries!
 public struct ArticleSheet: View {
     public struct Content: Sendable {
         public let title: String
@@ -62,15 +60,17 @@ public struct ArticleSheet: View {
     private var scrollViewContent: some View {
         VStack(spacing: 0) {
             ZStack {
-//                Image("Image3")
-                //if let headerImage = content.headerImage {
-                (content.headerImage ?? Image(""))
-//                    headerImage
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: 271)
-                        .clipped()
-//                }
+                Group {
+                    if let headerImage = content.headerImage {
+                        headerImage
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .clipped()
+                    } else {
+                        Color.clear
+                    }
+                }
+                .frame(height: 271)
                 VStack {
                     Spacer()
                     HStack {
