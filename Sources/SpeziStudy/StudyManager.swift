@@ -329,7 +329,7 @@ extension StudyManager {
     
     private func healthKitDocument(id uuid: UUID) async throws -> DocumentReference {
         try await firebaseConfiguration.userDocumentReference
-            .collection("HealthKit") // Add all HealthKit sources in a /HealthKit collection.
+            .collection("HealthKitObservations") // Add all HealthKit sources in a /HealthKit collection.
             .document(uuid.uuidString) // Set the document identifier to the UUID of the document.
     }
 }
