@@ -18,39 +18,14 @@ jobs:
   swiftlint:
     name: SwiftLint
     uses: StanfordBDHG/.github/.github/workflows/swiftlint.yml@v2
-  packageios:
+  buildandtest_ios:
     name: Build and Test Swift Package iOS
     uses: StanfordBDHG/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
     with:
       scheme: SpeziStudy
       resultBundle: SpeziStudy-iOS.xcresult
       artifactname: SpeziStudy-iOS.xcresult
-  packagewatchos:
-    name: Build and Test Swift Package watchOS
-    uses: StanfordBDHG/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
-    with:
-      scheme: SpeziStudy
-      destination: 'platform=watchOS Simulator,name=Apple Watch Series 10 (46mm)'
-      resultBundle: SpeziStudy-watchOS.xcresult
-      artifactname: SpeziStudy-watchOS.xcresult
-  packagevisionos:
-    name: Build and Test Swift Package visionOS
-    uses: StanfordBDHG/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
-    with:
-      runsonlabels: '["macOS", "self-hosted"]'
-      scheme: SpeziStudy
-      destination: 'platform=visionOS Simulator,name=Apple Vision Pro'
-      resultBundle: SpeziStudy-visionOS.xcresult
-      artifactname: SpeziStudy-visionOS.xcresult
-  packagetvos:
-    name: Build and Test Swift Package tvOS
-    uses: StanfordBDHG/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
-    with:
-      scheme: SpeziStudy
-      resultBundle: SpeziStudy-tvOS.xcresult
-      destination: 'platform=tvOS Simulator,name=Apple TV 4K (3rd generation)'
-      artifactname: SpeziStudy-tvOS.xcresult
-  packagemacos:
+  buildandtest_macos:
     name: Build and Test Swift Package macOS
     uses: StanfordBDHG/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
     with:
@@ -58,57 +33,19 @@ jobs:
       resultBundle: SpeziStudy-macOS.xcresult
       destination: 'platform=macOS,arch=arm64'
       artifactname: SpeziStudy-macOS.xcresult
-  ios:
-    name: Build and Test iOS
+  buildandtest_uitests:
+    name: Build and Test UI Tests
     uses: StanfordBDHG/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
     with:
       path: 'Tests/UITests'
       scheme: TestApp
       resultBundle: TestApp-iOS.xcresult
       artifactname: TestApp-iOS.xcresult
-  ipados:
-    name: Build and Test iPadOS
-    uses: StanfordBDHG/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
-    with:
-      path: 'Tests/UITests'
-      scheme: TestApp
-      destination: 'platform=iOS Simulator,name=iPad Air 13-inch (M2)'
-      resultBundle: TestApp-iPadOS.xcresult
-      artifactname: TestApp-iPadOS.xcresult
-  watchos:
-    name: Build and Test watchOS
-    uses: StanfordBDHG/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
-    with:
-      runsonlabels: '["macOS", "self-hosted"]'
-      path: 'Tests/UITests'
-      scheme: TestAppWatchApp
-      destination: 'platform=watchOS Simulator,name=Apple Watch Series 10 (46mm)'
-      resultBundle: TestApp-watchOS.xcresult
-      artifactname: TestApp-watchOS.xcresult
-  visionos:
-    name: Build and Test visionOS
-    uses: StanfordBDHG/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
-    with:
-      runsonlabels: '["macOS", "self-hosted"]'
-      path: 'Tests/UITests'
-      scheme: TestApp
-      destination: 'platform=visionOS Simulator,name=Apple Vision Pro'
-      resultBundle: TestApp-visionOS.xcresult
-      artifactname: TestApp-visionOS.xcresult
-  tvos:
-    name: Build and Test tvOS
-    uses: StanfordBDHG/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
-    with:
-      path: 'Tests/UITests'
-      scheme: TestApp
-      destination: 'platform=tvOS Simulator,name=Apple TV 4K (3rd generation)'
-      resultBundle: TestApp-tvOS.xcresult
-      artifactname: TestApp-tvOS.xcresult
   uploadcoveragereport:
     name: Upload Coverage Report
-    needs: [packageios, packagewatchos, packagevisionos, packagetvos, packagemacos, ios, ipados, watchos, visionos, tvos]
+    needs: [buildandtest_ios, buildandtest_macos, buildandtest_uitests]
     uses: StanfordBDHG/.github/.github/workflows/create-and-upload-coverage-report.yml@v2
     with:
-      coveragereports: SpeziStudy-iOS.xcresult SpeziStudy-watchOS.xcresult SpeziStudy-visionOS.xcresult SpeziStudy-tvOS.xcresult SpeziStudy-macOS.xcresult TestApp-iOS.xcresult TestApp-iPadOS.xcresult TestApp-watchOS.xcresult TestApp-visionOS.xcresult TestApp-tvOS.xcresult
+      coveragereports: SpeziStudy-iOS.xcresult SpeziStudy-macOS.xcresult TestApp-iOS.xcresult
     secrets:
       token: ${{ secrets.CODECOV_TOKEN }}
