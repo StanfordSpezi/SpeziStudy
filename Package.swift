@@ -16,9 +16,6 @@ let package = Package(
     name: "SpeziStudy",
     platforms: [
         .iOS(.v18),
-        .watchOS(.v11),
-        .visionOS(.v2),
-        .tvOS(.v18),
         .macOS(.v15)
     ],
     products: [
@@ -27,15 +24,14 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/FHIRModels", .upToNextMinor(from: "0.5.0")),
-        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", exact: "1.0.0-beta.4"),
-//        .package(url: "https://github.com/StanfordSpezi/SpeziQuestionnaire.git", from: "1.2.3"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", branch: "lukas/query"),
         .package(url: "https://github.com/StanfordSpezi/SpeziScheduler", from: "1.2.1"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4"),
         .package(url: "https://github.com/StanfordSpezi/SpeziViews.git", from: "1.9.1"),
         .package(url: "https://github.com/StanfordSpezi/SpeziFirebase.git", from: "2.0.4"),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", from: "11.9.0"),
         .package(url: "https://github.com/StanfordSpezi/SpeziAccount.git", from: "2.1.3"),
-        .package(url: "https://github.com/StanfordBDHG/HealthKitOnFHIR.git", .upToNextMinor(from: "0.2.13"))
+        .package(url: "https://github.com/StanfordBDHG/HealthKitOnFHIR.git", .upToNextMinor(from: "0.2.14"))
     ] + swiftLintPackage(),
     targets: [
         .target(

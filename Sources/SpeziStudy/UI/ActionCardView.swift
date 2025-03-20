@@ -13,6 +13,7 @@ import SpeziViews
 import SwiftUI
 
 
+/// View that displays an ``StudyManager/ActionCard``.
 public struct ActionCardView: View {
     @Environment(\.colorScheme) private var colorScheme
     
@@ -41,8 +42,14 @@ public struct ActionCardView: View {
             DefaultTileHeader(event, alignment: .leading)
         } footer: {
             EventActionButton(event: event) {
-                // TODO
-                fatalError()
+                guard let action = event.task.studyScheduledTaskAction else {
+                    print("Unable to fetch associated action.")
+                    return
+                }
+                // https://github.com/StanfordSpezi/SpeziScheduler/issues/54
+                _Concurrency.Task {
+                    await actionHandler(action)
+                }
             }
         } more: {
             Text("MORE")

@@ -351,9 +351,7 @@ extension Task.Category {
 
 extension View {
     public func injectingCustomTaskCategoryAppearances() -> some View {
-        self
-            .taskCategoryAppearance(for: .informational, label: "Informational", image: .system("text.rectangle.page"))
-//            .taskCategoryAppearance(for: .informational, label: "Informational", image: .systemSymbol(.textRectanglePage))
+        self.taskCategoryAppearance(for: .informational, label: "Informational", image: .system("text.rectangle.page"))
     }
 }
 
