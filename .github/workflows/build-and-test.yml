@@ -14,20 +14,20 @@ on:
 jobs:
   reuse_action:
     name: REUSE Compliance Check
-    uses: StanfordBDHG/.github/.github/workflows/reuse.yml@v2
+    uses: StanfordSpezi/.github/.github/workflows/reuse.yml@v2
   swiftlint:
     name: SwiftLint
     uses: StanfordBDHG/.github/.github/workflows/swiftlint.yml@v2
   buildandtest_ios:
     name: Build and Test Swift Package iOS
-    uses: StanfordBDHG/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
+    uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
     with:
       scheme: SpeziStudy
       resultBundle: SpeziStudy-iOS.xcresult
       artifactname: SpeziStudy-iOS.xcresult
   buildandtest_macos:
     name: Build and Test Swift Package macOS
-    uses: StanfordBDHG/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
+    uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
     with:
       scheme: SpeziStudy
       resultBundle: SpeziStudy-macOS.xcresult
@@ -35,7 +35,7 @@ jobs:
       artifactname: SpeziStudy-macOS.xcresult
   buildandtest_uitests:
     name: Build and Test UI Tests
-    uses: StanfordBDHG/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
+    uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
     with:
       path: 'Tests/UITests'
       scheme: TestApp
@@ -44,7 +44,7 @@ jobs:
   uploadcoveragereport:
     name: Upload Coverage Report
     needs: [buildandtest_ios, buildandtest_macos, buildandtest_uitests]
-    uses: StanfordBDHG/.github/.github/workflows/create-and-upload-coverage-report.yml@v2
+    uses: StanfordSpezi/.github/.github/workflows/create-and-upload-coverage-report.yml@v2
     with:
       coveragereports: SpeziStudy-iOS.xcresult SpeziStudy-macOS.xcresult TestApp-iOS.xcresult
     secrets:
