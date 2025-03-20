@@ -6,27 +6,40 @@
 // SPDX-License-Identifier: MIT
 //
 
-import SwiftUI
-import SpeziStudy
-import SpeziViews
 import SpeziHealthKit
-import SwiftData
 import SpeziStudyDefinition
+import SpeziViews
+import SwiftData
+import SwiftUI
 
 
 /// View that lets you pick a study (or multiple) to enroll in.
 public struct StudyEnrollmentView: View {
-    private enum ViewState: Hashable {
+    private enum ViewState {
         case loading
         case loaded([StudyDefinition])
+        case error(any Error)
+        
+        var isLoading: Bool {
+            switch self {
+            case .loading: true
+            case .loaded, .error: false
+            }
+        }
     }
-    @Environment(\.dismiss) private var dismiss
     
-    @StudyManagerQuery private var SPCs: [StudyParticipationContext]
+    public enum Source: Sendable {
+        case fetchFromServer(URL)
+        case constant([StudyDefinition])
+    }
     
-    @State private var state: ViewState = .loading
+    @Environment(\.dismiss)
+    private var dismiss
     
+    private let source: Source
     private let selectionHandler: @MainActor (StudyDefinition) -> Void
+    @StudyManagerQuery private var SPCs: [StudyParticipationContext]
+    @State private var state: ViewState = .loading
     
     public var body: some View {
         NavigationStack { // swiftlint:disable:this closure_body_length
@@ -44,6 +57,12 @@ public struct StudyEnrollmentView: View {
                         makeStudiesSection("Available Studies", studies: newStudies)
                         makeStudiesSection("Already Enrolled", studies: alreadyEnrolledStudies)
                     }
+                case .error(let error):
+                    ContentUnavailableView(
+                        "Unable to fetch studies",
+                        systemImage: "exclamationmark.triangle",
+                        description: Text(verbatim: "\(error)")
+                    )
                 }
             }
             .navigationTitle("Available Studies")
@@ -54,46 +73,20 @@ public struct StudyEnrollmentView: View {
                 }
             }
             .task {
-//                state = .loaded([mockMHCStudy])
-                // TODO
+                await fetchStudies()
             }
-        }
-    }
-    
-    
-    @ViewBuilder
-    private func makeStudiesSection(_ title: LocalizedStringResource, studies: [StudyDefinition]) -> some View {
-        if !studies.isEmpty {
-            Section(String(localized: title)) {
-                ForEach(studies) { study in
-                    let isUnavailableBcMissingDependency: Bool = { () -> Bool in // TODO instead of just disabling it, hide it entirely???
-                        if let dependency = study.metadata.studyDependency {
-                            // studies w/ a dependency are only allowed if the user is already in the other study
-                            return !SPCs.contains(where: { $0.study.id == dependency })
-                        } else {
-                            // studies w/out a dependency are always allowed
-                            return false
-                        }
-                    }()
-                    Section {
-                        NavigationLink {
-                            StudyInfoView(study: study, dismiss: dismiss)
-//                                    DetailedStudyInfoView(study: study) { study in
-//                                        dismiss()
-//                                        selectionHandler(study)
-//                                    }
-                        } label: {
-                            studyRowView(for: study)
-                            if isUnavailableBcMissingDependency {
-                                Text("Unavailable: not enrolled into parent(dep) study.")
-                            }
-                        }.disabled(isUnavailableBcMissingDependency)
-                    }
+            .if(!state.isLoading) {
+                $0.refreshable {
+                    await fetchStudies()
                 }
             }
         }
     }
     
+    public init(source: Source, selectionHandler: @MainActor @escaping (StudyDefinition) -> Void) {
+        self.source = source
+        self.selectionHandler = selectionHandler
+    }
     
     @ViewBuilder
     private func studyRowView(for study: StudyDefinition) -> some View {
@@ -103,9 +96,13 @@ public struct StudyEnrollmentView: View {
                 case nil:
                     EmptyView()
                 case .systemSymbol(let name):
-                    Image(systemName: name).resizable().aspectRatio(contentMode: .fit).padding(.horizontal, 8)
-                case .custom(let data):
-                    AsyncImage2(data: data)
+                    Image(systemName: name)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .padding(.horizontal, 8)
+                        .accessibilityHidden(true)
+                case .custom(let url):
+                    AsyncImage(url: url)
                 }
             }.frame(width: 47)
             VStack(alignment: .leading) {
@@ -118,8 +115,47 @@ public struct StudyEnrollmentView: View {
         }
     }
     
+    @ViewBuilder
+    private func makeStudiesSection(_ title: LocalizedStringResource, studies: [StudyDefinition]) -> some View {
+        if !studies.isEmpty {
+            Section(String(localized: title)) {
+                ForEach(studies) { study in
+                    let isUnavailableBcMissingDependency: Bool = { () -> Bool in // Question instead of just disabling it, hide it entirely???
+                        if let dependency = study.metadata.studyDependency {
+                            // studies w/ a dependency are only allowed if the user is already in the other study
+                            return !SPCs.contains(where: { $0.study.id == dependency })
+                        } else {
+                            // studies w/out a dependency are always allowed
+                            return false
+                        }
+                    }()
+                    Section {
+                        NavigationLink {
+                            StudyInfoView(study: study, dismiss: dismiss)
+                        } label: {
+                            studyRowView(for: study)
+                            if isUnavailableBcMissingDependency {
+                                Text("Unavailable: not enrolled into parent(dep) study.")
+                            }
+                        }.disabled(isUnavailableBcMissingDependency)
+                    }
+                }
+            }
+        }
+    }
     
-    public init(selectionHandler: @MainActor @escaping (StudyDefinition) -> Void) {
-        self.selectionHandler = selectionHandler
+    private func fetchStudies() async {
+        state = .loading
+        do {
+            switch source {
+            case .constant(let studies):
+                state = .loaded(studies)
+            case .fetchFromServer(let url):
+                let (data, _) = try await URLSession.shared.data(from: url)
+                state = .loaded(try JSONDecoder().decode([StudyDefinition].self, from: data))
+            }
+        } catch {
+            state = .error(error)
+        }
     }
 }

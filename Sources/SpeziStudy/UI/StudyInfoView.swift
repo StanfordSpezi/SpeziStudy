@@ -8,23 +8,24 @@
 
 import Foundation
 import SpeziHealthKit
+import SpeziStudyDefinition
 import SpeziViews
 import SwiftData
 import SwiftUI
-import SpeziStudyDefinition
 
 
 public struct StudyInfoView: View {
-    @Environment(StudyManager.self) private var mhc
-    @Environment(\.dismiss) private var _dismiss
+    @Environment(StudyManager.self)
+    private var mhc
+    @Environment(\.dismiss)
+    private var _dismiss
     
     @StudyManagerQuery private var SPCs: [StudyParticipationContext]
     @State private var viewState: ViewState = .idle
-    @State private var isPresentingUnenrollFromStudyConfirmationDialog = false
+    @State private var isPresentingUnenrollConfirmationDialog = false
     
     private let study: StudyDefinition
     private let injectedDismiss: DismissAction?
-//    let enrollmentHandler: @MainActor (StudyDefinition) -> Void
     
     private var dismiss: DismissAction {
         injectedDismiss ?? _dismiss
@@ -103,10 +104,10 @@ public struct StudyInfoView: View {
                 .tint(.red)
                 .confirmationDialog(
                     "Are you sure you want to leave the '\(study.metadata.title)' study?",
-                    isPresented: $isPresentingUnenrollFromStudyConfirmationDialog
+                    isPresented: $isPresentingUnenrollConfirmationDialog
                 ) {
                     Button("Cancel", role: .cancel) {
-                        isPresentingUnenrollFromStudyConfirmationDialog = false
+                        isPresentingUnenrollConfirmationDialog = false
                     }
                     Button("Unenroll", role: .destructive) {
                         _Concurrency.Task {
@@ -186,8 +187,6 @@ struct StudyParticipationCriteriaView: View {
         }
     }
 }
-
-
 
 
 extension Text {

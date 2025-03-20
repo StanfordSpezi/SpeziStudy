@@ -54,3 +54,31 @@ extension RangeReplaceableCollection {
         return copy
     }
 }
+
+
+extension Calendar.RecurrenceRule: @retroactive Hashable {
+    public func hash(into hasher: inout Hasher) {
+        for child in Mirror(reflecting: self).children {
+            if let hashable = child.value as? any Hashable {
+                hashable.hash(into: &hasher)
+            } else {
+                fatalError("Cannot hash child \(child)")
+            }
+        }
+    }
+}
+
+
+extension Calendar.RecurrenceRule.Weekday: @retroactive Hashable {
+    public func hash(into hasher: inout Hasher) {
+        switch self {
+        case .every(let weekday):
+            hasher.combine(weekday)
+        case let .nth(interval, weekday):
+            hasher.combine(interval)
+            hasher.combine(weekday)
+        @unknown default:
+            fatalError("Cannot hash \(self)")
+        }
+    }
+}

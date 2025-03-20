@@ -9,9 +9,9 @@
 import Foundation
 import class ModelsR4.Questionnaire
 import SpeziScheduler
+import SpeziStudyDefinition
 import SwiftData
 import SwiftUI
-import SpeziStudyDefinition
 
 
 // MARK: ActionCards

@@ -13,16 +13,26 @@ import SwiftUI
 
 
 /// Performs a SwiftData query in the ``StudyManager``'s `ModelContext`
-@propertyWrapper @MainActor
-public struct StudyManagerQuery<T: PersistentModel>: DynamicProperty {
+@propertyWrapper
+@MainActor
+public struct StudyManagerQuery<T: PersistentModel>: DynamicProperty { // swiftlint:disable:this file_types_order
     public struct QueryState {
         public let fetchError: (any Error)?
     }
     
-    @Environment(StudyManager.self) private var studyManager
+    @Environment(StudyManager.self)
+    private var studyManager
     private let predicate: Predicate<T>?
     private let sortDescriptors: [SortDescriptor<T>]
     @State private var storage = Storage<T>()
+    
+    public var wrappedValue: [T] {
+        storage.fetchResult.value ?? []
+    }
+    
+    public var projectedValue: QueryState {
+        QueryState(fetchError: storage.fetchResult.error)
+    }
     
     public init(_: T.Type = T.self, predicate: Predicate<T>? = nil, sortBy sortDescriptors: [SortDescriptor<T>] = []) {
         self.predicate = predicate
@@ -47,14 +57,6 @@ public struct StudyManagerQuery<T: PersistentModel>: DynamicProperty {
         }
         let descriptor = FetchDescriptor<T>(predicate: predicate, sortBy: sortDescriptors)
         storage.fetchResult = Result { try studyManager.modelContext.fetch(descriptor) }
-    }
-    
-    public var wrappedValue: [T] {
-        storage.fetchResult.value ?? []
-    }
-    
-    public var projectedValue: QueryState {
-        QueryState(fetchError: storage.fetchResult.error)
     }
 }
 

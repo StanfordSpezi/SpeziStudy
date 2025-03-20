@@ -7,37 +7,12 @@
 //
 
 import Foundation
-import SwiftUI
-import SpeziViews
 import SpeziStudyDefinition
+import SpeziViews
+import SwiftUI
 
 
 public struct ArticleSheet: View {
-    public struct Content: Sendable {
-        public let title: String
-        public let date: Date?
-        public let categories: [String]
-        public let lede: String?
-        public let headerImage: Image?
-        public let body: String
-        
-        public init(
-            title: String,
-            date: Date? = nil,
-            categories: [String] = [],
-            lede: String? = nil,
-            headerImage: Image? = nil, // swiftlint:disable:this function_default_parameter_at_end
-            body: String
-        ) {
-            self.title = title
-            self.date = date
-            self.categories = categories.filter { !$0.isEmpty && !$0.allSatisfy(\.isWhitespace) }
-            self.lede = lede
-            self.headerImage = headerImage
-            self.body = body
-        }
-    }
-    
     public let content: Content
     
     public var body: some View {
@@ -45,7 +20,7 @@ public struct ArticleSheet: View {
             ScrollView {
                 scrollViewContent
             }
-            .navigationTitle("") // TODO
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -56,8 +31,7 @@ public struct ArticleSheet: View {
     }
     
     
-    @ViewBuilder
-    private var scrollViewContent: some View {
+    @ViewBuilder private var scrollViewContent: some View {
         VStack(spacing: 0) {
             ZStack {
                 Group {
@@ -114,6 +88,33 @@ public struct ArticleSheet: View {
     }
 }
 
+
+extension ArticleSheet {
+    public struct Content: Sendable {
+        public let title: String
+        public let date: Date?
+        public let categories: [String]
+        public let lede: String?
+        public let headerImage: Image?
+        public let body: String
+        
+        public init(
+            title: String,
+            date: Date? = nil,
+            categories: [String] = [],
+            lede: String? = nil,
+            headerImage: Image? = nil, // swiftlint:disable:this function_default_parameter_at_end
+            body: String
+        ) {
+            self.title = title
+            self.date = date
+            self.categories = categories.filter { !$0.isEmpty && !$0.allSatisfy(\.isWhitespace) }
+            self.lede = lede
+            self.headerImage = headerImage
+            self.body = body
+        }
+    }
+}
 
 extension ArticleSheet.Content {
     public init(_ other: StudyDefinition.InformationalComponent) {

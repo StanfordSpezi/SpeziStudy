@@ -15,17 +15,13 @@ import SwiftUI
 
 /// View that displays an ``StudyManager/ActionCard``.
 public struct ActionCardView: View {
-    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorScheme)
+    private var colorScheme
     
     let card: StudyManager.ActionCard
     let actionHandler: @MainActor (StudyManager.ActionCard.Action) async -> Void
     
     @State private var viewState: ViewState = .idle
-    
-    public init(card: StudyManager.ActionCard, action: @MainActor @escaping (StudyManager.ActionCard.Action) async -> Void) {
-        self.card = card
-        self.actionHandler = action
-    }
     
     public var body: some View {
         switch card.content {
@@ -36,6 +32,10 @@ public struct ActionCardView: View {
         }
     }
     
+    public init(card: StudyManager.ActionCard, action: @MainActor @escaping (StudyManager.ActionCard.Action) async -> Void) {
+        self.card = card
+        self.actionHandler = action
+    }
     
     private func content(for event: Event) -> some View {
         InstructionsTile(event, alignment: .leading) {
@@ -56,7 +56,6 @@ public struct ActionCardView: View {
         }
     }
     
-    
     private func content(for content: StudyManager.ActionCard.SimpleContent) -> some View {
         AsyncButton(state: $viewState) {
             await actionHandler(card.action)
@@ -65,11 +64,12 @@ public struct ActionCardView: View {
                 VStack(alignment: .leading) {
                     HStack {
                         if let symbol = content.symbol {
-                            Image(/*systemSymbol: */symbol)
+                            Image(symbol)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .bold()
                                 .frame(width: 20, height: 20)
+                                .accessibilityHidden(true)
                         }
                         Text(content.title)
                             .font(.headline.bold())
@@ -79,14 +79,8 @@ public struct ActionCardView: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
-//                switch card.trailingAccessory {
-//                case .none:
-//                    EmptyView()
-//                case .disclosureIndicator:
-//                    DisclosureIndicator()
-//                }
             }
-        }//.buttonStyle(.plain)
+        }
         .tint({ () -> Color in
             switch colorScheme {
             case .light:
