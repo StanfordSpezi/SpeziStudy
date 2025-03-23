@@ -24,13 +24,10 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/FHIRModels", .upToNextMinor(from: "0.5.0")),
-        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", branch: "lukas/query"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", exact: "1.0.0-beta.5"),
         .package(url: "https://github.com/StanfordSpezi/SpeziScheduler", from: "1.2.1"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4"),
         .package(url: "https://github.com/StanfordSpezi/SpeziViews.git", from: "1.9.1"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziFirebase.git", from: "2.0.4"),
-        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", from: "11.9.0"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziAccount.git", from: "2.1.3"),
         .package(url: "https://github.com/StanfordBDHG/HealthKitOnFHIR.git", .upToNextMinor(from: "0.2.14"))
     ] + swiftLintPackage(),
     targets: [
@@ -54,11 +51,6 @@ let package = Package(
                 .product(name: "SpeziScheduler", package: "SpeziScheduler"),
                 .product(name: "SpeziSchedulerUI", package: "SpeziScheduler"),
                 .product(name: "SpeziViews", package: "SpeziViews"),
-                .product(name: "SpeziAccount", package: "SpeziAccount"),
-                .product(name: "SpeziFirebaseAccount", package: "SpeziFirebase"),
-                .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseStorage", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
                 .product(name: "HealthKitOnFHIR", package: "HealthKitOnFHIR")
             ],
             swiftSettings: [.enableUpcomingFeature("ExistentialAny")],

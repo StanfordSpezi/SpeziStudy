@@ -7,8 +7,6 @@
 //
 
 import Combine
-@preconcurrency import FirebaseFirestore
-@preconcurrency import FirebaseStorage
 import Foundation
 import HealthKitOnFHIR
 import class ModelsR4.Questionnaire
@@ -16,8 +14,6 @@ import class ModelsR4.QuestionnaireResponse
 import Observation
 import PDFKit
 import Spezi
-import SpeziAccount
-import SpeziFirebaseConfiguration
 import SpeziHealthKit
 import SpeziScheduler
 import SpeziSchedulerUI
@@ -43,10 +39,9 @@ struct SimpleError: Error, LocalizedError {
 @Observable
 public final class StudyManager: Module, EnvironmentAccessible, @unchecked Sendable {
     // swiftlint:disable attributes
-    @ObservationIgnored @Dependency(Account.self) var account
     @ObservationIgnored @Dependency(HealthKit.self) var healthKit
     @ObservationIgnored @Dependency(Scheduler.self) var scheduler
-    @ObservationIgnored @Dependency(FirebaseConfiguration.self) var firebaseConfiguration
+//    @ObservationIgnored @Dependency(FirebaseConfiguration.self) var firebaseConfiguration
     
     @ObservationIgnored @Application(\.logger) var logger
     // swiftlint:enaable attributes
