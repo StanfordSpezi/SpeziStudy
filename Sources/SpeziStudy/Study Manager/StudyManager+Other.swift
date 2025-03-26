@@ -7,16 +7,27 @@
 //
 
 import Foundation
+import class ModelsR4.Questionnaire
 import SpeziScheduler
+import SpeziStudyDefinition
+import SwiftData
 import SwiftUI
 
+
+extension StudyManager {
+    /// The user-facing action that is associated with a study-related `SpeziScheduler.Task`
+    public enum ScheduledTaskAction: Hashable, Codable {
+        case presentInformationalStudyComponent(StudyDefinition.InformationalComponent)
+        case answerQuestionnaire(Questionnaire, spcId: PersistentIdentifier)
+    }
+}
 
 extension Task.Context {
     // ISSUE for some reason only .json works? .propertyList (the default) fails to decode the input?!
     
     /// The ``Action`` associated with the task.
     @Property(coding: .json)
-    public var studyScheduledTaskAction: StudyManager.ActionCard.Action?
+    public var studyScheduledTaskAction: StudyManager.ScheduledTaskAction?
 }
 
 

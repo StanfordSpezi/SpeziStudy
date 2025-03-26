@@ -41,7 +41,6 @@ public final class StudyManager: Module, EnvironmentAccessible, @unchecked Senda
     // swiftlint:disable attributes
     @ObservationIgnored @Dependency(HealthKit.self) var healthKit
     @ObservationIgnored @Dependency(Scheduler.self) var scheduler
-//    @ObservationIgnored @Dependency(FirebaseConfiguration.self) var firebaseConfiguration
     
     @ObservationIgnored @Application(\.logger) var logger
     // swiftlint:enaable attributes
@@ -55,8 +54,6 @@ public final class StudyManager: Module, EnvironmentAccessible, @unchecked Senda
     var modelContext: ModelContext {
         ModelContext(modelContainer)
     }
-    
-    @MainActor public private(set) var actionCards: [ActionCard] = []
     
     
     public init() {
@@ -90,7 +87,6 @@ public final class StudyManager: Module, EnvironmentAccessible, @unchecked Senda
             try registerStudyTasksWithScheduler(SPCs)
             try await setupStudyBackgroundComponents(SPCs)
             // TODO(@lukas) we need a thing (not here, probably in -configre or in the function that fetches the current study versions from the server) that deletes/stops all Tasks registered w/ the scheduler that don't correspond to valid study components anymore! eg: imagine we remove an informational component (or replace it w/ smth completely new). in that case we want to disable the schedule for that, instead of having it continue to run in the background!
-            updateActionCards()
             
             #if targetEnvironment(simulator)
             guard autosaveTask == nil else {
@@ -122,18 +118,7 @@ public final class StudyManager: Module, EnvironmentAccessible, @unchecked Senda
 }
 
 
-extension StudyManager {
-    @MainActor
-    private func updateActionCards() {
-        actionCards = Array {
-//            ActionCard.enrollInStudy
-            // TODO have more suff here? maybe somehow allow the server to show these non-schedule-managed in-app action cards?
-        }
-    }
-}
-
-
-// MARK: Study Participation and Lifrecycle Management
+// MARK: Study Participation and Lifeecycle Management
 
 extension StudyManager {
     public enum StudyEnrollmentError: Error, LocalizedError {
@@ -165,7 +150,7 @@ extension StudyManager {
                     continue
                 }
                 let category: Task.Category?
-                let action: ActionCard.Action?
+                let action: ScheduledTaskAction?
                 switch component {
                 case .questionnaire(let component):
                     category = .questionnaire
