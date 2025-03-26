@@ -13,8 +13,7 @@ import Foundation
 extension StudyDefinition {
     public enum Component: Identifiable, StudyDefinitionElement {
         case informational(InformationalComponent)
-        /// - parameter id: the id of this study component, **not** of the questionnaire
-        case questionnaire(id: UUID, questionnaire: Questionnaire)
+        case questionnaire(QuestionnaireComponent)
         case healthDataCollection(HealthDataCollectionComponent)
         
         public var id: UUID {
@@ -23,8 +22,8 @@ extension StudyDefinition {
                 component.id
             case .healthDataCollection(let component):
                 component.id
-            case .questionnaire(let id, _):
-                id
+            case .questionnaire(let component):
+                component.id
             }
         }
         
@@ -44,10 +43,10 @@ extension StudyDefinition {
     
     
     public struct InformationalComponent: Identifiable, StudyDefinitionElement {
-        public let id: UUID
-        public let title: String
-        public let headerImage: String // TODO find smth better here!!!
-        public let body: String
+        public var id: UUID
+        public var title: String
+        public var headerImage: String // TODO find smth better here!!!
+        public var body: String
         
         public init(id: UUID, title: String, headerImage: String, body: String) {
             self.id = id
@@ -59,12 +58,24 @@ extension StudyDefinition {
     
     
     public struct HealthDataCollectionComponent: Identifiable, StudyDefinitionElement {
-        public let id: UUID
-        public let sampleTypes: HealthSampleTypesCollection
+        public var id: UUID
+        public var sampleTypes: HealthSampleTypesCollection
         
         public init(id: UUID, sampleTypes: HealthSampleTypesCollection) {
             self.id = id
             self.sampleTypes = sampleTypes
+        }
+    }
+    
+    
+    public struct QuestionnaireComponent: Identifiable, StudyDefinitionElement {
+        /// - parameter id: the id of this study component, **not** of the questionnaire
+        public let id: UUID
+        public let questionnaire: Questionnaire
+        
+        public init(id: UUID, questionnaire: Questionnaire) {
+            self.id = id
+            self.questionnaire = questionnaire
         }
     }
 }

@@ -63,11 +63,11 @@ extension StudyDefinition.Component {
     public var displayTitle: String? { // TODO is this actually needed / smth we wanna define in here?
         switch self {
         case .informational(let component):
-            return component.title
-        case .questionnaire(_, let questionnaire):
-            return questionnaire.title?.value?.string
+            component.title
+        case .questionnaire(let component):
+            component.questionnaire.title?.value?.string
         case .healthDataCollection:
-            return nil
+            nil
         }
     }
 }

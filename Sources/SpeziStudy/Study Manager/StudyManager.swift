@@ -167,9 +167,9 @@ extension StudyManager {
                 let category: Task.Category?
                 let action: ActionCard.Action?
                 switch component {
-                case .questionnaire(id: _, let questionnaire):
+                case .questionnaire(let component):
                     category = .questionnaire
-                    action = .answerQuestionnaire(questionnaire, spcId: SPC.persistentModelID)
+                    action = .answerQuestionnaire(component.questionnaire, spcId: SPC.persistentModelID)
                 case .informational(let component):
                     category = .informational
                     action = .presentInformationalStudyComponent(component)

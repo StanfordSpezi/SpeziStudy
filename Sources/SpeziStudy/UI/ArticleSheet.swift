@@ -21,7 +21,9 @@ public struct ArticleSheet: View {
                 scrollViewContent
             }
             .navigationTitle("")
+            #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     DismissButton()

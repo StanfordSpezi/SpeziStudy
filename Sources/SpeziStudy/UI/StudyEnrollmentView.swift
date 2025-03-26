@@ -66,7 +66,9 @@ public struct StudyEnrollmentView: View {
                 }
             }
             .navigationTitle("Available Studies")
+            #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     DismissButton()

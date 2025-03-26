@@ -16,11 +16,11 @@ extension StudyDefinition {
             case custom(URL)
         }
         
-        public let id: UUID
+        public var id: UUID
         // eg "My Heart Counts"
         public var title: String
         // eg "MHC"
-        public var shortTitle: String?
+        public var shortTitle: String
         /// Icon that will be used for this study.
         public var icon: Icon?
         /// Text that is presented to the user when they eg browse a list of studies they can enroll in
@@ -43,7 +43,7 @@ extension StudyDefinition {
         public init(
             id: UUID,
             title: String,
-            shortTitle: String? = nil,
+            shortTitle: String = "",
             icon: Icon? = nil, // swiftlint:disable:this function_default_parameter_at_end
             shortExplanationText: String,
             explanationText: String,
