@@ -15,6 +15,7 @@ import Observation
 import PDFKit
 import Spezi
 import SpeziHealthKit
+import SpeziLocalStorage
 import SpeziScheduler
 import SpeziSchedulerUI
 @_exported import SpeziStudyDefinition
@@ -36,12 +37,11 @@ struct SimpleError: Error, LocalizedError {
 }
 
 
-@Observable
-public final class StudyManager: Module, EnvironmentAccessible, @unchecked Sendable {
+@MainActor
+public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     // swiftlint:disable attributes
     @ObservationIgnored @Dependency(HealthKit.self) var healthKit
     @ObservationIgnored @Dependency(Scheduler.self) var scheduler
-    
     @ObservationIgnored @Application(\.logger) var logger
     // swiftlint:enaable attributes
     
@@ -58,13 +58,7 @@ public final class StudyManager: Module, EnvironmentAccessible, @unchecked Senda
     
     public init() {
         modelContainer = { () -> ModelContainer in
-            ValueTransformer.setValueTransformer(
-                JSONEncodingValueTransformer<QuestionnaireResponse>(),
-                forName: .init("JSONEncodingValueTransformer<QuestionnaireResponse>")
-            )
-            let schema = Schema([
-                StudyParticipationContext.self, SPCQuestionnaireEntry.self
-            ])
+            let schema = Schema([StudyParticipationContext.self], version: Schema.Version(0, 0, 1))
             let config = ModelConfiguration(
                 "SpeziStudy",
                 schema: schema,
@@ -107,7 +101,7 @@ public final class StudyManager: Module, EnvironmentAccessible, @unchecked Senda
     
     @MainActor
     func sinkDidSavePublisher(into consume: @MainActor @escaping (Notification) -> Void) throws -> AnyCancellable {
-        NotificationCenter.default.publisher(for: ModelContext.didSave, object: modelContext)
+        NotificationCenter.default.publisher(for: ModelContext.didSave, object: modelContainer.mainContext)
             .sink { notification in
                 // We use the mainContext. Therefore, the vent will always be called from the main actor
                 MainActor.assumeIsolated {
@@ -141,8 +135,11 @@ extension StudyManager {
     @MainActor
     private func registerStudyTasksWithScheduler(_ SPCs: some Collection<StudyParticipationContext>) throws {
         for SPC in SPCs {
-            for schedule in SPC.study.schedule.elements {
-                guard let component: StudyDefinition.Component = SPC.study.component(withId: schedule.componentId) else {
+            guard let study = SPC.study else {
+                continue
+            }
+            for schedule in study.schedule.elements {
+                guard let component: StudyDefinition.Component = study.component(withId: schedule.componentId) else {
                     throw SimpleError("Unable to find component for id '\(schedule.componentId)'")
                 }
                 guard component.requiresUserInteraction else {
@@ -162,7 +159,7 @@ extension StudyManager {
                     continue
                 }
                 try scheduler.createOrUpdateTask(
-                    id: "edu.stanford.spezi.SpeziStudy.studyComponentTask.\(SPC.study.id.uuidString).\(component.id)",
+                    id: taskId(for: component, in: study),
                     title: component.displayTitle.map { "\($0)" } ?? "",
                     instructions: "",
                     category: category,
@@ -185,14 +182,16 @@ extension StudyManager {
     @MainActor
     private func setupStudyBackgroundComponents(_ SPCs: some Collection<StudyParticipationContext>) async throws {
         for SPC in SPCs {
-            for component in SPC.study.healthDataCollectionComponents {
+            guard let study = SPC.study else {
+                continue
+            }
+            for component in study.healthDataCollectionComponents {
                 func setupSampleCollection(_ sampleTypes: some Collection<SampleType<some Any>>) async {
                     for sampleType in sampleTypes {
                         await healthKit.addHealthDataCollector(CollectSample(
                             sampleType,
                             start: .automatic,
-                            continueInBackground: true,
-                            predicate: nil
+                            continueInBackground: true
                         ))
                     }
                 }
@@ -206,6 +205,10 @@ extension StudyManager {
     }
     
     
+    private func taskId(for component: StudyDefinition.Component, in study: StudyDefinition) -> String {
+        "edu.stanford.spezi.SpeziStudy.studyComponentTask.\(study.id.uuidString).\(component.id)"
+    }
+    
     // MARK: Study Enrollment
     
     /// Enroll in a study.
@@ -215,17 +218,17 @@ extension StudyManager {
         // (which is much easier said that done...)
         let SPCs = try modelContext.fetch(FetchDescriptor<StudyParticipationContext>())
         
-        guard !SPCs.contains(where: { $0.study.id == study.id }) else {
+        guard !SPCs.contains(where: { $0.studyId == study.id }) else {
             throw StudyEnrollmentError.alreadyEnrolledInStudy
         }
         
         if let dependency = study.metadata.studyDependency {
-            guard SPCs.contains(where: { $0.study.id == dependency }) else {
+            guard SPCs.contains(where: { $0.studyId == dependency }) else {
                 throw StudyEnrollmentError.missingEnrollmentInStudyDependency
             }
         }
         
-        let SPC = StudyParticipationContext(study: study)
+        let SPC = StudyParticipationContext(enrollmentDate: .now, study: study)
         modelContext.insert(SPC)
         try modelContext.save()
         try registerStudyTasksWithScheduler(CollectionOfOne(SPC))
@@ -235,6 +238,11 @@ extension StudyManager {
     
     /// Unenroll from a study.
     public func unenroll(from SPC: StudyParticipationContext) async throws {
+        let study = SPC.study!
+        modelContext.delete(SPC)
+        for component in study.components {
+            try await scheduler.deleteAllVersions(ofTask: taskId(for: component, in: study))
+        }
         // TODO
         // - remove SPC from db
         // - inform server
@@ -251,10 +259,28 @@ extension StudyManager {
     public func SPC(withId id: PersistentIdentifier) -> StudyParticipationContext? {
         modelContext.registeredModel(for: id)
     }
-    
-    /// Saves a FHIR questionnaire response into the study manager.
-    public func saveQuestionnaireResponse(_ response: QuestionnaireResponse, for SPC: StudyParticipationContext) throws {
-        let entry = SPCQuestionnaireEntry(SPC: SPC, response: response)
-        modelContext.insert(entry) // TODO QUESTION: does this cause the property in the SPC class to get updated???
+}
+
+
+
+extension StudyManager {
+    /// Informs the Study Manager about current study definitions.
+    ///
+    /// Ths study manager will use these definitions to determine whether it needs to update any of the study participation contexts ic currently manages.
+    public func informAboutStudies(_ studies: [StudyDefinition]) async throws {
+        for study in studies {
+            let studyId = study.id
+            for SPC in try modelContext.fetch(FetchDescriptor(predicate: #Predicate<StudyParticipationContext> { $0.studyId == studyId })) {
+                SPC.study
+            }
+        }
     }
+//    func migrate(SPC: StudyParticipationContext2, to newStudyDef: StudyDefinition) async throws {
+//        fatalError()
+//    }
+}
+
+
+extension LocalStorageKeys {
+    static let enrolledSPCs = LocalStorageKey("edu.stanford.spezi.studymanager.enrolledSPCs", setting: .unencrypted(excludeFromBackup: false))
 }

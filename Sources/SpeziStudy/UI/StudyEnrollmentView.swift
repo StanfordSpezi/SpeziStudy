@@ -51,8 +51,8 @@ public struct StudyEnrollmentView: View {
                 case .loaded(let studies):
                     let studies = studies.sorted(using: KeyPathComparator(\.metadata.title))
                     // "new" as in not-yet-enrolled
-                    let newStudies = studies.filter { study in !SPCs.contains { $0.study.id == study.id } }
-                    let alreadyEnrolledStudies = studies.filter { study in SPCs.contains { $0.study.id == study.id } }
+                    let newStudies = studies.filter { study in !SPCs.contains { $0.studyId == study.id } }
+                    let alreadyEnrolledStudies = studies.filter { study in SPCs.contains { $0.studyId == study.id } }
                     Form {
                         makeStudiesSection("Available Studies", studies: newStudies)
                         makeStudiesSection("Already Enrolled", studies: alreadyEnrolledStudies)
@@ -125,7 +125,7 @@ public struct StudyEnrollmentView: View {
                     let isUnavailableBcMissingDependency: Bool = { () -> Bool in // Question instead of just disabling it, hide it entirely???
                         if let dependency = study.metadata.studyDependency {
                             // studies w/ a dependency are only allowed if the user is already in the other study
-                            return !SPCs.contains(where: { $0.study.id == dependency })
+                            return !SPCs.contains(where: { $0.studyId == dependency })
                         } else {
                             // studies w/out a dependency are always allowed
                             return false
@@ -154,7 +154,12 @@ public struct StudyEnrollmentView: View {
                 state = .loaded(studies)
             case .fetchFromServer(let url):
                 let (data, _) = try await URLSession.shared.data(from: url)
-                state = .loaded(try JSONDecoder().decode([StudyDefinition].self, from: data))
+                let studies = try JSONDecoder().decode(
+                    [StudyDefinition].self,
+                    from: data,
+                    configuration: .init(allowTrivialSchemaMigrations: true)
+                )
+                state = .loaded(studies)
             }
         } catch {
             state = .error(error)

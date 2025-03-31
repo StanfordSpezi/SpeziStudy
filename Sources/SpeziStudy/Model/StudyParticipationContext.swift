@@ -22,17 +22,40 @@ public final class StudyParticipationContext {
     /// The date when the participant enrolled into the study.
     ///
     /// This date is used as the reference for any relative date operations (e.g.: scheduling tasks relative to the start of someome's participation in a study).
-    public private(set) var enrollmentDate = Date()
+    public private(set) var enrollmentDate: Date
     
-    /// The study.
-    public private(set) var study: StudyDefinition
+    public private(set) var studyId: UUID
+    public private(set) var studyRevision: UInt
     
-    /// All questionnaire responses that were created as part of this study participation.
-    @Relationship(deleteRule: .cascade, inverse: \SPCQuestionnaireEntry.SPC)
-    public internal(set) var answeredQuestionnaires: [SPCQuestionnaireEntry] = []
+    /// JSON-encoded version of the study.
+    private var encodedStudy: Data
+    
+//    @Transient
+//    private var studyNeedsMigration = false
+    
+    @Transient
+    public private(set) lazy var study: StudyDefinition? = {
+        try? JSONDecoder().decode(
+            StudyDefinition.self,
+            from: encodedStudy,
+            configuration: .init(allowTrivialSchemaMigrations: true)
+        )
+    }()
     
     
-    init(study: StudyDefinition) {
+    init(enrollmentDate: Date, study: StudyDefinition) {
+        self.enrollmentDate = enrollmentDate
+        self.studyId = study.id
+        self.studyRevision = study.studyRevision
+        self.encodedStudy = try! JSONEncoder().encode(study)
         self.study = study
+    }
+    
+    
+    func updateStudyDefinition(_ newStudy: StudyDefinition) throws {
+        guard newStudy.id == studyId, newStudy.studyRevision > studyRevision else {
+            return
+        }
+        fatalError()
     }
 }

@@ -10,6 +10,8 @@ import Foundation
 @preconcurrency import class ModelsR4.Questionnaire
 
 
+// MARK: Definitions
+
 extension StudyDefinition {
     public enum Component: Identifiable, StudyDefinitionElement {
         case informational(InformationalComponent)
@@ -77,5 +79,15 @@ extension StudyDefinition {
             self.id = id
             self.questionnaire = questionnaire
         }
+    }
+}
+
+
+// MARK: Mutating
+
+extension StudyDefinition {
+    public mutating func removeComponent(at idx: Int) {
+        let component = components.remove(at: idx)
+        schedule.elements.removeAll { $0.componentId == component.id }
     }
 }

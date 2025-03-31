@@ -87,7 +87,7 @@ public struct StudyInfoView: View {
     
     @ViewBuilder private var mainAction: some View {
         Group { // swiftlint:disable:this closure_body_length
-            if let SPC = SPCs.first(where: { $0.study.id == study.id }) {
+            if let SPC = SPCs.first(where: { $0.studyId == study.id }) {
                 // already enrolled
                 AsyncButton(state: $viewState) {
                     try await mhc.unenroll(from: SPC)

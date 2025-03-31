@@ -25,7 +25,7 @@ extension StudyManager {
 extension Task.Context {
     // ISSUE for some reason only .json works? .propertyList (the default) fails to decode the input?!
     
-    /// The ``Action`` associated with the task.
+    /// The ``StudyManager/ScheduledTaskAction`` associated with the task.
     @Property(coding: .json)
     public var studyScheduledTaskAction: StudyManager.ScheduledTaskAction?
 }

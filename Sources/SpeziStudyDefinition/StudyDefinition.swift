@@ -14,14 +14,19 @@ public typealias StudyDefinitionElement = Hashable & Codable & Sendable
 
 
 /// Defines a Study, as a composition of metadata, components, and a schedule.
-public struct StudyDefinition: Identifiable, StudyDefinitionElement {
+public struct StudyDefinition: Identifiable, Hashable, Sendable, Encodable, DecodableWithConfiguration {
+    public static let schemaVersion = SchemaVersion(major: 0, minor: 0, patch: 1)
+    
+    /// The version of the study. You increment this value every time a new version of the study gets released.
+    public var studyRevision: UInt
     public var metadata: Metadata
     public var components: [Component]
     public var schedule: Schedule
     
     public var id: UUID { metadata.id }
     
-    public init(metadata: Metadata, components: [Component], schedule: Schedule) {
+    public init(studyRevision: UInt, metadata: Metadata, components: [Component], schedule: Schedule) {
+        self.studyRevision = studyRevision
         self.metadata = metadata
         self.components = components
         self.schedule = schedule
