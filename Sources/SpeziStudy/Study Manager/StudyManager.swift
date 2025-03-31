@@ -51,8 +51,9 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     
     let modelContainer: ModelContainer
     
+    @MainActor
     var modelContext: ModelContext {
-        ModelContext(modelContainer)
+        modelContainer.mainContext
     }
     
     
@@ -257,7 +258,11 @@ extension StudyManager {
     
     /// Fetches the ``StudyParticipationContext`` for the specified `PersistentIdentifier`.
     public func SPC(withId id: PersistentIdentifier) -> StudyParticipationContext? {
-        modelContext.registeredModel(for: id)
+        // for some reason, simply doing `modelContext.registeredModel(for: id)` doesn't work...
+        let SPCs = (try? modelContext.fetch(FetchDescriptor(predicate: #Predicate<StudyParticipationContext> {
+            $0.persistentModelID == id
+        }))) ?? []
+        return SPCs.first
     }
 }
 
