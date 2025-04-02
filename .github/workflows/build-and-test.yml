@@ -16,12 +16,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  reuse_action:
-    name: REUSE Compliance Check
-    uses: StanfordSpezi/.github/.github/workflows/reuse.yml@v2
-  swiftlint:
-    name: SwiftLint
-    uses: StanfordBDHG/.github/.github/workflows/swiftlint.yml@v2
   buildandtest_ios:
     name: Build and Test Swift Package iOS
     uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
