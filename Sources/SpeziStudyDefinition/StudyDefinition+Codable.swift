@@ -29,7 +29,7 @@ extension StudyDefinition {
         }
     }
     
-    /// Decodes a ``StudyDefinition`` from a `Decoder`.
+    /// Decodes a ``StudyDefinition`` from a `Decoder`, using the specified configuration.
     public init(from decoder: any Decoder, configuration: DecodingConfiguration) throws {
         // Q why not use made-up coding keys, to get just the schema, and then have the rest figured out dynamically?
         let container = try decoder.container(keyedBy: CodingKeysV0.self)
