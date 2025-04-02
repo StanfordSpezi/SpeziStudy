@@ -22,7 +22,7 @@ jobs:
     with:
       runsonlabels: '["macOS", "self-hosted"]'
       scheme: SpeziStudy-Package
-      destination: 'platform=iOS Simulator,arch=arm64'
+      destination: 'platform=iOS Simulator'
       resultBundle: SpeziStudy-Package-iOS.xcresult
       artifactname: SpeziStudy-Package-iOS.xcresult
   buildandtest_macos:
@@ -40,7 +40,7 @@ jobs:
     with:
       runsonlabels: '["macOS", "self-hosted"]'
       scheme: SpeziStudy-Package
-      destination: 'platform=watchOS Simulator,arch=arm64'
+      destination: 'platform=watchOS Simulator'
       resultBundle: SpeziStudy-Package-watchOS.xcresult
       artifactname: SpeziStudy-Package-watchOS.xcresult
   buildandtest_visionos:
@@ -49,7 +49,7 @@ jobs:
     with:
       runsonlabels: '["macOS", "self-hosted"]'
       scheme: SpeziStudy-Package
-      destination: 'platform=visionOS Simulator,arch=arm64'
+      destination: 'platform=visionOS Simulator'
       resultBundle: SpeziStudy-Package-visionOS.xcresult
       artifactname: SpeziStudy-Package-visionOS.xcresult
   buildandtest_uitests:
