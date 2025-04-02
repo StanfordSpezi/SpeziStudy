@@ -22,7 +22,7 @@ jobs:
     with:
       runsonlabels: '["macOS", "self-hosted"]'
       scheme: SpeziStudy-Package
-      destination: 'platform=iOS Simulator'
+      destination: 'platform=iOS Simulator,name=iPhone 16 Pro Max'
       resultBundle: SpeziStudy-Package-iOS.xcresult
       artifactname: SpeziStudy-Package-iOS.xcresult
   buildandtest_macos:
@@ -40,7 +40,7 @@ jobs:
     with:
       runsonlabels: '["macOS", "self-hosted"]'
       scheme: SpeziStudy-Package
-      destination: 'platform=watchOS Simulator'
+      destination: 'platform=watchOS Simulator,name=Apple Watch Ultra 2 (49mm)'
       resultBundle: SpeziStudy-Package-watchOS.xcresult
       artifactname: SpeziStudy-Package-watchOS.xcresult
   buildandtest_visionos:
@@ -49,7 +49,7 @@ jobs:
     with:
       runsonlabels: '["macOS", "self-hosted"]'
       scheme: SpeziStudy-Package
-      destination: 'platform=visionOS Simulator'
+      destination: 'platform=visionOS Simulator,name=Apple Vision Pro'
       resultBundle: SpeziStudy-Package-visionOS.xcresult
       artifactname: SpeziStudy-Package-visionOS.xcresult
   buildandtest_uitests:
