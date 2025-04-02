@@ -72,8 +72,8 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     public func configure() {
         _Concurrency.Task { @MainActor in
             let enrollments = try modelContext.fetch(FetchDescriptor<StudyEnrollment>())
-            try registerStudyTasksWithScheduler(enrollment)
-            try await setupStudyBackgroundComponents(enrollment)
+            try registerStudyTasksWithScheduler(enrollments)
+            try await setupStudyBackgroundComponents(enrollments)
             #if targetEnvironment(simulator)
             guard autosaveTask == nil else {
                 return
