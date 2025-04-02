@@ -41,8 +41,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     
     let modelContainer: ModelContainer
     
-    @MainActor
-    var modelContext: ModelContext {
+    @MainActor var modelContext: ModelContext {
         modelContainer.mainContext
     }
     
