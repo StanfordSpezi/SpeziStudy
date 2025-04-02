@@ -10,24 +10,31 @@ import Foundation
 
 
 extension StudyDefinition {
+    /// Study Metadata
     public struct Metadata: Identifiable, StudyDefinitionElement {
+        /// The icon that should be used when displaying the study to a user.
         public enum Icon: StudyDefinitionElement {
             case systemSymbol(String)
             case custom(URL)
         }
         
+        /// The study's unique identifier.
         public var id: UUID
-        // eg "My Heart Counts"
+        /// The study's user-visible title.
+        ///
+        /// E.g., "MyHeart Counts"
         public var title: String
-        // eg "MHC"
+        /// The study's user-visible short title
+        ///
+        /// E.g., "MHC"
         public var shortTitle: String
         /// Icon that will be used for this study.
         public var icon: Icon?
-        /// Text that is presented to the user when they eg browse a list of studies they can enroll in
-        public var shortExplanationText: String
         /// Long-form explanation of and/or introduction to the study.
         /// Is presented to the user
         public var explanationText: String // rename introductionText? introductoryText? instructions?
+        /// Text that is presented to the user when they eg browse a list of studies they can enroll in
+        public var shortExplanationText: String
         
         /// Other studies this study depends on.
         ///
@@ -40,13 +47,14 @@ extension StudyDefinition {
         /// The condition by which it is determined whether someone who satisfies the ``participationCriteria`` is allowed to enroll into the study.
         public var enrollmentConditions: EnrollmentConditions
         
+        /// Creates a new `Metadata` object.
         public init(
             id: UUID,
             title: String,
             shortTitle: String = "",
             icon: Icon? = nil, // swiftlint:disable:this function_default_parameter_at_end
-            shortExplanationText: String,
             explanationText: String,
+            shortExplanationText: String,
             studyDependency: StudyDefinition.ID? = nil, // swiftlint:disable:this function_default_parameter_at_end
             participationCriteria: ParticipationCriteria,
             enrollmentConditions: EnrollmentConditions
@@ -55,8 +63,8 @@ extension StudyDefinition {
             self.title = title
             self.shortTitle = shortTitle
             self.icon = icon
-            self.shortExplanationText = shortExplanationText
             self.explanationText = explanationText
+            self.shortExplanationText = shortExplanationText
             self.studyDependency = studyDependency
             self.participationCriteria = participationCriteria
             self.enrollmentConditions = enrollmentConditions

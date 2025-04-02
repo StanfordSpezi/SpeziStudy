@@ -16,7 +16,10 @@ let package = Package(
     name: "SpeziStudy",
     platforms: [
         .iOS(.v18),
-        .macOS(.v15)
+        .macOS(.v15),
+        .watchOS(.v11),
+        .tvOS(.v18),
+        .visionOS(.v2)
     ],
     products: [
         .library(name: "SpeziStudy", targets: ["SpeziStudy"]),
@@ -24,12 +27,10 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/FHIRModels", .upToNextMinor(from: "0.5.0")),
-        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", exact: "1.0.0-beta.5"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", from: "1.2.1"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", .upToNextMajor(from: "1.0.0")),
+        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", branch: "lukas/improve-task-creation"),
         .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", from: "2.1.0"),
-        .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziViews.git", from: "1.9.1"),
-        .package(url: "https://github.com/StanfordBDHG/HealthKitOnFHIR.git", .upToNextMinor(from: "0.2.14"))
+        .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4")
     ] + swiftLintPackage(),
     targets: [
         .target(
@@ -51,9 +52,7 @@ let package = Package(
                 .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
                 .product(name: "SpeziLocalStorage", package: "SpeziStorage"),
                 .product(name: "SpeziScheduler", package: "SpeziScheduler"),
-                .product(name: "SpeziSchedulerUI", package: "SpeziScheduler"),
-                .product(name: "SpeziViews", package: "SpeziViews"),
-                .product(name: "HealthKitOnFHIR", package: "HealthKitOnFHIR")
+                .product(name: "SpeziSchedulerUI", package: "SpeziScheduler")
             ],
             swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
             plugins: [] + swiftLintPlugin()
@@ -61,8 +60,11 @@ let package = Package(
         .testTarget(
             name: "SpeziStudyTests",
             dependencies: [
-                .target(name: "SpeziStudy")
+                .target(name: "SpeziStudy"),
+                .target(name: "SpeziStudyDefinition"),
+                .product(name: "ModelsR4", package: "FHIRModels")
             ],
+            resources: [.process("Resources")],
             swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
             plugins: [] + swiftLintPlugin()
         )

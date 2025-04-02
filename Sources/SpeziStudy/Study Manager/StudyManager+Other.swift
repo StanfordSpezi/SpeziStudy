@@ -55,14 +55,15 @@ extension SpeziScheduler.Schedule {
     /// - parameter participationStartDate: the date at which the user started to participate in the study.
     init(_ other: StudyDefinition.ScheduleElement, participationStartDate: Date) throws(ScheduleConversionError) {
         switch other.componentSchedule {
-        case .once(.studyBegin, let offset):
-            self = .once(at: participationStartDate.advanced(by: offset.totalSeconds))
-        case .once(.studyEnd, _):
-            // instead of throwing an error here, we probably wanna return nil,
-            // since this is something where we do want to continue processing the remaining schedule elements!!!
-            throw .unsupportedInput
-        case .once(.completion, offset: _):
-            throw .unsupportedInput
+            // Temporarily disabled due to SwiftData issues
+//        case .once(.studyBegin, let offset):
+//            self = .once(at: participationStartDate.advanced(by: offset.totalSeconds))
+//        case .once(.studyEnd, _):
+//            // instead of throwing an error here, we probably wanna return nil,
+//            // since this is something where we do want to continue processing the remaining schedule elements!!!
+//            throw .unsupportedInput
+//        case .once(.completion, offset: _):
+//            throw .unsupportedInput
         case let .repeated(.daily(interval, hour, minute), startOffsetInDays):
             self = .daily(
                 interval: interval,

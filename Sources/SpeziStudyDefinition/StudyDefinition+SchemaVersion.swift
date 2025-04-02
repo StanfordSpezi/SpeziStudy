@@ -10,12 +10,17 @@ import Foundation
 
 
 extension StudyDefinition {
+    /// Version of the ``StudyDefinition`` schema.
     public struct SchemaVersion: Hashable, Sendable {
+        /// Major version component
         public let major: UInt
+        /// Minor version component
         public let minor: UInt
+        /// Patch version component
         public let patch: UInt
         
-        public init(major: UInt, minor: UInt, patch: UInt) {
+        /// Creates a new `SchemaVersion`, from the specified components
+        public init(_ major: UInt, _ minor: UInt, _ patch: UInt) {
             self.major = major
             self.minor = minor
             self.patch = patch
@@ -31,29 +36,10 @@ extension StudyDefinition.SchemaVersion: Comparable {
 }
 
 
-extension StudyDefinition.SchemaVersion {
-    public enum Component {
-        case major, minor, patch
-    }
-    
-//    /// Determines whether a `SchemaVersion` is compatible with another version, up to the specified component.
-//    ///
-//    /// E.g.: `1.0.1` compares as compatible with `1`
-//    public func matches(other: Self, upToNext component: Component) -> Bool {
-//        switch component {
-//        case .major:
-//            self.major == other.major
-//        case .minor:
-//            self.major == other.major
-//        case .patch:
-//            <#code#>
-//        }
-//    }
-}
-
-
 extension StudyDefinition.SchemaVersion: LosslessStringConvertible, Codable {
+    /// An error that occurre when parsing a ``SchemaVersion`` from a `String`.
     public enum ParseError: Error {
+        /// The input string did not contain a valid ``SchemaVersion``
         case unableToParseVersion
     }
     
@@ -71,7 +57,7 @@ extension StudyDefinition.SchemaVersion: LosslessStringConvertible, Codable {
               let patch = UInt(match.output.patch) else {
             return nil
         }
-        self.init(major: major, minor: minor, patch: patch)
+        self.init(major, minor, patch)
     }
     
     

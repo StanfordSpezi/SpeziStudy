@@ -6,15 +6,24 @@
 // SPDX-License-Identifier: MIT
 //
 
+import Spezi
 import SpeziStudy
 import SwiftUI
 
 
 @main
 struct UITestsApp: App {
+    @UIApplicationDelegateAdaptor(TestAppDelegate.self)
+    private var appDelegate
+    
     var body: some Scene {
         WindowGroup {
-            Text(operatingSystem)
+            TabView {
+                Tab("Home", systemImage: "house") {
+                    HomeTab()
+                }
+            }
+            .spezi(appDelegate)
         }
     }
 }

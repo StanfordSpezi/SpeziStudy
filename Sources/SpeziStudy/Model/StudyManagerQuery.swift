@@ -27,11 +27,13 @@ public struct StudyManagerQuery<T: PersistentModel>: DynamicProperty { // swiftl
     @State private var storage = Storage<T>()
     
     public var wrappedValue: [T] {
-        storage.fetchResult.value ?? []
+        _ = storage.viewUpdate
+        return storage.fetchResult.value ?? []
     }
     
     public var projectedValue: QueryState {
-        QueryState(fetchError: storage.fetchResult.error)
+        _ = storage.viewUpdate
+        return QueryState(fetchError: storage.fetchResult.error)
     }
     
     public init(_: T.Type = T.self, predicate: Predicate<T>? = nil, sortBy sortDescriptors: [SortDescriptor<T>] = []) {

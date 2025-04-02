@@ -9,28 +9,6 @@
 import Foundation
 
 
-//private class CodingKeysBase: CustomDebugStringConvertible, CustomStringConvertible {
-//    static let schemaVersion = Self(stringValue: "schemaVersion")
-//    
-//    let stringValue: String
-//    var intValue: Int? { nil }
-//    
-//    required init?(stringValue: String) {
-//        self.stringValue = stringValue
-//    }
-//    
-//    @available(*, deprecated, renamed: "init(stringValue:)", message: "Only string-based keys are supported!")
-//    init?(intValue _: Int) {
-//        return nil
-//    }
-//}
-//
-//
-//private final class CodingKeysV1: CodingKeysBase, CodingKey, @unchecked Sendable {
-//    
-//}
-
-
 extension StudyDefinition {
     private enum CodingKeysV0: String, CodingKey {
         case schemaVersion
@@ -40,38 +18,20 @@ extension StudyDefinition {
         case schedule
     }
     
+    /// The configuration used to govern parts of the decoding process.
     public struct DecodingConfiguration {
-        /// Whether the decoding operation should be allowed to perform trivial migrations when decoding definitions encoded using an older schema version
-        public let allowTrivialSchemaMigrations: Bool
+        fileprivate let allowTrivialSchemaMigrations: Bool
         
+        /// Creates a new `DecodingConfiguration`
+        /// - parameter allowTrivialSchemaMigrations: Whether the decoding operation should be allowed to perform trivial migrations when decoding definitions encoded using an older schema version.
         public init(allowTrivialSchemaMigrations: Bool) {
             self.allowTrivialSchemaMigrations = allowTrivialSchemaMigrations
         }
     }
     
-//    private struct CodingKey: Swift.CodingKey {
-//        let stringValue: String
-//        var intValue: Int? { nil }
-//        
-//        init(stringValue: String) {
-//            self.stringValue = stringValue
-//        }
-//        
-//        @available(*, deprecated, renamed: "init(stringValue:)", message: "Only string-based keys are supported!")
-//        init?(intValue: Int) {
-//            return nil
-//        }
-//        
-//        static let schemaVersion = Self(stringValue: "schemaVersion")
-//        
-////        case studyRevision = "studyRevision"
-////        case metadata = "metadata"
-////        case components = "components"
-////        case schedule = "schedule"
-//    }
-    
+    /// Decodes a ``StudyDefinition`` from a `Decoder`.
     public init(from decoder: any Decoder, configuration: DecodingConfiguration) throws {
-        // TODO why not use made-up coding keys, to get just the schema, and then have the rest figured out dynamically?
+        // Q why not use made-up coding keys, to get just the schema, and then have the rest figured out dynamically?
         let container = try decoder.container(keyedBy: CodingKeysV0.self)
         let schemaVersion: SchemaVersion
         do {
@@ -83,11 +43,8 @@ extension StudyDefinition {
                 throw error
             }
         }
-        guard schemaVersion == Self.schemaVersion else {
-            fatalError()
-        }
         switch schemaVersion {
-        case .init(major: 0, minor: 0, patch: 1):
+        case .init(0, 0, 1):
             do {
                 studyRevision = try container.decode(UInt.self, forKey: .studyRevision)
             } catch DecodingError.keyNotFound where configuration.allowTrivialSchemaMigrations {
@@ -107,6 +64,7 @@ extension StudyDefinition {
     }
     
     
+    /// Encodes a ``StudyDefinition`` into an `Encoder`.
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeysV0.self)
         try container.encode(Self.schemaVersion, forKey: .schemaVersion)

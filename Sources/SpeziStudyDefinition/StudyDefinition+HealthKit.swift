@@ -9,33 +9,35 @@
 import Foundation
 import SpeziHealthKit
 
+
+/// Defines a set of HealthKit sample types that should be collected as part of a study.
 public struct HealthSampleTypesCollection: StudyDefinitionElement {
     private enum CodingKeys: CodingKey {
         case quantityTypes
         case correlationTypes
         case categoryTypes
-//        case other
     }
     
     private enum CodingError: Error {
         case unableToFindSampleType((any _HKSampleWithSampleType).Type, identifier: String)
     }
     
+    /// The set of quantity types to collect.
     public let quantityTypes: Set<SampleType<HKQuantitySample>>
+    /// The set of correlation types to collect.
     public let correlationTypes: Set<SampleType<HKCorrelation>>
+    /// The set of category types to collect.
     public let categoryTypes: Set<SampleType<HKCategorySample>>
-//    public let other: Set<HKObjectType>
     
+    /// Creates a new `HealthSampleTypesCollection`, using the specified sample types.
     public init(
         quantityTypes: Set<SampleType<HKQuantitySample>> = [],
         correlationTypes: Set<SampleType<HKCorrelation>> = [],
-        categoryTypes: Set<SampleType<HKCategorySample>> = []//,
-//        other: Set<HKObjectType> = []
+        categoryTypes: Set<SampleType<HKCategorySample>> = []
     ) {
         self.quantityTypes = quantityTypes
         self.correlationTypes = correlationTypes
         self.categoryTypes = categoryTypes
-//        self.other = other
     }
     
     public init(from decoder: any Decoder) throws {
@@ -71,7 +73,6 @@ public struct HealthSampleTypesCollection: StudyDefinitionElement {
             makeSampleType: { SampleType<HKCategorySample>(HKCategoryTypeIdentifier(rawValue: $0)) },
             rawIdentifiers: try container.decode(Set<String>.self, forKey: .categoryTypes)
         )
-//        other = try container.decode(Set<String>.self, forKey: .other).map { HKWorkoutType }
     }
     
     public func encode(to encoder: any Encoder) throws {
@@ -86,7 +87,7 @@ public struct HealthSampleTypesCollection: StudyDefinitionElement {
 extension HealthSampleTypesCollection {
     /// `true` iff the object is completely empty
     public var isEmpty: Bool {
-        quantityTypes.isEmpty && correlationTypes.isEmpty && categoryTypes.isEmpty // && other.isEmpty
+        quantityTypes.isEmpty && correlationTypes.isEmpty && categoryTypes.isEmpty
     }
     
     /// Returns a new collection created by merging the elements of the current one, with those of the other one.
@@ -94,8 +95,7 @@ extension HealthSampleTypesCollection {
         Self(
             quantityTypes: self.quantityTypes.union(other.quantityTypes),
             correlationTypes: self.correlationTypes.union(other.correlationTypes),
-            categoryTypes: self.categoryTypes.union(other.categoryTypes)//,
-            //other: self.other.union(other.other)
+            categoryTypes: self.categoryTypes.union(other.categoryTypes)
         )
     }
     
@@ -107,6 +107,7 @@ extension HealthSampleTypesCollection {
 
 
 extension HealthKit.DataAccessRequirements {
+    /// Initializes the object, based on the values in the other collection.
     public init(_ other: HealthSampleTypesCollection) {
         let sampleTypes = Set<HKSampleType> {
             other.quantityTypes.lazy.map(\.hkSampleType)

@@ -13,11 +13,41 @@ import Foundation
 // MARK: Definitions
 
 extension StudyDefinition {
+    /// A Component within a Study
+    ///
+    /// Study Components model schedulable and usually completable tasks or events that happen as part of a study participation.
+    ///
+    /// ### Component Kinds
+    /// There are two kinds of components:
+    /// 1. User-interactive components.
+    ///     These are components which are displayed to the study participant, and typically require some kind of response.
+    ///     Typically, these are used to initiate some form of data collection (e.g., prompting the user to answer a questionnaire, or to perform a six minute walking test),
+    ///     but they can also be purely informational (e.g., displaying an article about some study-related topic to the user).
+    /// 2. Internal, non-user-interactive components.
+    ///     These are components which don't require any immediate user interaction and instead run in the background, e.g. to collect data.
+    ///     An example of such a component is the background Health data collection.
+    ///
+    /// ### Component activation and Scheduling
+    /// All study components operate on a schedule, which determines when (and how often) the component is activated.
+    ///
+    /// User-interactive components must have at least one explicit schedule defined in ``StudyDefinition/schedule-swift.property``; otherwise, they will simply be ignored and never do anything.
+    /// Internal components are implicitly activated upon enrollment into the study.
     public enum Component: Identifiable, StudyDefinitionElement {
+        /// Component Kind
+        public enum Kind: Hashable, Sendable {
+            /// A user-interactive component
+            case userInteractive
+            /// An internal component
+            case `internal`
+        }
+        /// A component that prompts the participant to read an informative article.
         case informational(InformationalComponent)
+        /// A component that prompts the participant to anwer a questionnaire.
         case questionnaire(QuestionnaireComponent)
+        /// A component that initiates background Health data collection.
         case healthDataCollection(HealthDataCollectionComponent)
         
+        /// The components `id`, uniquely identifying it within the ``StudyDefinition``.
         public var id: UUID {
             switch self {
             case .informational(let component):
@@ -29,25 +59,25 @@ extension StudyDefinition {
             }
         }
         
-        /// Whether the component consists of something that we want the user to interact with
-        ///
-        /// TODO better name here. the idea is to differentiate between "internal" components (eg health data collection) that can run on their own,
-        /// vc non-internal components that essentially just tell the user to do something.
-        public var requiresUserInteraction: Bool {
+        /// The Component's kind
+        public var kind: Kind {
             switch self {
             case .informational, .questionnaire:
-                true
+                .userInteractive
             case .healthDataCollection:
-                false
+                .internal
             }
         }
     }
-    
-    
+}
+
+
+extension StudyDefinition {
+    /// Study Component which prompts the participant to read an informational article
     public struct InformationalComponent: Identifiable, StudyDefinitionElement {
         public var id: UUID
         public var title: String
-        public var headerImage: String // TODO find smth better here!!!
+        public var headerImage: String
         public var body: String
         
         public init(id: UUID, title: String, headerImage: String, body: String) {
@@ -57,19 +87,11 @@ extension StudyDefinition {
             self.body = body
         }
     }
-    
-    
-    public struct HealthDataCollectionComponent: Identifiable, StudyDefinitionElement {
-        public var id: UUID
-        public var sampleTypes: HealthSampleTypesCollection
-        
-        public init(id: UUID, sampleTypes: HealthSampleTypesCollection) {
-            self.id = id
-            self.sampleTypes = sampleTypes
-        }
-    }
-    
-    
+}
+
+
+extension StudyDefinition {
+    /// Study Component which prompts the participant to answer a questionnaire
     public struct QuestionnaireComponent: Identifiable, StudyDefinitionElement {
         /// - parameter id: the id of this study component, **not** of the questionnaire
         public let id: UUID
@@ -83,9 +105,26 @@ extension StudyDefinition {
 }
 
 
+extension StudyDefinition {
+    /// Study Component which initiates background Health data collection
+    public struct HealthDataCollectionComponent: Identifiable, StudyDefinitionElement {
+        public var id: UUID
+        public var sampleTypes: HealthSampleTypesCollection
+        
+        public init(id: UUID, sampleTypes: HealthSampleTypesCollection) {
+            self.id = id
+            self.sampleTypes = sampleTypes
+        }
+    }
+}
+
+
 // MARK: Mutating
 
 extension StudyDefinition {
+    /// Removes the component at the specified index from the study.
+    ///
+    /// This removes both the component itself, as well as any schedules referencing it.
     public mutating func removeComponent(at idx: Int) {
         let component = components.remove(at: idx)
         schedule.elements.removeAll { $0.componentId == component.id }

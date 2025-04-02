@@ -11,6 +11,7 @@ import Foundation
 
 
 extension StudyDefinition {
+    /// Criteria which must be fulfilled in order for someone to be eligible to enroll in the study.
     public struct ParticipationCriteria: StudyDefinitionElement {
         /// A criterion which must be satisfied for a person to be able to participate in a study.
         ///
@@ -54,6 +55,7 @@ extension StudyDefinition {
                 }
             }
             
+            /// The children of this node, if any.
             public var children: [Criterion] {
                 switch self {
                 case .ageAtLeast, .isFromRegion, .speaksLanguage, .custom:
@@ -118,7 +120,7 @@ extension StudyDefinition {
 extension StudyDefinition {
     /// Defines how enrollment into a study works
     public enum EnrollmentConditions: StudyDefinitionElement {
-        /// The are no conditions wrt the enrollment into the study
+        /// The are no conditions w.r.t. the enrollment into the study
         case none
         /// Enrollment into the study is controlled based on invitation codes.
         /// - parameter verificationEndpoint: URL to which a user-entered verification code is sent,
@@ -126,12 +128,6 @@ extension StudyDefinition {
         ///
         /// Example: you could have `https://my-heart-counts.stanford.edu/api/invite` as the endpoint here,
         /// and the app would then send a GET request to `/api/invite?code=${CODE}` to verify a user-entered invitation code
-        ///
-        /// TODO question here: how should these invitation-only studies be surfaced in the app?
-        /// - we could have a hidden button of sorts, which one would use bring up a text field to enter the code,
-        ///     which would need to somehow have the specific study it belongs to encoded into it (eg `MHCb:1234`, and anything prior to the `:` would be a shorthand study identifier)
-        /// - OR: we could have a link-based mechanism, where we can tell the app to download a specific stufy from some url (or, maybe simply tell it to show some already-downloaded study which until now was always hidden)
-        /// - the link could also directly include the personalized invitation code, so that the user wouldn't have to enter it by hand.
         case requiresInvitation(verificationEndpoint: URL)
     }
 }
@@ -147,6 +143,7 @@ extension StudyDefinition.ParticipationCriteria.Criterion {
         let language: Locale.Language
         let enabledCustomKeys: Set<CustomCriterionKey>
         
+        /// Creates a new evaluation environment, using the specified values.
         public init(
             age: Int?,
             region: Locale.Region?,
