@@ -9,7 +9,11 @@
 name: Build and Test
 
 on:
-  workflow_call:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   reuse_action:
