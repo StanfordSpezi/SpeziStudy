@@ -22,7 +22,7 @@ jobs:
     with:
       runsonlabels: '["macOS", "self-hosted"]'
       scheme: SpeziStudy-Package
-      destination: 'platform=iOS,arch=arm64'
+      destination: 'platform=iOS Simulator,arch=arm64'
       resultBundle: SpeziStudy-Package-iOS.xcresult
       artifactname: SpeziStudy-Package-iOS.xcresult
   buildandtest_macos:
@@ -40,7 +40,7 @@ jobs:
     with:
       runsonlabels: '["macOS", "self-hosted"]'
       scheme: SpeziStudy-Package
-      destination: 'platform=watchOS,arch=arm64'
+      destination: 'platform=watchOS Simulator,arch=arm64'
       resultBundle: SpeziStudy-Package-watchOS.xcresult
       artifactname: SpeziStudy-Package-watchOS.xcresult
   buildandtest_visionos:
@@ -49,7 +49,7 @@ jobs:
     with:
       runsonlabels: '["macOS", "self-hosted"]'
       scheme: SpeziStudy-Package
-      destination: 'platform=visionOS,arch=arm64'
+      destination: 'platform=visionOS Simulator,arch=arm64'
       resultBundle: SpeziStudy-Package-visionOS.xcresult
       artifactname: SpeziStudy-Package-visionOS.xcresult
   buildandtest_uitests:
@@ -63,7 +63,7 @@ jobs:
       artifactname: TestApp-iOS.xcresult
   uploadcoveragereport:
     name: Upload Coverage Report
-    needs: [buildandtest_ios, buildandtest_macos, buildandtest_uitests]
+    needs: [buildandtest_ios, buildandtest_macos, buildandtest_watchos, buildandtest_visionos, buildandtest_uitests]
     uses: StanfordSpezi/.github/.github/workflows/create-and-upload-coverage-report.yml@v2
     with:
       coveragereports: SpeziStudy-Package-iOS.xcresult SpeziStudy-Package-macOS.xcresult SpeziStudy-Package-watchOS.xcresult SpeziStudy-Package-visionOS.xcresult TestApp-iOS.xcresult
