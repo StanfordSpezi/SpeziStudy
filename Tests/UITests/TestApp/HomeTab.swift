@@ -17,8 +17,8 @@ struct HomeTab: View {
     @Environment(StudyManager.self)
     private var studyManager
     
-    @StudyManagerQuery(StudyParticipationContext.self)
-    private var SPCs
+    @StudyManagerQuery(StudyEnrollment.self)
+    private var enrollments
     
     @EventQuery(in: Date.today..<Date.nextWeek)
     private var events
@@ -32,8 +32,8 @@ struct HomeTab: View {
                     actions
                 }
                 Section {
-                    ForEach(SPCs) { SPC in
-                        makeStudyEnrollmentRow(for: SPC)
+                    ForEach(enrollments) { enrollment in
+                        makeStudyEnrollmentRow(for: enrollment)
                     }
                 }
                 if events.isEmpty {
@@ -66,25 +66,25 @@ struct HomeTab: View {
         AsyncButton("Enroll in \(mockStudyV1.metadata.title) (v\(mockStudyV1.studyRevision))", state: $viewState) {
             try await studyManager.enroll(in: mockStudyV1)
         }
-        AsyncButton("Update SPC to study revision 2", state: $viewState) {
+        AsyncButton("Update enrollment to study revision 2", state: $viewState) {
             try await studyManager.informAboutStudies([mockStudyV2])
         }
-        .disabled(!SPCs.contains { $0.studyId == mockStudyV1.id && $0.studyRevision < mockStudyV2.studyRevision })
-        AsyncButton("Update SPC to study revision 3", state: $viewState) {
+        .disabled(!enrollments.contains { $0.studyId == mockStudyV1.id && $0.studyRevision < mockStudyV2.studyRevision })
+        AsyncButton("Update enrollment to study revision 3", state: $viewState) {
             try await studyManager.informAboutStudies([mockStudyV3])
         }
-        .disabled(!SPCs.contains { $0.studyId == mockStudyV1.id && $0.studyRevision < mockStudyV3.studyRevision })
+        .disabled(!enrollments.contains { $0.studyId == mockStudyV1.id && $0.studyRevision < mockStudyV3.studyRevision })
         AsyncButton("Unenroll from Study", state: $viewState) {
-            if let SPC = SPCs.first {
-                try studyManager.unenroll(from: SPC)
+            if let enrollment = enrollments.first {
+                try studyManager.unenroll(from: enrollment)
             }
-        }.disabled(SPCs.isEmpty)
+        }.disabled(enrollments.isEmpty)
     }
     
     @ViewBuilder
-    private func makeStudyEnrollmentRow(for SPC: StudyParticipationContext) -> some View {
+    private func makeStudyEnrollmentRow(for enrollment: StudyEnrollment) -> some View {
         VStack {
-            if let study = SPC.study {
+            if let study = enrollment.study {
                 HStack {
                     Text(study.metadata.title)
                         .font(.headline)
@@ -93,7 +93,7 @@ struct HomeTab: View {
             HStack {
                 Text("Study ID")
                 Spacer()
-                Text(SPC.studyId.uuidString)
+                Text(enrollment.studyId.uuidString)
                     .font(.caption2)
                     .monospaced()
                     .foregroundStyle(.secondary)
@@ -102,7 +102,7 @@ struct HomeTab: View {
             HStack {
                 Text("Study Revision")
                 Spacer()
-                Text("\(SPC.studyRevision)")
+                Text("\(enrollment.studyRevision)")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -110,7 +110,7 @@ struct HomeTab: View {
             HStack {
                 Text("Enrollment Date")
                 Spacer()
-                Text(DateFormatter.localizedString(from: SPC.enrollmentDate, dateStyle: .short, timeStyle: .none))
+                Text(DateFormatter.localizedString(from: enrollment.enrollmentDate, dateStyle: .short, timeStyle: .none))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }

@@ -14,7 +14,7 @@ import SwiftData
 
 /// Tracks a user's enrollment into a study.
 @Model
-public final class StudyParticipationContext {
+public final class StudyEnrollment {
     /// The primary key.
     @Attribute(.unique)
     public private(set) var id = UUID()
@@ -36,7 +36,7 @@ public final class StudyParticipationContext {
     
     /// The study.
     ///
-    /// - Note: In some circumstances (e.g., if the `StudyDefinition` schema changes, and this SPC has yet to be updated),
+    /// - Note: In some circumstances (e.g., if the `StudyDefinition` schema changes, and this enrollment has yet to be updated),
     ///     this value may initially be `nil` for a bit, until ``StudyManager/informAboutStudies(_:)`` was called.
     @Transient public private(set) lazy var study: StudyDefinition? = {
         try? JSONDecoder().decode(
@@ -47,7 +47,7 @@ public final class StudyParticipationContext {
     }()
     
     
-    /// Creates a new `StudyParticipationContext` object.
+    /// Creates a new `StudyEnrollment` object.
     init(enrollmentDate: Date, study: StudyDefinition) throws {
         self.enrollmentDate = enrollmentDate
         self.studyId = study.id
@@ -57,14 +57,14 @@ public final class StudyParticipationContext {
     }
     
     
-    /// Updates the SPC's `StudyDefinition` to a new revision, if necessary.
+    /// Updates the enrollment's `StudyDefinition` to a new revision, if necessary.
     ///
     /// - Note: Attempting to update to a different study, or attempting to downgrade to an older revision, will result in the function simply not doing anything.
     func updateStudyDefinition(_ newStudy: StudyDefinition) throws {
         guard newStudy.id == studyId, newStudy.studyRevision > studyRevision else {
             return
         }
-        // do this first so that, in case the encoding fails, we don't have a partially-updated SPC object.
+        // do this first so that, in case the encoding fails, we don't have a partially-updated enrollment object.
         let studyData = try JSONEncoder().encode(newStudy)
         studyRevision = newStudy.studyRevision
         encodedStudy = studyData

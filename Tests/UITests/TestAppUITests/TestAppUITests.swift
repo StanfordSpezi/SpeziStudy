@@ -45,7 +45,7 @@ class TestAppUITests: XCTestCase {
         // update the study to a newer version.
         // going from 1 to 2 will remove the questionnaire component.
         // since the informational component remains, and has already been completed, we expect it to stay completed.
-        app.buttons["Update SPC to study revision 2"].tap()
+        app.buttons["Update enrollment to study revision 2"].tap()
         XCTAssertTrue(app.staticTexts["Study Revision, 2"].waitForExistence(timeout: 1))
         XCTAssertTrue(app.buttons["Complete Informational"].waitForNonExistence(timeout: 1))
         XCTAssertTrue(app.staticTexts["Social Support"].waitForNonExistence(timeout: 1))
@@ -53,7 +53,7 @@ class TestAppUITests: XCTestCase {
         // update the study to a newer version.
         // going from 2 to 3 will introduce a new, second informative article component.
         // we expect this to show up, and we still expect the first article to stay completed.
-        app.buttons["Update SPC to study revision 3"].tap()
+        app.buttons["Update enrollment to study revision 3"].tap()
         XCTAssertTrue(app.staticTexts["Study Revision, 3"].waitForExistence(timeout: 1))
         XCTAssertTrue(app.staticTexts["Article2 Title"].waitForExistence(timeout: 1))
         XCTAssertTrue(app.staticTexts["Article1 Title, Completed"].waitForExistence(timeout: 1))

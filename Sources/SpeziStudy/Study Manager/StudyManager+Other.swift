@@ -18,7 +18,7 @@ extension StudyManager {
     /// The user-facing action that is associated with a study-related `SpeziScheduler.Task`
     public enum ScheduledTaskAction: Hashable, Codable {
         case presentInformationalStudyComponent(StudyDefinition.InformationalComponent)
-        case answerQuestionnaire(Questionnaire, spcId: PersistentIdentifier)
+        case answerQuestionnaire(Questionnaire, enrollmentId: PersistentIdentifier)
     }
 }
 

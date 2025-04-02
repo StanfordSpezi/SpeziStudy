@@ -48,7 +48,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     
     public init(persistence: PersistenceConfiguration = .onDisk) {
         modelContainer = { () -> ModelContainer in
-            let schema = Schema([StudyParticipationContext.self], version: Schema.Version(0, 0, 1))
+            let schema = Schema([StudyEnrollment.self], version: Schema.Version(0, 0, 2))
             let config: ModelConfiguration
             switch persistence {
             case .onDisk:
@@ -71,9 +71,9 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     
     public func configure() {
         _Concurrency.Task { @MainActor in
-            let SPCs = try modelContext.fetch(FetchDescriptor<StudyParticipationContext>())
-            try registerStudyTasksWithScheduler(SPCs)
-            try await setupStudyBackgroundComponents(SPCs)
+            let enrollments = try modelContext.fetch(FetchDescriptor<StudyEnrollment>())
+            try registerStudyTasksWithScheduler(enrollment)
+            try await setupStudyBackgroundComponents(enrollment)
             #if targetEnvironment(simulator)
             guard autosaveTask == nil else {
                 return
@@ -125,9 +125,9 @@ extension StudyManager {
     
     
     @MainActor // swiftlint:disable:next function_body_length
-    private func registerStudyTasksWithScheduler(_ SPCs: some Collection<StudyParticipationContext>) throws {
-        for SPC in SPCs {
-            guard let study = SPC.study else {
+    private func registerStudyTasksWithScheduler(_ enrollments: some Collection<StudyEnrollment>) throws {
+        for enrollment in enrollments {
+            guard let study = enrollment.study else {
                 continue
             }
             var createdTasks = Set<Task>()
@@ -150,7 +150,7 @@ extension StudyManager {
                 switch component {
                 case .questionnaire(let component):
                     category = .questionnaire
-                    action = .answerQuestionnaire(component.questionnaire, spcId: SPC.persistentModelID)
+                    action = .answerQuestionnaire(component.questionnaire, enrollmentId: enrollment.persistentModelID)
                 case .informational(let component):
                     category = .informational
                     action = .presentInformationalStudyComponent(component)
@@ -162,7 +162,7 @@ extension StudyManager {
                     title: component.displayTitle.map { "\($0)" } ?? "",
                     instructions: "",
                     category: category,
-                    schedule: try .init(schedule, participationStartDate: SPC.enrollmentDate),
+                    schedule: try .init(schedule, participationStartDate: enrollment.enrollmentDate),
                     completionPolicy: schedule.completionPolicy,
                     // not passing true here currently, since that sometimes leads to SwiftData crashes (for some inputs)
                     scheduleNotifications: false,
@@ -193,9 +193,9 @@ extension StudyManager {
     }
     
     @MainActor
-    private func setupStudyBackgroundComponents(_ SPCs: some Collection<StudyParticipationContext>) async throws {
-        for SPC in SPCs {
-            guard let study = SPC.study else {
+    private func setupStudyBackgroundComponents(_ enrollments: some Collection<StudyEnrollment>) async throws {
+        for enrollment in enrollments {
+            guard let study = enrollment.study else {
                 continue
             }
             for component in study.healthDataCollectionComponents {
@@ -242,23 +242,23 @@ extension StudyManager {
     public func enroll(in study: StudyDefinition) async throws {
         // big issue in this function is that, if we throw somewhere we kinda need to unroll _all_ the changes we've made so far
         // (which is much easier said than done...)
-        let SPCs = try modelContext.fetch(FetchDescriptor<StudyParticipationContext>())
+        let enrollments = try modelContext.fetch(FetchDescriptor<StudyEnrollment>())
         
-        if case let existingSPCs = SPCs.filter({ $0.studyId == study.id }),
-           !existingSPCs.isEmpty {
+        if case let existingEnrollments = enrollments.filter({ $0.studyId == study.id }),
+           !existingEnrollments.isEmpty {
             // There exists at least one enrollment for this study
-            if let SPC = existingSPCs.first, existingSPCs.count == 1 {
-                if SPC.studyRevision == study.studyRevision {
+            if let enrollment = existingEnrollments.first, existingEnrollments.count == 1 {
+                if enrollment.studyRevision == study.studyRevision {
                     // already enrolled in this study, at this revision.
                     // this is a no-op.
                     return
-                } else if SPC.studyRevision < study.studyRevision {
+                } else if enrollment.studyRevision < study.studyRevision {
                     // if we have only one enrollment, and it is for an older version of the study,
                     // we treat the enroll call as a study definition update
                     try await informAboutStudies(CollectionOfOne(study))
                     return
                 } else {
-                    // SPC.studyRevision > study.studyRevision
+                    // enrollment.studyRevision > study.studyRevision
                     // trying to enroll into an older version of the study.
                     throw StudyEnrollmentError.alreadyEnrolledInNewerStudyRevision
                 }
@@ -267,27 +267,27 @@ extension StudyManager {
         }
         
         if let dependency = study.metadata.studyDependency {
-            guard SPCs.contains(where: { $0.studyId == dependency }) else {
+            guard enrollments.contains(where: { $0.studyId == dependency }) else {
                 throw StudyEnrollmentError.missingEnrollmentInStudyDependency
             }
         }
         
-        let SPC = try StudyParticipationContext(enrollmentDate: .now, study: study)
-        modelContext.insert(SPC)
+        let enrollment = try StudyEnrollment(enrollmentDate: .now, study: study)
+        modelContext.insert(enrollment)
         try modelContext.save()
-        try registerStudyTasksWithScheduler(CollectionOfOne(SPC))
-        try await setupStudyBackgroundComponents(CollectionOfOne(SPC))
+        try registerStudyTasksWithScheduler(CollectionOfOne(enrollment))
+        try await setupStudyBackgroundComponents(CollectionOfOne(enrollment))
     }
     
     
     /// Unenroll from a study.
-    public func unenroll(from SPC: StudyParticipationContext) throws {
+    public func unenroll(from enrollment: StudyEnrollment) throws {
         do {
             // Delete all Tasks associated with this study.
             // Note that we do this by simply fetching & deleting all Tasks with a matching prefix,
             // instead of going (based on the study components) through all component ids and deleting the tasks based on that.
-            // the reason being that we might be deleting an SPC w/ an old study schema, which we can't necessarily trivially decode.
-            let studyTaskPrefix = taskIdPrefix(forStudyId: SPC.studyId)
+            // the reason being that we might be deleting an enrollment w/ an old study schema, which we can't necessarily trivially decode.
+            let studyTaskPrefix = taskIdPrefix(forStudyId: enrollment.studyId)
             let tasks = try scheduler.queryTasks(for: Date.distantPast...Date.distantFuture, predicate: #Predicate {
                 $0.id.starts(with: studyTaskPrefix)
             })
@@ -295,18 +295,18 @@ extension StudyManager {
                 try scheduler.deleteAllVersions(of: task)
             }
         }
-        modelContext.delete(SPC)
+        modelContext.delete(enrollment)
         try modelContext.save()
     }
     
     
-    /// Fetches the ``StudyParticipationContext`` for the specified `PersistentIdentifier`.
-    public func SPC(withId id: PersistentIdentifier) -> StudyParticipationContext? {
+    /// Fetches the ``StudyEnrollment`` for the specified `PersistentIdentifier`.
+    public func enrollment(withId id: PersistentIdentifier) -> StudyEnrollment? {
         // for some reason, simply doing `modelContext.registeredModel(for: id)` doesn't work...
-        let SPCs = (try? modelContext.fetch(FetchDescriptor(predicate: #Predicate<StudyParticipationContext> {
+        let enrollments = (try? modelContext.fetch(FetchDescriptor(predicate: #Predicate<StudyEnrollment> {
             $0.persistentModelID == id
         }))) ?? []
-        return SPCs.first
+        return enrollments.first
     }
 }
 
@@ -319,12 +319,12 @@ extension StudyManager {
         for study in studies {
             let studyId = study.id
             let studyRevision = study.studyRevision
-            for SPC in try modelContext.fetch(FetchDescriptor(predicate: #Predicate<StudyParticipationContext> {
+            for enrollment in try modelContext.fetch(FetchDescriptor(predicate: #Predicate<StudyEnrollment> {
                 $0.studyId == studyId && $0.studyRevision < studyRevision
             })) {
-                try SPC.updateStudyDefinition(study)
-                try registerStudyTasksWithScheduler(CollectionOfOne(SPC))
-                try await setupStudyBackgroundComponents(CollectionOfOne(SPC))
+                try enrollment.updateStudyDefinition(study)
+                try registerStudyTasksWithScheduler(CollectionOfOne(enrollment))
+                try await setupStudyBackgroundComponents(CollectionOfOne(enrollment))
             }
         }
     }
