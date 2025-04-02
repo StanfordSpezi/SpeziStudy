@@ -33,7 +33,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     @Dependency(HealthKit.self) var healthKit
     @Dependency(Scheduler.self) var scheduler
     @Application(\.logger) var logger
-    // swiftlint:enaable attributes
+    // swiftlint:enable attributes
     
     #if targetEnvironment(simulator)
     private var autosaveTask: _Concurrency.Task<Void, Never>?
@@ -105,7 +105,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
 }
 
 
-// MARK: Study Participation and Lifeecycle Management
+// MARK: Study Participation and Lifecycle Management
 
 extension StudyManager {
     public enum StudyEnrollmentError: Error, LocalizedError {
@@ -175,7 +175,6 @@ extension StudyManager {
                         context.studyScheduledTaskAction = action
                     }
                 )
-                print("\(String(localized: task.title)) didChange: \(didChange)")
                 createdTasks.insert(task)
             }
             

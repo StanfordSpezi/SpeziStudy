@@ -22,6 +22,7 @@ jobs:
     with:
       runsonlabels: '["macOS", "self-hosted"]'
       scheme: SpeziStudy-Package
+      destination: 'platform=iOS,arch=arm64'
       resultBundle: SpeziStudy-Package-iOS.xcresult
       artifactname: SpeziStudy-Package-iOS.xcresult
   buildandtest_macos:
@@ -33,6 +34,24 @@ jobs:
       destination: 'platform=macOS,arch=arm64'
       resultBundle: SpeziStudy-Package-macOS.xcresult
       artifactname: SpeziStudy-Package-macOS.xcresult
+  buildandtest_watchos:
+    name: Build and Test Swift Package watchOS
+    uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
+    with:
+      runsonlabels: '["macOS", "self-hosted"]'
+      scheme: SpeziStudy-Package
+      destination: 'platform=watchOS,arch=arm64'
+      resultBundle: SpeziStudy-Package-watchOS.xcresult
+      artifactname: SpeziStudy-Package-watchOS.xcresult
+  buildandtest_visionos:
+    name: Build and Test Swift Package visionOS
+    uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
+    with:
+      runsonlabels: '["macOS", "self-hosted"]'
+      scheme: SpeziStudy-Package
+      destination: 'platform=visionOS,arch=arm64'
+      resultBundle: SpeziStudy-Package-visionOS.xcresult
+      artifactname: SpeziStudy-Package-visionOS.xcresult
   buildandtest_uitests:
     name: Build and Test UI Tests
     uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
@@ -47,6 +66,6 @@ jobs:
     needs: [buildandtest_ios, buildandtest_macos, buildandtest_uitests]
     uses: StanfordSpezi/.github/.github/workflows/create-and-upload-coverage-report.yml@v2
     with:
-      coveragereports: SpeziStudy-iOS.xcresult SpeziStudy-macOS.xcresult TestApp-iOS.xcresult
+      coveragereports: SpeziStudy-Package-iOS.xcresult SpeziStudy-Package-macOS.xcresult SpeziStudy-Package-watchOS.xcresult SpeziStudy-Package-visionOS.xcresult TestApp-iOS.xcresult
     secrets:
       token: ${{ secrets.CODECOV_TOKEN }}

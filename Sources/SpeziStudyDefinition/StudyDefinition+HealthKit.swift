@@ -51,7 +51,7 @@ public struct HealthSampleTypesCollection: StudyDefinitionElement {
                     sampleTypes.insert(sampleType)
                 } else {
                     throw CodingError.unableToFindSampleType(
-                        // SAFETY: we know that the type will always conform to the ptotocol
+                        // SAFETY: we know that the type will always conform to the protocol
                         T.self as! (any _HKSampleWithSampleType).Type, // swiftlint:disable:this force_cast
                         identifier: identifier
                     )
