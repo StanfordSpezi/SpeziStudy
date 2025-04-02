@@ -21,16 +21,16 @@ jobs:
     uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
     with:
       scheme: SpeziStudy-Package
-      resultBundle: SpeziStudy-iOS.xcresult
-      artifactname: SpeziStudy-iOS.xcresult
+      resultBundle: SpeziStudy-Package-iOS.xcresult
+      artifactname: SpeziStudy-Package-iOS.xcresult
   buildandtest_macos:
     name: Build and Test Swift Package macOS
     uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
     with:
       scheme: SpeziStudy-Package
-      resultBundle: SpeziStudy-macOS.xcresult
       destination: 'platform=macOS,arch=arm64'
-      artifactname: SpeziStudy-macOS.xcresult
+      resultBundle: SpeziStudy-Package-macOS.xcresult
+      artifactname: SpeziStudy-Package-macOS.xcresult
   buildandtest_uitests:
     name: Build and Test UI Tests
     uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
