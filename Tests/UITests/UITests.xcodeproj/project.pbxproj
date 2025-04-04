@@ -734,8 +734,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/StanfordSpezi/SpeziScheduler.git";
 			requirement = {
-				branch = "lukas/improve-task-creation";
-				kind = branch;
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.2;
 			};
 		};
 		80F47E842D9D2B9900DA4F62 /* XCRemoteSwiftPackageReference "swift-numerics" */ = {
