@@ -34,40 +34,38 @@ jobs:
       destination: 'platform=macOS,arch=arm64'
       resultBundle: SpeziStudy-Package-macOS.xcresult
       artifactname: SpeziStudy-Package-macOS.xcresult
-  # buildandtest_watchos:
-  #   name: Build and Test Swift Package watchOS
-  #   uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
-  #   with:
-  #     runsonlabels: '["macOS", "self-hosted"]'
-  #     scheme: SpeziStudy-Package
-  #     destination: 'platform=watchOS Simulator,name=Apple Watch Ultra 2 (49mm)'
-  #     resultBundle: SpeziStudy-Package-watchOS.xcresult
-  #     artifactname: SpeziStudy-Package-watchOS.xcresult
-  # buildandtest_visionos:
-  #   name: Build and Test Swift Package visionOS
-  #   uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
-  #   with:
-  #     runsonlabels: '["macOS", "self-hosted"]'
-  #     scheme: SpeziStudy-Package
-  #     destination: 'platform=visionOS Simulator,name=Apple Vision Pro'
-  #     resultBundle: SpeziStudy-Package-visionOS.xcresult
-  #     artifactname: SpeziStudy-Package-visionOS.xcresult
-  # buildandtest_uitests:
-  #   name: Build and Test UI Tests
-  #   uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
-  #   with:
-  #     runsonlabels: '["macOS", "self-hosted"]'
-  #     path: 'Tests/UITests'
-  #     scheme: TestApp
-  #     resultBundle: TestApp-iOS.xcresult
-  #     artifactname: TestApp-iOS.xcresult
+  buildandtest_watchos:
+    name: Build and Test Swift Package watchOS
+    uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
+    with:
+      runsonlabels: '["macOS", "self-hosted"]'
+      scheme: SpeziStudy-Package
+      destination: 'platform=watchOS Simulator,name=Apple Watch Ultra 2 (49mm)'
+      resultBundle: SpeziStudy-Package-watchOS.xcresult
+      artifactname: SpeziStudy-Package-watchOS.xcresult
+  buildandtest_visionos:
+    name: Build and Test Swift Package visionOS
+    uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
+    with:
+      runsonlabels: '["macOS", "self-hosted"]'
+      scheme: SpeziStudy-Package
+      destination: 'platform=visionOS Simulator,name=Apple Vision Pro'
+      resultBundle: SpeziStudy-Package-visionOS.xcresult
+      artifactname: SpeziStudy-Package-visionOS.xcresult
+  buildandtest_uitests:
+    name: Build and Test UI Tests
+    uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
+    with:
+      runsonlabels: '["macOS", "self-hosted"]'
+      path: 'Tests/UITests'
+      scheme: TestApp
+      resultBundle: TestApp-iOS.xcresult
+      artifactname: TestApp-iOS.xcresult
   uploadcoveragereport:
     name: Upload Coverage Report
-    # needs: [buildandtest_ios, buildandtest_macos, buildandtest_watchos, buildandtest_visionos, buildandtest_uitests]
-    needs: [buildandtest_ios, buildandtest_macos]
+    needs: [buildandtest_ios, buildandtest_macos, buildandtest_watchos, buildandtest_visionos, buildandtest_uitests]
     uses: StanfordSpezi/.github/.github/workflows/create-and-upload-coverage-report.yml@lukas/codecov-v5
     with:
-      # coveragereports: SpeziStudy-Package-iOS.xcresult SpeziStudy-Package-macOS.xcresult SpeziStudy-Package-watchOS.xcresult SpeziStudy-Package-visionOS.xcresult TestApp-iOS.xcresult
-      coveragereports: SpeziStudy-Package-iOS.xcresult SpeziStudy-Package-macOS.xcresult
+      coveragereports: SpeziStudy-Package-iOS.xcresult SpeziStudy-Package-macOS.xcresult SpeziStudy-Package-watchOS.xcresult SpeziStudy-Package-visionOS.xcresult TestApp-iOS.xcresult
     secrets:
       token: ${{ secrets.CODECOV_TOKEN }}
