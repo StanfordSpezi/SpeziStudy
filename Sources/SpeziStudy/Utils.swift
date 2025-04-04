@@ -17,7 +17,6 @@ extension RangeReplaceableCollection {
         return copy
     }
     
-    
     /// Returns the collection obtained by appending a sequence to the collection.
     func appending(contentsOf other: some Sequence<Element>) -> Self {
         var copy = self
