@@ -67,6 +67,7 @@ jobs:
     needs: [buildandtest_macos]
     uses: StanfordSpezi/.github/.github/workflows/create-and-upload-coverage-report.yml@lukas/codecov-v5
     with:
-      coveragereports: SpeziStudy-Package-iOS.xcresult SpeziStudy-Package-macOS.xcresult SpeziStudy-Package-watchOS.xcresult SpeziStudy-Package-visionOS.xcresult TestApp-iOS.xcresult
+      # coveragereports: SpeziStudy-Package-iOS.xcresult SpeziStudy-Package-macOS.xcresult SpeziStudy-Package-watchOS.xcresult SpeziStudy-Package-visionOS.xcresult TestApp-iOS.xcresult
+      coveragereports: SpeziStudy-Package-macOS.xcresult
     secrets:
       token: ${{ secrets.CODECOV_TOKEN }}
