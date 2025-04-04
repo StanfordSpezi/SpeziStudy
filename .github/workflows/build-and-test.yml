@@ -16,15 +16,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  # buildandtest_ios:
-  #   name: Build and Test Swift Package iOS
-  #   uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
-  #   with:
-  #     runsonlabels: '["macOS", "self-hosted"]'
-  #     scheme: SpeziStudy-Package
-  #     destination: 'platform=iOS Simulator,name=iPhone 16 Pro Max'
-  #     resultBundle: SpeziStudy-Package-iOS.xcresult
-  #     artifactname: SpeziStudy-Package-iOS.xcresult
+  buildandtest_ios:
+    name: Build and Test Swift Package iOS
+    uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
+    with:
+      runsonlabels: '["macOS", "self-hosted"]'
+      scheme: SpeziStudy-Package
+      destination: 'platform=iOS Simulator,name=iPhone 16 Pro Max'
+      resultBundle: SpeziStudy-Package-iOS.xcresult
+      artifactname: SpeziStudy-Package-iOS.xcresult
   buildandtest_macos:
     name: Build and Test Swift Package macOS
     uses: StanfordSpezi/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
@@ -64,10 +64,10 @@ jobs:
   uploadcoveragereport:
     name: Upload Coverage Report
     # needs: [buildandtest_ios, buildandtest_macos, buildandtest_watchos, buildandtest_visionos, buildandtest_uitests]
-    needs: [buildandtest_macos]
+    needs: [buildandtest_ios, buildandtest_macos]
     uses: StanfordSpezi/.github/.github/workflows/create-and-upload-coverage-report.yml@lukas/codecov-v5
     with:
       # coveragereports: SpeziStudy-Package-iOS.xcresult SpeziStudy-Package-macOS.xcresult SpeziStudy-Package-watchOS.xcresult SpeziStudy-Package-visionOS.xcresult TestApp-iOS.xcresult
-      coveragereports: SpeziStudy-Package-macOS.xcresult
+      coveragereports: SpeziStudy-Package-iOS.xcresult SpeziStudy-Package-macOS.xcresult
     secrets:
       token: ${{ secrets.CODECOV_TOKEN }}
