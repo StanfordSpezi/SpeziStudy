@@ -51,5 +51,5 @@ This project is licensed under the MIT License. See [Licenses](https://github.co
 This project is developed as part of the Stanford Mussallem Center for Biodesign at Stanford University.
 See [CONTRIBUTORS.md](https://github.com/StanfordSpezi/SpeziStudy/tree/main/CONTRIBUTORS.md) for a full list of all SpeziStudy contributors.
 
-![Stanford Mussallem Center for Biodesign Logo](https://raw.githubusercontent.com/StanfordSpezi/.github/main/assets/biodesign-footer-light.png#gh-light-mode-only)
-![Stanford Mussallem Center for Biodesign Logo](https://raw.githubusercontent.com/StanfordSpezi/.github/main/assets/biodesign-footer-dark.png#gh-dark-mode-only)
+![Spezi Footer](https://raw.githubusercontent.com/StanfordSpezi/.github/main/assets/FooterLight.png#gh-light-mode-only)
+![Spezi Footer](https://raw.githubusercontent.com/StanfordSpezi/.github/main/assets/FooterDark.png#gh-dark-mode-only)
