@@ -34,7 +34,7 @@ extension StudyDefinition {
     /// Internal components are implicitly activated upon enrollment into the study.
     public enum Component: Identifiable, StudyDefinitionElement {
         /// Component Kind
-        public enum Kind: Hashable, Sendable {
+        public enum Kind: Hashable, Sendable { // swiftlint:disable:this type_contents_order
             /// A user-interactive component
             case userInteractive
             /// An internal component

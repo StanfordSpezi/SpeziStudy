@@ -35,6 +35,19 @@ extension StudyDefinition {
             /// - Note: if the list of contained criteria is empty, the criterion will evaluate to false
             case any([Criterion])
             
+            /// Key used to identify a custom criterion.
+            public struct CustomCriterionKey: Codable, Hashable, Sendable { // swiftlint:disable:this nesting
+                /// The key's identifying value
+                public let keyValue: String
+                /// The key's user-visible display title
+                public let displayTitle: String
+                /// Creates a new key for a custom criterion
+                public init(_ keyValue: String, displayTitle: String) {
+                    self.keyValue = keyValue
+                    self.displayTitle = displayTitle
+                }
+            }
+            
             public static prefix func ! (rhs: Self) -> Self {
                 .not(rhs)
             }
@@ -43,55 +56,6 @@ extension StudyDefinition {
             }
             public static func || (lhs: Self, rhs: Self) -> Self {
                 .any([lhs, rhs])
-            }
-            
-            /// whether the criterion is a leaf element, i.e. doesn't contain any nested further criteria
-            public var isLeaf: Bool {
-                switch self {
-                case .ageAtLeast, .isFromRegion, .speaksLanguage, .custom:
-                    true
-                case .not, .any, .all:
-                    false
-                }
-            }
-            
-            /// The children of this node, if any.
-            public var children: [Criterion] {
-                switch self {
-                case .ageAtLeast, .isFromRegion, .speaksLanguage, .custom:
-                    []
-                case .not(let inner):
-                    [inner]
-                case .any(let nested), .all(let nested):
-                    nested
-                }
-            }
-            
-            public func reduce<Result>(into initialResult: Result, _ visitor: (inout Result, Criterion) throws -> Void) rethrows -> Result {
-                var result = initialResult
-                var deque: Deque<Self> = [self]
-                while let node = deque.popFirst() {
-                    try visitor(&result, node)
-                    deque.append(contentsOf: node.children)
-                }
-                return result
-            }
-            
-            public var allLeafs: Set<Criterion> {
-                reduce(into: []) { leafs, criterion in
-                    if criterion.isLeaf {
-                        leafs.insert(criterion)
-                    }
-                }
-            }
-            
-            public struct CustomCriterionKey: Codable, Hashable, Sendable { // swiftlint:disable:this nesting
-                public let keyValue: String
-                public let displayTitle: String
-                public init(_ keyValue: String, displayTitle: String) {
-                    self.keyValue = keyValue
-                    self.displayTitle = displayTitle
-                }
             }
         }
         
@@ -184,5 +148,53 @@ extension StudyDefinition.ParticipationCriteria.Criterion {
         case .all(let criteria):
             return criteria.allSatisfy { $0.evaluate(environment) }
         }
+    }
+}
+
+
+extension StudyDefinition.ParticipationCriteria.Criterion {
+    /// whether the criterion is a leaf element, i.e. doesn't contain any nested further criteria
+    public var isLeaf: Bool {
+        switch self {
+        case .ageAtLeast, .isFromRegion, .speaksLanguage, .custom:
+            true
+        case .not, .any, .all:
+            false
+        }
+    }
+    
+    /// The children of this node, if any.
+    public var children: [Self] {
+        switch self {
+        case .ageAtLeast, .isFromRegion, .speaksLanguage, .custom:
+            []
+        case .not(let inner):
+            [inner]
+        case .any(let nested), .all(let nested):
+            nested
+        }
+    }
+    
+    /// All leaf nodes.
+    public var allLeafs: Set<Self> {
+        reduce(into: []) { leafs, criterion in
+            if criterion.isLeaf {
+                leafs.insert(criterion)
+            }
+        }
+    }
+    
+    /// Reduces the tree, using the specified closure.
+    public func reduce<Result>(
+        into initialResult: Result,
+        _ visitor: (inout Result, Self) throws -> Void
+    ) rethrows -> Result {
+        var result = initialResult
+        var deque: Deque<Self> = [self]
+        while let node = deque.popFirst() {
+            try visitor(&result, node)
+            deque.append(contentsOf: node.children)
+        }
+        return result
     }
 }

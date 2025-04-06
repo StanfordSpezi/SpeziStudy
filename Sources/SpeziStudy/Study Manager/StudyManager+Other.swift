@@ -46,24 +46,10 @@ extension View {
 
 
 extension SpeziScheduler.Schedule {
-    /// An Error that can occur when attempting to create a `SpeziScheduler.Schedule` from a `StudyDefinition.ScheduleElement`.
-    public enum ScheduleConversionError: Error {
-        case unsupportedInput
-    }
-    
     /// - parameter other: the study definition schedule element which should be turned into a `Schedule`
     /// - parameter participationStartDate: the date at which the user started to participate in the study.
-    init(_ other: StudyDefinition.ScheduleElement, participationStartDate: Date) throws(ScheduleConversionError) {
+    init(_ other: StudyDefinition.ScheduleElement, participationStartDate: Date) {
         switch other.componentSchedule {
-            // Temporarily disabled due to SwiftData issues
-//        case .once(.studyBegin, let offset):
-//            self = .once(at: participationStartDate.advanced(by: offset.totalSeconds))
-//        case .once(.studyEnd, _):
-//            // instead of throwing an error here, we probably wanna return nil,
-//            // since this is something where we do want to continue processing the remaining schedule elements!!!
-//            throw .unsupportedInput
-//        case .once(.completion, offset: _):
-//            throw .unsupportedInput
         case let .repeated(.daily(interval, hour, minute), startOffsetInDays):
             self = .daily(
                 interval: interval,
