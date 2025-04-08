@@ -49,23 +49,23 @@ struct StudyDefinitionTests {
                     questionnaire: try .named("SocialSupportQuestionnaire")
                 ))
             ],
-            schedule: StudyDefinition.Schedule(elements: [
+            componentSchedules: [
                 .init(
                     componentId: article1ComponentId,
-                    componentSchedule: .repeated(.daily(hour: 11, minute: 21), startOffsetInDays: 4),
+                    scheduleDefinition: .repeated(.daily(hour: 11, minute: 21), startOffsetInDays: 4),
                     completionPolicy: .afterStart
                 ),
                 .init(
                     componentId: article2ComponentId,
-                    componentSchedule: .repeated(.daily(interval: 2, hour: 17, minute: 41), startOffsetInDays: 0),
+                    scheduleDefinition: .repeated(.daily(interval: 2, hour: 17, minute: 41), startOffsetInDays: 0),
                     completionPolicy: .anytime
                 ),
                 .init(
                     componentId: questionnaireComponentId,
-                    componentSchedule: .repeated(.weekly(weekday: .wednesday, hour: 21, minute: 59), startOffsetInDays: 1),
+                    scheduleDefinition: .repeated(.weekly(weekday: .wednesday, hour: 21, minute: 59), startOffsetInDays: 1),
                     completionPolicy: .sameDayAfterStart
                 )
-            ])
+            ]
         )
         
         let data = try JSONEncoder().encode(testStudy)
