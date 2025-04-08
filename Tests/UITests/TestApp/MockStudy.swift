@@ -95,29 +95,29 @@ func mockStudy(revision: MockStudyRevision) -> StudyDefinition { // swiftlint:di
                 ))
             }
         },
-        schedule: StudyDefinition.Schedule(elements: Array {
-            StudyDefinition.ScheduleElement(
+        componentSchedules: Array {
+            StudyDefinition.ComponentSchedule(
                 componentId: .article1ComponentId,
-                componentSchedule: .repeated(.weekly(weekday: .wednesday, hour: 09, minute: 00), startOffsetInDays: 0),
+                scheduleDefinition: .repeated(.weekly(weekday: .wednesday, hour: 09, minute: 00), startOffsetInDays: 0),
                 completionPolicy: .anytime
             )
             switch revision {
             case .v1:
-                StudyDefinition.ScheduleElement(
+                StudyDefinition.ComponentSchedule(
                     componentId: .questionnaireComponentId,
-                    componentSchedule: .repeated(.weekly(weekday: .monday, hour: 09, minute: 00), startOffsetInDays: 0),
+                    scheduleDefinition: .repeated(.weekly(weekday: .monday, hour: 09, minute: 00), startOffsetInDays: 0),
                     completionPolicy: .afterStart
                 )
             case .v2:
                 let _ = () // swiftlint:disable:this redundant_discardable_let
             case .v3:
-                StudyDefinition.ScheduleElement(
+                StudyDefinition.ComponentSchedule(
                     componentId: .article2ComponentId,
-                    componentSchedule: .repeated(.weekly(weekday: .friday, hour: 09, minute: 00), startOffsetInDays: 0),
+                    scheduleDefinition: .repeated(.weekly(weekday: .friday, hour: 09, minute: 00), startOffsetInDays: 0),
                     completionPolicy: .anytime
                 )
             }
-        })
+        }
     )
 }
 
