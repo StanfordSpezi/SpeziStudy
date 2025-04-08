@@ -48,8 +48,8 @@ extension View {
 extension SpeziScheduler.Schedule {
     /// - parameter other: the study definition schedule element which should be turned into a `Schedule`
     /// - parameter participationStartDate: the date at which the user started to participate in the study.
-    init(_ other: StudyDefinition.ScheduleElement, participationStartDate: Date) {
-        switch other.componentSchedule {
+    init(_ other: StudyDefinition.ComponentSchedule.ScheduleDefinition, participationStartDate: Date) {
+        switch other {
         case let .repeated(.daily(interval, hour, minute), startOffsetInDays):
             self = .daily(
                 interval: interval,

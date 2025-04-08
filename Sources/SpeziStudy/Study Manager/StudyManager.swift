@@ -18,6 +18,24 @@ import SwiftData
 import SwiftUI
 
 
+/// Manages enrollment and participation in studies.
+///
+/// ## Usage
+///
+/// Your app uses a single
+///
+/// ## Topics
+///
+/// ### Initialization
+/// - ``init()``
+/// - ``init(persistence:)``
+///
+/// ### Study Enrollment
+/// - ``enroll(in:)``
+/// - ``unenroll(from:)``
+/// - ``informAboutStudies(_:)``
+/// - ``StudyEnrollment``
+/// - ``StudyEnrollmentError``
 @MainActor
 public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     /// How the ``StudyManager`` should persist its data.
@@ -46,6 +64,12 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     }
     
     
+    /// Creates a new Study Manager.
+    public convenience init() {
+        self.init(persistence: .onDisk)
+    }
+    
+    /// Creates a new Study Manager, using the specified persistence configuration
     public init(persistence: PersistenceConfiguration = .onDisk) {
         modelContainer = { () -> ModelContainer in
             let schema = Schema([StudyEnrollment.self], version: Schema.Version(0, 0, 2))
@@ -69,6 +93,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     }
     
     
+    @_documentation(visibility: internal)
     public func configure() {
         _Concurrency.Task { @MainActor in
             let enrollments = try modelContext.fetch(FetchDescriptor<StudyEnrollment>())
@@ -131,7 +156,7 @@ extension StudyManager {
                 continue
             }
             var createdTasks = Set<Task>()
-            for schedule in study.schedule.elements {
+            for schedule in study.componentSchedules {
                 guard let component: StudyDefinition.Component = study.component(withId: schedule.componentId) else {
                     // ideally this shouldn't happen, but if it does (we have a schedule but can't resolve the corresponding component),
                     // we simply skip and ignore it.
@@ -157,12 +182,12 @@ extension StudyManager {
                 case .healthDataCollection:
                     continue
                 }
-                let (task, didChange) = try scheduler.createOrUpdateTask(
+                let task = try scheduler.createOrUpdateTask(
                     id: taskId(for: component, in: study),
                     title: component.displayTitle.map { "\($0)" } ?? "",
                     instructions: "",
                     category: category,
-                    schedule: try .init(schedule, participationStartDate: enrollment.enrollmentDate),
+                    schedule: .init(schedule.scheduleDefinition, participationStartDate: enrollment.enrollmentDate),
                     completionPolicy: schedule.completionPolicy,
                     // not passing true here currently, since that sometimes leads to SwiftData crashes (for some inputs)
                     scheduleNotifications: false,
@@ -173,7 +198,7 @@ extension StudyManager {
                     with: { context in
                         context.studyScheduledTaskAction = action
                     }
-                )
+                ).task
                 createdTasks.insert(task)
             }
             

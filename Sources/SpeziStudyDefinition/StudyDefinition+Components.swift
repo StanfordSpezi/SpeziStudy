@@ -13,7 +13,7 @@ import Foundation
 // MARK: Definitions
 
 extension StudyDefinition {
-    /// A Component within a Study
+    /// A Component within a ``StudyDefinition``
     ///
     /// Study Components model schedulable and usually completable tasks or events that happen as part of a study participation.
     ///
@@ -30,7 +30,7 @@ extension StudyDefinition {
     /// ### Component activation and Scheduling
     /// All study components operate on a schedule, which determines when (and how often) the component is activated.
     ///
-    /// User-interactive components must have at least one explicit schedule defined in ``StudyDefinition/schedule-swift.property``; otherwise, they will simply be ignored and never do anything.
+    /// User-interactive components must have at least one explicit schedule defined in ``StudyDefinition/componentSchedules``; otherwise, they will simply be ignored and never do anything.
     /// Internal components are implicitly activated upon enrollment into the study.
     public enum Component: Identifiable, StudyDefinitionElement {
         /// Component Kind
@@ -127,6 +127,6 @@ extension StudyDefinition {
     /// This removes both the component itself, as well as any schedules referencing it.
     public mutating func removeComponent(at idx: Int) {
         let component = components.remove(at: idx)
-        schedule.elements.removeAll { $0.componentId == component.id }
+        componentSchedules.removeAll { $0.componentId == component.id }
     }
 }

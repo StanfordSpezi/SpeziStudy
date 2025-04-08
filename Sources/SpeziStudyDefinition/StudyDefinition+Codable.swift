@@ -16,7 +16,7 @@ extension StudyDefinition {
         case studyRevision
         case metadata
         case components
-        case schedule
+        case componentSchedules
     }
     
     /// The configuration used to govern parts of the decoding process.
@@ -55,7 +55,7 @@ extension StudyDefinition {
             }
             metadata = try container.decode(Metadata.self, forKey: .metadata)
             components = try container.decode([Component].self, forKey: .components)
-            schedule = try container.decode(Schedule.self, forKey: .schedule)
+            componentSchedules = try container.decode([ComponentSchedule].self, forKey: .componentSchedules)
         default:
             throw DecodingError.dataCorrupted(.init(
                 codingPath: [],
@@ -72,6 +72,6 @@ extension StudyDefinition {
         try container.encode(studyRevision, forKey: .studyRevision)
         try container.encode(metadata, forKey: .metadata)
         try container.encode(components, forKey: .components)
-        try container.encode(schedule, forKey: .schedule)
+        try container.encode(componentSchedules, forKey: .componentSchedules)
     }
 }
