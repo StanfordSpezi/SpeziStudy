@@ -26,6 +26,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/FHIRModels", .upToNextMinor(from: "0.5.0")),
+        .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", .upToNextMajor(from: "2.1.3")),
         .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", .upToNextMajor(from: "1.0.1")),
         .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", .upToNextMajor(from: "1.2.2")),
         .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", from: "2.1.0"),
@@ -37,6 +38,7 @@ let package = Package(
             dependencies: [
                 .product(name: "ModelsR4", package: "FHIRModels"),
                 .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
+                .product(name: "SpeziFoundation", package: "SpeziFoundation"),
                 .product(name: "SpeziScheduler", package: "SpeziScheduler"),
                 .product(name: "DequeModule", package: "swift-collections")
             ],
