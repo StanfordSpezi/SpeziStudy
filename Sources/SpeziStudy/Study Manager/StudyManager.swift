@@ -59,10 +59,14 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     
     let modelContainer: ModelContainer
     
-    @MainActor var modelContext: ModelContext {
+    var modelContext: ModelContext {
         modelContainer.mainContext
     }
     
+    /// All ``StudyEnrollment``s currently registered with the ``StudyManager``.
+    public var studyEnrollments: [StudyEnrollment] {
+        (try? modelContext.fetch(FetchDescriptor<StudyEnrollment>())) ?? []
+    }
     
     /// Creates a new Study Manager.
     public convenience init() {
