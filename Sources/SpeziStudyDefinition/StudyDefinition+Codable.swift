@@ -45,7 +45,7 @@ extension StudyDefinition {
             }
         }
         switch schemaVersion {
-        case .init(0, 0, 1):
+        case Version(0, 2, 0):
             do {
                 studyRevision = try container.decode(UInt.self, forKey: .studyRevision)
             } catch DecodingError.keyNotFound where configuration.allowTrivialSchemaMigrations {

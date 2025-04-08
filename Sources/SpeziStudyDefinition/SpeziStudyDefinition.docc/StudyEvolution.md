@@ -1,5 +1,15 @@
 # Study Evolution
 
+<!--
+
+This source file is part of the Stanford Spezi open source project
+
+SPDX-FileCopyrightText: 2025 Stanford University and the project authors (see CONTRIBUTORS.md)
+
+SPDX-License-Identifier: MIT
+       
+-->
+
 ## Study Evolution
 There are two kinds of possible changes the ``StudyDefinition`` type (as well as apps/libraries using it) must be able to cope with:
 1. **Study Content Evolution:** changes made within a study; e.g., adding a new component, modifying an existing component, adjusting some component's schedule, etc.
