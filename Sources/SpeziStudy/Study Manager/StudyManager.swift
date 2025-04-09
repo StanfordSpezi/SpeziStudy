@@ -345,12 +345,12 @@ extension StudyManager {
     
     /// Removes all SpeziScheduler Tasks which are in the SpeziStudy domain (based on the task id's prefix), but for which we don't have any matching study enrollments.
     private func removeOrphanedTasks() throws {
-        let speziStudyDomainPrefix = Self.speziStudyDomainTaskIdPrefix
         let activeStudies = try modelContext.fetch(FetchDescriptor<StudyEnrollment>()).mapIntoSet(\.studyId.uuidString)
-        let orphanedTasks = try scheduler.queryTasks(for: Date.distantPast...Date.distantFuture, predicate: #Predicate { task in
+        // Note: it sadly seems like we can't use a #Predicate to filter through SwiftData here. (doing so will simply crash the app...)
+        let orphanedTasks = try scheduler.queryTasks(for: Date.distantPast...Date.distantFuture).filter { task in
             // fetch all tasks which are in the SpeziStudy domain, but don't match one of the currently-enrolled-in studies.
-            task.id.starts(with: speziStudyDomainPrefix) && !activeStudies.contains { task.id.starts(with: $0) }
-        })
+            task.id.starts(with: Self.speziStudyDomainTaskIdPrefix) && !activeStudies.contains { task.id.starts(with: $0) }
+        }
         for task in orphanedTasks {
             logger.notice("Found orphaned task in SpeziStudy domain which doesn't match any current enrollment: '\(task.id)'. Will delete.")
             try scheduler.deleteAllVersions(of: task)
