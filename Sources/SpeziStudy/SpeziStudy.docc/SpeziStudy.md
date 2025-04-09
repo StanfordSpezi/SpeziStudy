@@ -28,8 +28,8 @@ You need to add the SpeziStudy Swift package to
 ### Architecture
 
 The SpeziStudy package consists of two targets:
-- [SpeziStudyDefinition](https://swiftpackageindex.com/stanfordspezi/spezistudy/documentation/spezistudydefinition), which defines the [`StudyDefinition`](TODO) type;
-- ``SpeziStudy``, which implements the ``StudyManager`` providing study-related logic, such as on-device persistence of study enrollments, scheduling of study-related tasks, automatic configuration of background Health data collection, etc.
+- [SpeziStudyDefinition](https://swiftpackageindex.com/stanfordspezi/spezistudy/documentation/spezistudydefinition), which defines the [`StudyDefinition`](https://swiftpackageindex.com/stanfordspezi/spezistudy/documentation/spezistudydefinition/studydefinition) type;
+- ``SpeziStudy``, which implements the ``StudyManager`` providing study-related logic and infrastructure, such as on-device persistence of study enrollments, scheduling of study-related tasks, automatic configuration of background Health data collection, etc.
 
 > Tip: If your app is only interested in the [`StudyDefinition`](https://swiftpackageindex.com/stanfordspezi/spezistudy/documentation/spezistudydefinition/studydefinition), you don't need to import the ``SpeziStudy`` target at all.
 
