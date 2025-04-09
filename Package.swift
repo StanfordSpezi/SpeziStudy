@@ -1,9 +1,9 @@
 // swift-tools-version:6.0
 
 //
-// This source file is part of the TemplatePackage open source project
+// This source file is part of the Stanford Spezi open source project
 // 
-// SPDX-FileCopyrightText: 2022 Stanford University and the project authors (see CONTRIBUTORS.md)
+// SPDX-FileCopyrightText: 2025 Stanford University and the project authors (see CONTRIBUTORS.md)
 // 
 // SPDX-License-Identifier: MIT
 //
@@ -13,29 +13,60 @@ import PackageDescription
 
 
 let package = Package(
-    name: "TemplatePackage",
+    name: "SpeziStudy",
     platforms: [
-        .iOS(.v17),
-        .watchOS(.v10),
-        .visionOS(.v1),
-        .tvOS(.v17),
-        .macOS(.v14)
+        .iOS(.v18),
+        .macOS(.v15),
+        .watchOS(.v11),
+        .visionOS(.v2)
     ],
     products: [
-        .library(name: "TemplatePackage", targets: ["TemplatePackage"])
+        .library(name: "SpeziStudy", targets: ["SpeziStudy"]),
+        .library(name: "SpeziStudyDefinition", targets: ["SpeziStudyDefinition"])
     ],
     dependencies: [
+        .package(url: "https://github.com/apple/FHIRModels", .upToNextMinor(from: "0.5.0")),
+        .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", .upToNextMajor(from: "2.1.3")),
+        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", .upToNextMajor(from: "1.0.1")),
+        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", .upToNextMajor(from: "1.2.2")),
+        .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", from: "2.1.0"),
+        .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4")
     ] + swiftLintPackage(),
     targets: [
         .target(
-            name: "TemplatePackage",
+            name: "SpeziStudyDefinition",
+            dependencies: [
+                .product(name: "ModelsR4", package: "FHIRModels"),
+                .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
+                .product(name: "SpeziFoundation", package: "SpeziFoundation"),
+                .product(name: "SpeziScheduler", package: "SpeziScheduler"),
+                .product(name: "DequeModule", package: "swift-collections")
+            ],
+            swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
+            plugins: [] + swiftLintPlugin()
+        ),
+        .target(
+            name: "SpeziStudy",
+            dependencies: [
+                .target(name: "SpeziStudyDefinition"),
+                .product(name: "ModelsR4", package: "FHIRModels"),
+                .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
+                .product(name: "SpeziLocalStorage", package: "SpeziStorage"),
+                .product(name: "SpeziScheduler", package: "SpeziScheduler"),
+                .product(name: "SpeziSchedulerUI", package: "SpeziScheduler")
+            ],
+            swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
             plugins: [] + swiftLintPlugin()
         ),
         .testTarget(
-            name: "TemplatePackageTests",
+            name: "SpeziStudyTests",
             dependencies: [
-                .target(name: "TemplatePackage")
+                .target(name: "SpeziStudy"),
+                .target(name: "SpeziStudyDefinition"),
+                .product(name: "ModelsR4", package: "FHIRModels")
             ],
+            resources: [.process("Resources")],
+            swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
             plugins: [] + swiftLintPlugin()
         )
     ]

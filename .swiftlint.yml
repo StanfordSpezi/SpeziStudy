@@ -1,7 +1,7 @@
 #
-# This source file is part of the TemplatePackage open source project
+# This source file is part of the Stanford Spezi open source project
 #
-# SPDX-FileCopyrightText: 2022 Stanford University and the project authors (see CONTRIBUTORS.md)
+# SPDX-FileCopyrightText: 2025 Stanford University and the project authors (see CONTRIBUTORS.md)
 #
 # SPDX-License-Identifier: MIT
 # 
@@ -368,7 +368,7 @@ only_rules:
   - yoda_condition
 
 attributes:
-  attributes_with_arguments_always_on_line_above: false
+  attributes_with_arguments_always_on_line_above: true
 
 deployment_target: # Availability checks or attributes shouldn’t be using older versions that are satisfied by the deployment target.
   iOSApplicationExtension_deployment_target: 16.0
