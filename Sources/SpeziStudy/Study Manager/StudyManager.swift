@@ -38,9 +38,6 @@ import SwiftUI
 /// - ``StudyEnrollmentError``
 @MainActor
 public final class StudyManager: Module, EnvironmentAccessible, Sendable {
-    /// The prefix used for SpeziScheduler Tasks created for study component schedules.
-    private static let speziStudyDomainTaskIdPrefix = "edu.stanford.spezi.SpeziStudy.studyComponentTask."
-    
     /// How the ``StudyManager`` should persist its data.
     public enum PersistenceConfiguration {
         /// The ``StudyManager`` will use an on-disk database for persistence.
@@ -49,6 +46,9 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
         /// Intended for testing purposes.
         case inMemory
     }
+    
+    /// The prefix used for SpeziScheduler Tasks created for study component schedules.
+    private static let speziStudyDomainTaskIdPrefix = "edu.stanford.spezi.SpeziStudy.studyComponentTask."
     
     // swiftlint:disable attributes
     @Dependency(HealthKit.self) var healthKit
