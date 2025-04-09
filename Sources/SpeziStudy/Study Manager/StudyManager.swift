@@ -38,6 +38,9 @@ import SwiftUI
 /// - ``StudyEnrollmentError``
 @MainActor
 public final class StudyManager: Module, EnvironmentAccessible, Sendable {
+    /// The prefix used for SpeziScheduler Tasks created for study component schedules.
+    private static let speziStudyDomainTaskIdPrefix = "edu.stanford.spezi.SpeziStudy.studyComponentTask."
+    
     /// How the ``StudyManager`` should persist its data.
     public enum PersistenceConfiguration {
         /// The ``StudyManager`` will use an on-disk database for persistence.
@@ -103,6 +106,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
             let enrollments = try modelContext.fetch(FetchDescriptor<StudyEnrollment>())
             try registerStudyTasksWithScheduler(enrollments)
             try await setupStudyBackgroundComponents(enrollments)
+            try removeOrphanedTasks()
             #if targetEnvironment(simulator)
             guard autosaveTask == nil else {
                 return
@@ -252,7 +256,7 @@ extension StudyManager {
     }
     
     private func taskIdPrefix(forStudyId studyId: StudyDefinition.ID) -> String {
-        "edu.stanford.spezi.SpeziStudy.studyComponentTask.\(studyId.uuidString)"
+        Self.speziStudyDomainTaskIdPrefix + studyId.uuidString
     }
     
     private func taskId(for component: StudyDefinition.Component, in study: StudyDefinition) -> String {
@@ -336,6 +340,21 @@ extension StudyManager {
             $0.persistentModelID == id
         }))) ?? []
         return enrollments.first
+    }
+    
+    
+    /// Removes all SpeziScheduler Tasks which are in the SpeziStudy domain (based on the task id's prefix), but for which we don't have any matching study enrollments.
+    private func removeOrphanedTasks() throws {
+        let speziStudyDomainPrefix = Self.speziStudyDomainTaskIdPrefix
+        let activeStudies = try modelContext.fetch(FetchDescriptor<StudyEnrollment>()).mapIntoSet(\.studyId.uuidString)
+        let orphanedTasks = try scheduler.queryTasks(for: Date.distantPast...Date.distantFuture, predicate: #Predicate { task in
+            // fetch all tasks which are in the SpeziStudy domain, but don't match one of the currently-enrolled-in studies.
+            task.id.starts(with: speziStudyDomainPrefix) && !activeStudies.contains { task.id.starts(with: $0) }
+        })
+        for task in orphanedTasks {
+            logger.notice("Found orphaned task in SpeziStudy domain which doesn't match any current enrollment: '\(task.id)'. Will delete.")
+            try scheduler.deleteAllVersions(of: task)
+        }
     }
 }
 
