@@ -32,7 +32,7 @@ extension StudyDefinition {
         public var icon: Icon?
         /// Long-form explanation of and/or introduction to the study.
         /// Is presented to the user
-        public var explanationText: String // rename introductionText? introductoryText? instructions?
+        public var explanationText: String
         /// Text that is presented to the user when they eg browse a list of studies they can enroll in
         public var shortExplanationText: String
         
