@@ -26,6 +26,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/FHIRModels", .upToNextMinor(from: "0.5.0")),
+        .package(url: "https://github.com/StanfordSpezi/Spezi.git", .upToNextMajor(from: "1.8.1")),
         .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", .upToNextMajor(from: "2.1.3")),
         .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", .upToNextMajor(from: "1.0.1")),
         .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", .upToNextMajor(from: "1.2.2")),
@@ -49,6 +50,7 @@ let package = Package(
             name: "SpeziStudy",
             dependencies: [
                 .target(name: "SpeziStudyDefinition"),
+                .product(name: "Spezi", package: "Spezi"),
                 .product(name: "ModelsR4", package: "FHIRModels"),
                 .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
                 .product(name: "SpeziLocalStorage", package: "SpeziStorage"),
@@ -63,6 +65,7 @@ let package = Package(
             dependencies: [
                 .target(name: "SpeziStudy"),
                 .target(name: "SpeziStudyDefinition"),
+                .product(name: "SpeziTesting", package: "Spezi"),
                 .product(name: "ModelsR4", package: "FHIRModels")
             ],
             resources: [.process("Resources")],

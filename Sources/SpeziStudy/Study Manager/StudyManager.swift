@@ -344,6 +344,7 @@ extension StudyManager {
     
     
     /// Removes all SpeziScheduler Tasks which are in the SpeziStudy domain (based on the task id's prefix), but for which we don't have any matching study enrollments.
+    @_spi(TestingSupport)
     public func removeOrphanedTasks() throws {
         let activeStudyIds = try modelContext.fetch(FetchDescriptor<StudyEnrollment>()).mapIntoSet(\.studyId)
         // Note: it sadly seems like we can't use a #Predicate to filter through SwiftData here. (doing so will simply crash the app...)
