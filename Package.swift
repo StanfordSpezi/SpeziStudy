@@ -31,6 +31,7 @@ let package = Package(
         .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", .upToNextMajor(from: "1.0.1")),
         .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", .upToNextMajor(from: "1.2.2")),
         .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", from: "2.1.0"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziNotifications.git", from: "1.0.6"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4")
     ] + swiftLintPackage(),
     targets: [
@@ -53,6 +54,7 @@ let package = Package(
                 .product(name: "Spezi", package: "Spezi"),
                 .product(name: "ModelsR4", package: "FHIRModels"),
                 .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
+                .product(name: "SpeziNotifications", package: "SpeziNotifications"),
                 .product(name: "SpeziLocalStorage", package: "SpeziStorage"),
                 .product(name: "SpeziScheduler", package: "SpeziScheduler"),
                 .product(name: "SpeziSchedulerUI", package: "SpeziScheduler")

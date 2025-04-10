@@ -54,22 +54,26 @@ struct StudyManagerTests {
     )
     
     @Test
-    @MainActor
     func testOrphanHandling() async throws {
         let allTime = Date.distantPast...Date.distantFuture
-        let studyManager = StudyManager(persistence: .inMemory)
-        withDependencyResolution(standard: TestStandard()) {
+        let studyManager = await StudyManager(persistence: .inMemory)
+        await withDependencyResolution(standard: TestStandard()) {
             studyManager
         }
         try await studyManager.enroll(in: testStudy)
-        #expect(studyManager.studyEnrollments.count == 1)
-        let enrollment = try #require(studyManager.studyEnrollments.first)
-        #expect(enrollment.studyId == testStudy.id)
-        #expect(enrollment.study == testStudy)
-        #expect(try studyManager.scheduler.queryTasks(for: allTime).count == 1)
-        studyManager.modelContext.delete(enrollment)
-        #expect(try studyManager.scheduler.queryTasks(for: allTime).count == 1)
-        try studyManager.removeOrphanedTasks()
-        #expect(try studyManager.scheduler.queryTasks(for: allTime).isEmpty)
+        try await MainActor.run {
+            #expect(studyManager.studyEnrollments.count == 1)
+            let enrollment = try #require(studyManager.studyEnrollments.first)
+            #expect(enrollment.studyId == testStudy.id)
+            #expect(enrollment.study == testStudy)
+            try #expect(studyManager.scheduler.queryTasks(for: allTime).count == 1)
+            studyManager.modelContext.delete(enrollment)
+            try #expect(studyManager.scheduler.queryTasks(for: allTime).count == 1)
+            try studyManager.removeOrphanedTasks()
+        }
+        try await _Concurrency.Task.sleep(for: .seconds(0.2))
+        try await MainActor.run {
+            try #expect(studyManager.scheduler.queryTasks(for: allTime).count == 0)
+        }
     }
 }
