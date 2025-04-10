@@ -73,7 +73,7 @@ struct StudyManagerTests {
         }
         try await _Concurrency.Task.sleep(for: .seconds(0.2))
         try await MainActor.run {
-            try #expect(studyManager.scheduler.queryTasks(for: allTime).count == 0)
+            try #expect(studyManager.scheduler.queryTasks(for: allTime).isEmpty)
         }
     }
 }
