@@ -16,7 +16,7 @@ extension StudyDefinition {
         /// A criterion which must be satisfied for a person to be able to participate in a study.
         ///
         /// IDEA might want to add the concept of public/internal criterions (public would be ones which are communicated to the user / the user can know about; internal would be for e.g. inter-study dependencies)
-        public indirect enum Criterion: StudyDefinitionElement, ExpressibleByBooleanLiteral {
+        public indirect enum Criterion: StudyDefinitionElement {
             /// a criterion which evaluates to true if the user is at least of the specified age
             case ageAtLeast(Int)
             /// a criterion which evaluates to true if the user is from the specified region
@@ -57,15 +57,6 @@ extension StudyDefinition {
             public static func || (lhs: Self, rhs: Self) -> Self {
                 .any([lhs, rhs])
             }
-            
-            public init(booleanLiteral value: Bool) {
-                switch value {
-                case true:
-                    self = .all([])
-                case false:
-                    self = .any([])
-                }
-            }
         }
         
         private var criterionData: Data
@@ -102,6 +93,18 @@ extension StudyDefinition {
         /// Example: you could have `https://my-heart-counts.stanford.edu/api/invite` as the endpoint here,
         /// and the app would then send a GET request to `/api/invite?code=${CODE}` to verify a user-entered invitation code
         case requiresInvitation(verificationEndpoint: URL)
+    }
+}
+
+
+extension StudyDefinition.ParticipationCriteria.Criterion: ExpressibleByBooleanLiteral {
+    public init(booleanLiteral value: Bool) {
+        switch value {
+        case true:
+            self = .all([])
+        case false:
+            self = .any([])
+        }
     }
 }
 

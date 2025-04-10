@@ -53,8 +53,9 @@ struct StudyManagerTests {
         ]
     )
     
+    @Test
     @MainActor
-    @Test func testOrphanHandling() async throws {
+    func testOrphanHandling() async throws {
         let allTime = Date.distantPast...Date.distantFuture
         let studyManager = StudyManager(persistence: .inMemory)
         withDependencyResolution(standard: TestStandard()) {
