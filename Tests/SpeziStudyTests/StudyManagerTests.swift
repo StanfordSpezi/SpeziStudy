@@ -38,7 +38,7 @@ struct StudyManagerTests {
             title: "",
             explanationText: "",
             shortExplanationText: "",
-            participationCriteria: .init(criterion: true),
+            participationCriterion: true,
             enrollmentConditions: .none
         ),
         components: [
@@ -56,7 +56,7 @@ struct StudyManagerTests {
     @Test
     func testOrphanHandling() async throws {
         let allTime = Date.distantPast...Date.distantFuture
-        let studyManager = await StudyManager(persistence: .inMemory)
+        let studyManager = StudyManager(persistence: .inMemory)
         await withDependencyResolution(standard: TestStandard()) {
             Scheduler(persistence: .inMemory)
             studyManager
