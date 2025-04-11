@@ -27,11 +27,11 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/FHIRModels", .upToNextMinor(from: "0.5.0")),
         .package(url: "https://github.com/StanfordSpezi/Spezi.git", .upToNextMajor(from: "1.8.1")),
-        .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", .upToNextMajor(from: "2.1.3")),
+        .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", branch: "lukas/platform-env-detection"),
         .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", .upToNextMajor(from: "1.0.1")),
-        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", .upToNextMajor(from: "1.2.4")),
-        .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", from: "2.1.0"),
-        .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4")
+        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", branch: "lukas/scheduler-persistence-macos"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", .upToNextMajor(from: "2.1.0")),
+        .package(url: "https://github.com/apple/swift-collections.git", .upToNextMajor(from: "1.1.4"))
     ] + swiftLintPackage(),
     targets: [
         .target(

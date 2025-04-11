@@ -9,6 +9,7 @@
 import Combine
 import Foundation
 import Spezi
+import SpeziFoundation
 import SpeziHealthKit
 import SpeziLocalStorage
 import SpeziScheduler
@@ -43,7 +44,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
         /// The ``StudyManager`` will use an on-disk database for persistence.
         case onDisk
         /// The ``StudyManager`` will use an in-memory database for persistence.
-        /// Intended for testing purposes.
+        /// Intended primarily for testing purposes.
         case inMemory
     }
     
@@ -72,17 +73,28 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     }
     
     /// Creates a new Study Manager.
-    public convenience init() {
+    public nonisolated convenience init() {
         self.init(persistence: .onDisk)
     }
     
     /// Creates a new Study Manager, using the specified persistence configuration
-    public init(persistence: PersistenceConfiguration = .onDisk) {
+    public nonisolated init(persistence: PersistenceConfiguration) {
         modelContainer = { () -> ModelContainer in
             let schema = Schema([StudyEnrollment.self], version: Schema.Version(0, 0, 2))
             let config: ModelConfiguration
             switch persistence {
             case .onDisk:
+                guard ProcessInfo.isRunningInSandbox else {
+                    preconditionFailure(
+                        """
+                        The current application is running in a non-sandboxed environment.
+                        In this case, the `onDisk` persistence configuration is not available,
+                        since the \(StudyManager.self) module would end up placing its database directly into
+                        the current user's Documents directory (i.e., `~/Documents`).
+                        Specify another persistence option, or enable sandboxing for the application.
+                        """
+                    )
+                }
                 config = ModelConfiguration(
                     "SpeziStudy",
                     schema: schema,

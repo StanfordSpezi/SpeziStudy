@@ -58,6 +58,7 @@ struct StudyManagerTests {
         let allTime = Date.distantPast...Date.distantFuture
         let studyManager = await StudyManager(persistence: .inMemory)
         await withDependencyResolution(standard: TestStandard()) {
+            Scheduler(persistence: .inMemory)
             studyManager
         }
         try await studyManager.enroll(in: testStudy)
