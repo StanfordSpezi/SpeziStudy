@@ -50,7 +50,7 @@ func mockStudy(revision: MockStudyRevision) -> StudyDefinition { // swiftlint:di
             title: "TestStudy",
             explanationText: "This is a fake study, intended for testing the SpeziStudy package.",
             shortExplanationText: "SpeziStudy fake test study",
-            participationCriterion .ageAtLeast(18) && !.ageAtLeast(60) && (.isFromRegion(.unitedStates) || .isFromRegion(.unitedKingdom)) && .speaksLanguage(.english),
+            participationCriterion: .ageAtLeast(18) && !.ageAtLeast(60) && (.isFromRegion(.unitedStates) || .isFromRegion(.unitedKingdom)) && .speaksLanguage(.english),
             // swiftlint:disable:previous line_length
             enrollmentConditions: .none
         ),
