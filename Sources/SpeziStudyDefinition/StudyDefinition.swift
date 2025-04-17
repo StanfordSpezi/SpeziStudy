@@ -68,7 +68,6 @@ public typealias StudyDefinitionElement = Hashable & Codable & Sendable
 /// - ``StudyDefinitionElement``
 /// - ``EnrollmentConditions``
 /// - ``ParticipationCriteria``
-/// - ``HealthSampleTypesCollection``
 /// ### Working with a study definition
 /// - ``allCollectedHealthData``
 /// - ``healthDataCollectionComponents``
