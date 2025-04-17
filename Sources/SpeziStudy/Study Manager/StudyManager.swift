@@ -23,7 +23,7 @@ import SwiftUI
 ///
 /// ## Usage
 ///
-/// Your app uses a single
+/// The ``StudyManager`` module handles enrollment into Studies, and coordinates the scheduling of a study's components.
 ///
 /// ## Topics
 ///
