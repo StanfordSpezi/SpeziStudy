@@ -243,15 +243,15 @@ extension StudyManager {
             guard let study = enrollment.study else {
                 continue
             }
+            func setupSampleCollection<Sample>(_ sampleType: some AnySampleType<Sample>) async {
+                let sampleType = SampleType(sampleType)
+                await healthKit.addHealthDataCollector(CollectSample(
+                    sampleType,
+                    start: .automatic,
+                    continueInBackground: true
+                ))
+            }
             for component in study.healthDataCollectionComponents {
-                func setupSampleCollection<Sample>(_ sampleType: some AnySampleType<Sample>) async {
-                    let sampleType = SampleType(sampleType)
-                    await healthKit.addHealthDataCollector(CollectSample(
-                        sampleType,
-                        start: .automatic,
-                        continueInBackground: true
-                    ))
-                }
                 for sampleType in component.sampleTypes {
                     await setupSampleCollection(sampleType)
                 }
