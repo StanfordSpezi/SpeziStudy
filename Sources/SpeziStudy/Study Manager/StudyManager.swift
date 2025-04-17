@@ -244,18 +244,17 @@ extension StudyManager {
                 continue
             }
             for component in study.healthDataCollectionComponents {
-                func setupSampleCollection(_ sampleTypes: some Collection<SampleType<some Any>>) async {
-                    for sampleType in sampleTypes {
-                        await healthKit.addHealthDataCollector(CollectSample(
-                            sampleType,
-                            start: .automatic,
-                            continueInBackground: true
-                        ))
-                    }
+                func setupSampleCollection<Sample>(_ sampleType: some AnySampleType<Sample>) async {
+                    let sampleType = SampleType(sampleType)
+                    await healthKit.addHealthDataCollector(CollectSample(
+                        sampleType,
+                        start: .automatic,
+                        continueInBackground: true
+                    ))
                 }
-                await setupSampleCollection(component.sampleTypes.quantityTypes)
-                await setupSampleCollection(component.sampleTypes.correlationTypes.flatMap(\.associatedQuantityTypes))
-                await setupSampleCollection(component.sampleTypes.categoryTypes)
+                for sampleType in component.sampleTypes {
+                    await setupSampleCollection(sampleType)
+                }
             }
         }
         // we want to request HealthKit auth once, at the end, for everything we just registered.

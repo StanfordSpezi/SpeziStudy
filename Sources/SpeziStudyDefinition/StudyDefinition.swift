@@ -8,6 +8,7 @@
 
 import Foundation
 import SpeziFoundation
+import SpeziHealthKit
 
 
 /// A type that can appear in a ``StudyDefinition``.
@@ -108,9 +109,9 @@ public struct StudyDefinition: Identifiable, Hashable, Sendable, Encodable, Deco
 
 extension StudyDefinition {
     /// The combined, effective HealthKit data collection of the entire study.
-    public var allCollectedHealthData: HealthSampleTypesCollection {
-        healthDataCollectionComponents.reduce(into: HealthSampleTypesCollection()) { acc, component in
-            acc.merge(with: component.sampleTypes)
+    public var allCollectedHealthData: SampleTypesCollection {
+        healthDataCollectionComponents.reduce(into: SampleTypesCollection()) { acc, component in
+            acc.insert(contentsOf: component.sampleTypes)
         }
     }
     
