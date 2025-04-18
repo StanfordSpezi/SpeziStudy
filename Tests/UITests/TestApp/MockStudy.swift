@@ -65,7 +65,7 @@ func mockStudy(revision: MockStudyRevision) -> StudyDefinition { // swiftlint:di
                 id: .healthComponentId,
                 sampleTypes: SampleTypesCollection(
                     quantity: [.stepCount, .heartRate, .activeEnergyBurned],
-//                    correlation: [.bloodPressure],
+                    correlation: [.bloodPressure],
                     category: [.sleepAnalysis]
                 )
             ))
