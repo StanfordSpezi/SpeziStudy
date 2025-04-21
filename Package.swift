@@ -28,7 +28,7 @@ let package = Package(
         .package(url: "https://github.com/apple/FHIRModels.git", .upToNextMinor(from: "0.5.0")),
         .package(url: "https://github.com/StanfordSpezi/Spezi.git", .upToNextMajor(from: "1.8.1")),
         .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", .upToNextMajor(from: "2.1.4")),
-        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", .upToNextMajor(from: "1.1.0"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", .upToNextMajor(from: "1.1.0")),
         .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", .upToNextMajor(from: "1.2.5")),
         .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", .upToNextMajor(from: "2.1.0")),
         .package(url: "https://github.com/apple/swift-collections.git", .upToNextMajor(from: "1.1.4"))
