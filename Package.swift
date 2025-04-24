@@ -39,6 +39,7 @@ let package = Package(
             dependencies: [
                 .product(name: "ModelsR4", package: "FHIRModels"),
                 .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
+                .product(name: "SpeziHealthKitBulkExport", package: "SpeziHealthKit"),
                 .product(name: "SpeziFoundation", package: "SpeziFoundation"),
                 .product(name: "SpeziScheduler", package: "SpeziScheduler"),
                 .product(name: "DequeModule", package: "swift-collections")
