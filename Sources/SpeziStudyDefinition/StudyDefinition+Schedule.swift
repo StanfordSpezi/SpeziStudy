@@ -7,7 +7,8 @@
 //
 
 import Foundation
-import SpeziScheduler
+import enum SpeziScheduler.AllowedCompletionPolicy
+import enum SpeziScheduler.NotificationThread
 
 
 extension StudyDefinition {
@@ -62,22 +63,42 @@ extension StudyDefinition {
             }
         }
         
+        public enum NotificationsConfig: StudyDefinitionElement {
+            /// There should not be any notifications for occurrences of this schedule.
+            case disabled
+            /// There should be notifications for occurrences of this schedule.
+            /// - parameter thread: the notification thread used to group the notifications
+            case enabled(thread: SpeziScheduler.NotificationThread)
+            
+            /// The resulting effective notification thread
+            public var thread: SpeziScheduler.NotificationThread {
+                switch self {
+                case .disabled: .none
+                case .enabled(let thread): thread
+                }
+            }
+        }
+        
         /// The identifier of the component this schedule is referencing
         public var componentId: StudyDefinition.Component.ID
         /// The schedule itself
         public var scheduleDefinition: ScheduleDefinition
         /// Defines when an `Event` scheduled based on this schedule is allowed to be marked as completed.
         public var completionPolicy: SpeziScheduler.AllowedCompletionPolicy
+        /// Whether notifications should be sent for occurrences of this schedule.
+        public var notifications: NotificationsConfig
         
         /// Creates a new `ComponentSchedule`.
         public init(
             componentId: StudyDefinition.Component.ID,
             scheduleDefinition: ScheduleDefinition,
-            completionPolicy: SpeziScheduler.AllowedCompletionPolicy
+            completionPolicy: SpeziScheduler.AllowedCompletionPolicy,
+            notifications: NotificationsConfig
         ) {
             self.componentId = componentId
             self.scheduleDefinition = scheduleDefinition
             self.completionPolicy = completionPolicy
+            self.notifications = notifications
         }
     }
 }

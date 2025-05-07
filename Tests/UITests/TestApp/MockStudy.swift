@@ -98,14 +98,16 @@ func mockStudy(revision: MockStudyRevision) -> StudyDefinition { // swiftlint:di
             StudyDefinition.ComponentSchedule(
                 componentId: .article1ComponentId,
                 scheduleDefinition: .repeated(.weekly(weekday: .wednesday, hour: 09, minute: 00), startOffsetInDays: 0),
-                completionPolicy: .anytime
+                completionPolicy: .anytime,
+                notifications: .enabled(thread: .none)
             )
             switch revision {
             case .v1:
                 StudyDefinition.ComponentSchedule(
                     componentId: .questionnaireComponentId,
                     scheduleDefinition: .repeated(.weekly(weekday: .monday, hour: 09, minute: 00), startOffsetInDays: 0),
-                    completionPolicy: .afterStart
+                    completionPolicy: .afterStart,
+                    notifications: .enabled(thread: .none)
                 )
             case .v2:
                 let _ = () // swiftlint:disable:this redundant_discardable_let
@@ -113,7 +115,8 @@ func mockStudy(revision: MockStudyRevision) -> StudyDefinition { // swiftlint:di
                 StudyDefinition.ComponentSchedule(
                     componentId: .article2ComponentId,
                     scheduleDefinition: .repeated(.weekly(weekday: .friday, hour: 09, minute: 00), startOffsetInDays: 0),
-                    completionPolicy: .anytime
+                    completionPolicy: .anytime,
+                    notifications: .enabled(thread: .none)
                 )
             }
         }

@@ -210,8 +210,13 @@ extension StudyManager {
                     schedule: .init(schedule.scheduleDefinition, participationStartDate: enrollment.enrollmentDate),
                     completionPolicy: schedule.completionPolicy,
                     // not passing true here currently, since that sometimes leads to SwiftData crashes (for some inputs)
-                    scheduleNotifications: false,
-                    notificationThread: NotificationThread.none,
+                    scheduleNotifications: {
+                        switch schedule.notifications {
+                        case .disabled: false
+                        case .enabled: true
+                        }
+                    }(),
+                    notificationThread: schedule.notifications.thread,
                     tags: nil,
                     effectiveFrom: .now,
                     shadowedOutcomesHandling: .delete,
