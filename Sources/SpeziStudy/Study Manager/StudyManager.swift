@@ -169,7 +169,7 @@ extension StudyManager {
     }
     
     
-    @MainActor // swiftlint:disable:next function_body_length
+    @MainActor // swiftlint:disable:next function_body_length cyclomatic_complexity
     private func registerStudyTasksWithScheduler(_ enrollments: some Collection<StudyEnrollment>) throws {
         for enrollment in enrollments {
             guard let study = enrollment.study else {
