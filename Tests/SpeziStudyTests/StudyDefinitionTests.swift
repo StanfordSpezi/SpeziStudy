@@ -106,17 +106,20 @@ extension StudyDefinitionTests {
                     .init(
                         componentId: article1ComponentId,
                         scheduleDefinition: .repeated(.daily(hour: 11, minute: 21), startOffsetInDays: 4),
-                        completionPolicy: .afterStart
+                        completionPolicy: .afterStart,
+                        notifications: .enabled(thread: .none)
                     ),
                     .init(
                         componentId: article2ComponentId,
                         scheduleDefinition: .repeated(.daily(interval: 2, hour: 17, minute: 41), startOffsetInDays: 0),
-                        completionPolicy: .anytime
+                        completionPolicy: .anytime,
+                        notifications: .enabled(thread: .global)
                     ),
                     .init(
                         componentId: questionnaireComponentId,
                         scheduleDefinition: .repeated(.weekly(weekday: .wednesday, hour: 21, minute: 59), startOffsetInDays: 1),
-                        completionPolicy: .sameDayAfterStart
+                        completionPolicy: .sameDayAfterStart,
+                        notifications: .enabled(thread: .task)
                     )
                 ]
             )
