@@ -202,12 +202,25 @@ extension StudyManager {
                 case .healthDataCollection:
                     continue
                 }
+                let taskSchedule: SpeziScheduler.Schedule
+                switch schedule.scheduleDefinition {
+                case .after:
+                    // study-lifecycle-relative schedules aren't configured via the scheduler.
+                    continue
+                case .once(let dateComponents):
+                    guard let date = Calendar.current.date(from: dateComponents) else {
+                        continue
+                    }
+                    taskSchedule = .once(at: date, duration: .tillEndOfDay)
+                case .repeated:
+                    taskSchedule = .fromRepeated(schedule.scheduleDefinition, participationStartDate: enrollment.enrollmentDate)
+                }
                 let task = try scheduler.createOrUpdateTask(
                     id: taskId(for: component, in: study),
                     title: component.displayTitle.map { "\($0)" } ?? "",
                     instructions: "",
                     category: category,
-                    schedule: .init(schedule.scheduleDefinition, participationStartDate: enrollment.enrollmentDate),
+                    schedule: taskSchedule,
                     completionPolicy: schedule.completionPolicy,
                     // not passing true here currently, since that sometimes leads to SwiftData crashes (for some inputs)
                     scheduleNotifications: {

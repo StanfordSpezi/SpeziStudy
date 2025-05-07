@@ -47,6 +47,12 @@ extension StudyDefinition {
         /// ### Supporting Types
         /// - ``RepetitionPattern``
         public enum ScheduleDefinition: StudyDefinitionElement {
+            /// A schedule that should run in response to an event within the study's lifecycle.
+            case after(StudyLifecycleEvent, offsetInDays: Int)
+            
+            /// A schedule that should run exactly once, at a specific date in the user's time zone.
+            case once(DateComponents) // DateComponents bc we need it to be TimeZone independent...
+            
             /// A schedule that will run multiple times, based on a repetition pattern (e.g.: weekly).
             ///
             /// This case defines a schedule which will activate repeatedly, based on a repetition pattern.
