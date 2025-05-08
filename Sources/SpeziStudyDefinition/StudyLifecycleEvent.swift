@@ -18,5 +18,5 @@ public enum StudyLifecycleEvent: Hashable, Codable, Sendable {
     /// The event representing the official end of the study
     case studyEnd
     /// The event representing the completion of a scheduled occurrence of a component.
-    case completedTask(componentId: UUID)
+    case completedTask(componentId: StudyDefinition.Component.ID)
 }
