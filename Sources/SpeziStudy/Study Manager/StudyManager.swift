@@ -12,7 +12,8 @@ import Spezi
 import SpeziFoundation
 import SpeziHealthKit
 import SpeziLocalStorage
-@_spi(APISupport) import SpeziScheduler
+@_spi(APISupport)
+import SpeziScheduler
 import SpeziSchedulerUI
 @_exported import SpeziStudyDefinition
 import SwiftData
@@ -184,6 +185,8 @@ extension StudyManager {
     private enum TaskCreationError: Error {
         /// Attempted to create a `Task` for a component which cannot be scheduled (eg: a health data collection component)
         case componentNotEligibleForTaskCreation
+        /// Asked to create a `Task` for an invalid `ComponentSchedule`, e.g. because the referenced component doesn't exist.
+        case unableToFindComponent
     }
     
     
@@ -209,18 +212,6 @@ extension StudyManager {
                     // ... but internal components don't
                     continue
                 }
-//                let category: Task.Category?
-//                let action: ScheduledTaskAction?
-//                switch component {
-//                case .questionnaire(let component):
-//                    category = .questionnaire
-//                    action = .answerQuestionnaire(component.questionnaire, enrollmentId: enrollment.persistentModelID)
-//                case .informational(let component):
-//                    category = .informational
-//                    action = .presentInformationalStudyComponent(component)
-//                case .healthDataCollection:
-//                    continue
-//                }
                 let taskSchedule: SpeziScheduler.Schedule
                 switch schedule.scheduleDefinition {
                 case .after:
@@ -237,8 +228,6 @@ extension StudyManager {
                 }
                 do {
                     let task = try createOrUpdateTask(
-                        study: study,
-                        component: component,
                         componentSchedule: schedule,
                         enrollment: enrollment,
                         taskSchedule: taskSchedule
@@ -265,17 +254,19 @@ extension StudyManager {
         }
     }
     
+    
     /// Creates (or updates) a `Task` for a study component, based on a schedule.
+    ///
+    /// - parameter study: The `StudyDefinition` to which the
     @MainActor
     private func createOrUpdateTask(
-        study: StudyDefinition,
-        component: StudyDefinition.Component,
         componentSchedule: StudyDefinition.ComponentSchedule,
         enrollment: StudyEnrollment,
         taskSchedule: SpeziScheduler.Schedule
     ) throws -> Task {
-        precondition(componentSchedule.componentId == component.id)
-        precondition(enrollment.studyId == study.id)
+        guard let study = enrollment.study, let component = study.component(withId: componentSchedule.componentId) else {
+            throw TaskCreationError.unableToFindComponent
+        }
         let category: Task.Category?
         let action: ScheduledTaskAction?
         switch component {
@@ -288,20 +279,6 @@ extension StudyManager {
         case .healthDataCollection:
             throw TaskCreationError.componentNotEligibleForTaskCreation
         }
-//        let taskSchedule: SpeziScheduler.Schedule
-//        switch schedule.scheduleDefinition {
-//        case .after:
-//            // study-lifecycle-relative schedules aren't configured here...
-//            activeTaskIds.insert(taskId(for: schedule, in: study))
-//            continue
-//        case .once(let dateComponents):
-//            guard let date = Calendar.current.date(from: dateComponents) else {
-//                continue
-//            }
-//            taskSchedule = .once(at: date, duration: .tillEndOfDay)
-//        case .repeated:
-//            taskSchedule = .fromRepeated(schedule.scheduleDefinition, participationStartDate: enrollment.enrollmentDate)
-//        }
         return try scheduler.createOrUpdateTask(
             id: taskId(for: componentSchedule, in: study),
             title: component.displayTitle.map { "\($0)" } ?? "",
@@ -505,17 +482,12 @@ extension StudyManager {
                 }
             }
             for schedule in schedules {
-                guard let component = study.component(withId: schedule.componentId) else {
-                    continue
-                }
                 switch schedule.scheduleDefinition {
                 case .once, .repeated:
                     continue
                 case let .after(_, offset):
                     do {
                         _ = try createOrUpdateTask(
-                            study: study,
-                            component: component,
                             componentSchedule: schedule,
                             enrollment: enrollment,
                             taskSchedule: .once(at: Date.now.addingTimeInterval(offset.timeInterval))
@@ -530,3 +502,5 @@ extension StudyManager {
         }
     }
 }
+
+// swiftlint:disable:this file_length
