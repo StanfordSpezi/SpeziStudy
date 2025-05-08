@@ -233,7 +233,7 @@ extension StudyManager {
                         taskSchedule: taskSchedule
                     )
                     activeTaskIds.insert(task.id)
-                } catch TaskCreationError.componentNotEligibleForTaskCreation {
+                } catch TaskCreationError.unableToFindComponent, TaskCreationError.componentNotEligibleForTaskCreation {
                     continue
                 } catch {
                     throw error
@@ -256,8 +256,6 @@ extension StudyManager {
     
     
     /// Creates (or updates) a `Task` for a study component, based on a schedule.
-    ///
-    /// - parameter study: The `StudyDefinition` to which the
     @MainActor
     private func createOrUpdateTask(
         componentSchedule: StudyDefinition.ComponentSchedule,
@@ -492,7 +490,7 @@ extension StudyManager {
                             enrollment: enrollment,
                             taskSchedule: .once(at: Date.now.addingTimeInterval(offset.timeInterval))
                         )
-                    } catch TaskCreationError.componentNotEligibleForTaskCreation {
+                    } catch TaskCreationError.unableToFindComponent, TaskCreationError.componentNotEligibleForTaskCreation {
                         continue
                     } catch {
                         logger.error("Error creating task: \(error)")
