@@ -14,6 +14,9 @@ import SwiftUI
 
 
 struct HomeTab: View {
+    @Environment(\.taskCategoryAppearances)
+    private var taskCategoryAppearances
+    
     @Environment(StudyManager.self)
     private var studyManager
     
@@ -39,18 +42,7 @@ struct HomeTab: View {
                 if events.isEmpty {
                     ContentUnavailableView("No Events", systemImage: "calendar")
                 } else {
-                    ForEach(events) { event in
-                        Section {
-                            InstructionsTile(event) {
-                                EventActionButton(event: event) {
-                                    `try`(with: $viewState) {
-                                        try event.complete()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .injectingCustomTaskCategoryAppearances()
+                    makeEventsList(events)
                 }
             }
             .navigationTitle("Home")
@@ -115,6 +107,36 @@ struct HomeTab: View {
                     .foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
+        }
+    }
+    
+    @ViewBuilder
+    private func makeEventsList(_ events: [Event]) -> some View {
+        ForEach(events) { (event: Event) in
+            Section {
+                InstructionsTile(event) {
+                    EventActionButton(event: event) {
+                        `try`(with: $viewState) {
+                            try event.complete()
+                        }
+                    } label: {
+                        let text = if let categoryLabel = label(for: event.task.category) {
+                            "Complete \(categoryLabel): \(String(localized: event.task.title))"
+                        } else {
+                            "Complete \(String(localized: event.task.title))"
+                        }
+                        Text(text)
+                    }
+                }
+            }
+        }
+    }
+    
+    private func label(for category: Task.Category?) -> String? {
+        if let category, let appearance = taskCategoryAppearances[category] {
+            String(localized: appearance.label)
+        } else {
+            nil
         }
     }
 }
