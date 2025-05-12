@@ -134,7 +134,7 @@ func mockStudy(revision: MockStudyRevision) -> StudyDefinition { // swiftlint:di
             switch revision {
             case .v1:
                 StudyDefinition.ComponentSchedule(
-                    id: .schedule1Id,
+                    id: .schedule2Id,
                     componentId: .questionnaireComponentId,
                     scheduleDefinition: .repeated(.weekly(weekday: .monday, hour: 09, minute: 00)),
                     completionPolicy: .anytime,

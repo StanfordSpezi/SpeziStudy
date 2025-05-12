@@ -738,7 +738,7 @@
 			repositoryURL = "https://github.com/StanfordSpezi/SpeziScheduler.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.6;
+				minimumVersion = 1.2.7;
 			};
 		};
 		80F47E842D9D2B9900DA4F62 /* XCRemoteSwiftPackageReference "swift-numerics" */ = {
