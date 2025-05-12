@@ -85,7 +85,6 @@ func mockStudy(revision: MockStudyRevision) -> StudyDefinition { // swiftlint:di
                 headerImage: "",
                 body: ""
             ))
-            // Note that we intentionally place this compoennt in here (in that it'll be included in all revisions of the study TODO!!!
             StudyDefinition.Component.informational(.init(
                 id: .article3ComponentId,
                 title: "You have answered the SocialSupport questionnaire!",
@@ -116,7 +115,7 @@ func mockStudy(revision: MockStudyRevision) -> StudyDefinition { // swiftlint:di
                 ))
             }
         },
-        componentSchedules: Array {
+        componentSchedules: Array { // swiftlint:disable:this closure_body_length
             StudyDefinition.ComponentSchedule(
                 id: .schedule0Id,
                 componentId: .article0ComponentId,
@@ -161,5 +160,3 @@ func mockStudy(revision: MockStudyRevision) -> StudyDefinition { // swiftlint:di
         }
     )
 }
-
-// swiftlint:enable file_types_order
