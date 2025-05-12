@@ -39,10 +39,13 @@ struct HomeTab: View {
                         makeStudyEnrollmentRow(for: enrollment)
                     }
                 }
-                if events.isEmpty {
-                    ContentUnavailableView("No Events", systemImage: "calendar")
-                } else {
-                    makeEventsList(events)
+                Section {
+                    if events.isEmpty {
+                        ContentUnavailableView("No Events", systemImage: "calendar")
+                    } else {
+                        makeEventsList(events)
+                            .font(.caption)
+                    }
                 }
             }
             .navigationTitle("Home")
@@ -113,20 +116,18 @@ struct HomeTab: View {
     @ViewBuilder
     private func makeEventsList(_ events: [Event]) -> some View {
         ForEach(events) { (event: Event) in
-            Section {
-                InstructionsTile(event) {
-                    EventActionButton(event: event) {
-                        `try`(with: $viewState) {
-                            try event.complete()
-                        }
-                    } label: {
-                        let text = if let categoryLabel = label(for: event.task.category) {
-                            "Complete \(categoryLabel): \(String(localized: event.task.title))"
-                        } else {
-                            "Complete \(String(localized: event.task.title))"
-                        }
-                        Text(text)
+            InstructionsTile(event) {
+                EventActionButton(event: event) {
+                    `try`(with: $viewState) {
+                        try event.complete()
                     }
+                } label: {
+                    let text = if let categoryLabel = label(for: event.task.category) {
+                        "Complete \(categoryLabel): \(String(localized: event.task.title))"
+                    } else {
+                        "Complete \(String(localized: event.task.title))"
+                    }
+                    Text(text)
                 }
             }
         }
