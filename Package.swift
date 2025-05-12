@@ -29,7 +29,7 @@ let package = Package(
         .package(url: "https://github.com/StanfordSpezi/Spezi.git", .upToNextMajor(from: "1.8.1")),
         .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", .upToNextMajor(from: "2.1.4")),
         .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", .upToNextMajor(from: "1.1.0")),
-        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", branch: "lukas/change-observations-api"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", from: "1.2.6"),
         .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", .upToNextMajor(from: "2.1.0")),
         .package(url: "https://github.com/apple/swift-collections.git", .upToNextMajor(from: "1.1.4"))
     ] + swiftLintPackage(),
