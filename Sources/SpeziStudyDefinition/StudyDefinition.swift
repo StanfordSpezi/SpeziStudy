@@ -76,7 +76,7 @@ public typealias StudyDefinitionElement = Hashable & Codable & Sendable
 /// - ``validate()``
 public struct StudyDefinition: Identifiable, Hashable, Sendable, Encodable, DecodableWithConfiguration {
     /// The ``StudyDefinition`` type's current schema version.
-    public static let schemaVersion = Version(0, 6, 0)
+    public static let schemaVersion = Version(0, 7, 0)
     
     /// The revision of the study.
     ///
@@ -120,7 +120,7 @@ extension StudyDefinition {
             switch component {
             case .healthDataCollection(let component):
                 component
-            case .informational, .questionnaire:
+            case .informational, .questionnaire, .timedWalkingTest:
                 nil
             }
         }
@@ -134,15 +134,42 @@ extension StudyDefinition {
 
 
 extension StudyDefinition.Component {
+    private static let spellOutNumberFormatter: NumberFormatter = {
+        let fmt = NumberFormatter()
+        fmt.numberStyle = .spellOut
+        return fmt
+    }()
+    private static let fractionalNumberFormatter: NumberFormatter = {
+        let fmt = NumberFormatter()
+        fmt.numberStyle = .decimal
+        fmt.minimumFractionDigits = 0
+        fmt.maximumFractionDigits = 1
+        return fmt
+    }()
+    
     /// The components display title
     public var displayTitle: String? {
         switch self {
         case .informational(let component):
-            component.title
+            return component.title
         case .questionnaire(let component):
-            component.questionnaire.title?.value?.string
+            return component.questionnaire.title?.value?.string
+        case .timedWalkingTest(let component):
+            let durationInMin = component.test.duration.totalSeconds / 60
+            let durationText: String
+            if durationInMin.rounded() == durationInMin, durationInMin <= 10 { // whole number of minutes
+                durationText = Self.spellOutNumberFormatter.string(from: NSNumber(value: Int(durationInMin))) ?? "\(Int(durationInMin))"
+            } else {
+                durationText = Self.fractionalNumberFormatter.string(from: NSNumber(value: durationInMin)) ?? String(format: "%.1f", durationInMin)
+            }
+            switch component.test.kind {
+            case .walking:
+                return "\(durationText.localizedCapitalized)-Minute Walking Test"
+            case .running:
+                return "\(durationText.localizedCapitalized)-Minute Running Test"
+            }
         case .healthDataCollection:
-            nil
+            return nil
         }
     }
 }
