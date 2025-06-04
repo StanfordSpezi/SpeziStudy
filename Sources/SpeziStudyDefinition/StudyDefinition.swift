@@ -134,42 +134,17 @@ extension StudyDefinition {
 
 
 extension StudyDefinition.Component {
-    private static let spellOutNumberFormatter: NumberFormatter = {
-        let fmt = NumberFormatter()
-        fmt.numberStyle = .spellOut
-        return fmt
-    }()
-    private static let fractionalNumberFormatter: NumberFormatter = {
-        let fmt = NumberFormatter()
-        fmt.numberStyle = .decimal
-        fmt.minimumFractionDigits = 0
-        fmt.maximumFractionDigits = 1
-        return fmt
-    }()
-    
     /// The components display title
     public var displayTitle: String? {
         switch self {
         case .informational(let component):
-            return component.title
+            component.title
         case .questionnaire(let component):
-            return component.questionnaire.title?.value?.string
+            component.questionnaire.title?.value?.string
         case .timedWalkingTest(let component):
-            let durationInMin = component.test.duration.totalSeconds / 60
-            let durationText: String
-            if durationInMin.rounded() == durationInMin, durationInMin <= 10 { // whole number of minutes
-                durationText = Self.spellOutNumberFormatter.string(from: NSNumber(value: Int(durationInMin))) ?? "\(Int(durationInMin))"
-            } else {
-                durationText = Self.fractionalNumberFormatter.string(from: NSNumber(value: durationInMin)) ?? String(format: "%.1f", durationInMin)
-            }
-            switch component.test.kind {
-            case .walking:
-                return "\(durationText.localizedCapitalized)-Minute Walking Test"
-            case .running:
-                return "\(durationText.localizedCapitalized)-Minute Running Test"
-            }
+            component.test.displayTitle
         case .healthDataCollection:
-            return nil
+            nil
         }
     }
 }
