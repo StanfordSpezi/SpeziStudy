@@ -38,7 +38,7 @@ struct StudyDefinitionTests {
     @Test
     func displayTitles() throws {
         let study = try testStudy
-        var it = study.components.makeIterator()
+        var it = study.components.makeIterator() // swiftlint:disable:this identifier_name
         #expect(it.next()?.displayTitle == "Informational Component #1")
         #expect(it.next()?.displayTitle == "Informational Component #2")
         #expect(it.next()?.displayTitle == "Social Support")
