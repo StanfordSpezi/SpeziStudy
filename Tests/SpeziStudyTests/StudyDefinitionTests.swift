@@ -38,14 +38,15 @@ struct StudyDefinitionTests {
     @Test
     func displayTitles() throws {
         let study = try testStudy
-        #expect(study.components.count == 7)
-        #expect(study.components[0].displayTitle == "Informational Component #1")
-        #expect(study.components[1].displayTitle == "Informational Component #2")
-        #expect(study.components[2].displayTitle == "Social Support")
-        #expect(study.components[3].displayTitle == nil) // health collection
-        #expect(study.components[4].displayTitle == "Six-Minute Walking Test")
-        #expect(study.components[5].displayTitle == "12-Minute Running Test")
-        #expect(study.components[6].displayTitle == "8.5-Minute Walking Test")
+        var it = study.components.makeIterator()
+        #expect(it.next()?.displayTitle == "Informational Component #1")
+        #expect(it.next()?.displayTitle == "Informational Component #2")
+        #expect(it.next()?.displayTitle == "Social Support")
+        #expect(it.next()?.displayTitle == nil) // health collection
+        #expect(it.next()?.displayTitle == "Six-Minute Walking Test")
+        #expect(it.next()?.displayTitle == "12-Minute Running Test")
+        #expect(it.next()?.displayTitle == "8.5-Minute Walking Test")
+        #expect(it.next() == nil)
     }
 }
 
