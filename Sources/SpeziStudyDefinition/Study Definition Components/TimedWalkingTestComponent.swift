@@ -7,8 +7,6 @@
 //
 
 import Foundation
-import SpeziHealthKit
-import SpeziHealthKitBulkExport
 
 
 /// A Timed Walking Test's configuration
