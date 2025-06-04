@@ -19,7 +19,7 @@ extension StudyManager {
     public enum ScheduledTaskAction: Hashable, Codable {
         case presentInformationalStudyComponent(StudyDefinition.InformationalComponent)
         case answerQuestionnaire(Questionnaire, enrollmentId: PersistentIdentifier)
-        case promptTimedWalkingTest(TimedWalkingTestConfiguration)
+        case promptTimedWalkingTest(StudyDefinition.TimedWalkingTestComponent)
     }
 }
 
