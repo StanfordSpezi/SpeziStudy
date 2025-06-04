@@ -62,14 +62,14 @@ extension TimedWalkingTestConfiguration {
     
     /// A textual description of the Timed Walking Test
     public var displayTitle: String {
-        let durationInMin = component.test.duration.totalSeconds / 60
+        let durationInMin = duration.totalSeconds / 60
         let durationText: String
         if durationInMin.rounded() == durationInMin, durationInMin <= 10 { // whole number of minutes
             durationText = Self.spellOutNumberFormatter.string(from: NSNumber(value: Int(durationInMin))) ?? "\(Int(durationInMin))"
         } else {
             durationText = Self.fractionalNumberFormatter.string(from: NSNumber(value: durationInMin)) ?? String(format: "%.1f", durationInMin)
         }
-        switch component.test.kind {
+        switch kind {
         case .walking:
             return "\(durationText.localizedCapitalized)-Minute Walking Test"
         case .running:
