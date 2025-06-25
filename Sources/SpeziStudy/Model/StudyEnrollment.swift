@@ -31,43 +31,57 @@ public final class StudyEnrollment {
     /// This property stores the current revision of the study as last seen by this object.
     public private(set) var studyRevision: UInt
     
-    /// JSON-encoded version of the study.
-    private var encodedStudy: Data
+////    /// JSON-encoded version of the study.
+////    private var encodedStudy: Data
+//    /// The path of the study bundle, relative to the application's Documents directory.
+//    private var studyBundlePath: String
+    
+    var studyBundleUrl: URL {
+        StudyManager.studyBundlesDirectory.appendingPathComponent(self.id.uuidString, conformingTo: .speziStudyBundle)
+    }
     
     /// The study.
     ///
     /// - Note: In some circumstances (e.g., if the `StudyDefinition` schema changes, and this enrollment has yet to be updated),
     ///     this value may initially be `nil` for a bit, until ``StudyManager/informAboutStudies(_:)`` was called.
-    @Transient public private(set) lazy var study: StudyDefinition? = {
-        try? JSONDecoder().decode(
-            StudyDefinition.self,
-            from: encodedStudy,
-            configuration: .init(allowTrivialSchemaMigrations: true)
-        )
+    @Transient public private(set) lazy var studyBundle: StudyDefinitionBundle? = {
+        try? .init(bundleUrl: studyBundleUrl)
     }()
     
     
     /// Creates a new `StudyEnrollment` object.
-    init(enrollmentDate: Date, study: StudyDefinition) throws {
+    init(enrollmentDate: Date, studyBundle: StudyDefinitionBundle) throws {
         self.enrollmentDate = enrollmentDate
-        self.studyId = study.id
-        self.studyRevision = study.studyRevision
-        self.encodedStudy = try JSONEncoder().encode(study)
-        self.study = study
+        self.studyId = studyBundle.studyDefinition.id
+        self.studyRevision = studyBundle.studyDefinition.studyRevision
+        try updateStudyBundle(studyBundle, performValidityChecks: false)
     }
-    
     
     /// Updates the enrollment's `StudyDefinition` to a new revision, if necessary.
     ///
     /// - Note: Attempting to update to a different study, or attempting to downgrade to an older revision, will result in the function simply not doing anything.
-    func updateStudyDefinition(_ newStudy: StudyDefinition) throws {
-        guard newStudy.id == studyId, newStudy.studyRevision > studyRevision else {
+    func updateStudyBundle(_ newBundle: StudyDefinitionBundle) throws {
+        try updateStudyBundle(newBundle, performValidityChecks: true)
+    }
+    
+    
+    private func updateStudyBundle(_ newBundle: StudyDefinitionBundle, performValidityChecks: Bool) throws {
+        guard !performValidityChecks || (newBundle.id == studyId && newBundle.studyDefinition.studyRevision > studyRevision) else {
             return
         }
-        // do this first so that, in case the encoding fails, we don't have a partially-updated enrollment object.
-        let studyData = try JSONEncoder().encode(newStudy)
-        studyRevision = newStudy.studyRevision
-        encodedStudy = studyData
-        study = newStudy
+//        // do this first so that, in case the encoding fails, we don't have a partially-updated enrollment object.
+//        let studyData = try JSONEncoder().encode(newStudy)
+//        studyRevision = newStudy.studyRevision
+//        encodedStudy = studyData
+//        study = newStudy
+//        let FM = FileManager.default
+//        let tmpCopyUrl = URL.temporaryDirectory
+//            .appending(component: UUID().uuidString, directoryHint: .isDirectory)
+//            .appending(component: newBundle.bundleUrl.lastPathComponent)
+//        try! newBundle.copy(to: tmpCopyUrl)
+//        _ = try FM.replaceItemAt(self.studyBundleUrl, withItemAt: tmpCopyUrl)
+//        try? FM.removeItem(at: tmpCopyUrl) // TODO do we need to do this? does it happen automatically?
+        try newBundle.copy(to: studyBundleUrl)
+        self.studyBundle = try! .init(bundleUrl: self.studyBundleUrl)
     }
 }

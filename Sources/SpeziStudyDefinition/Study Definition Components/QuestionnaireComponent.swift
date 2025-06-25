@@ -7,7 +7,6 @@
 //
 
 import Foundation
-@preconcurrency import class ModelsR4.Questionnaire
 
 
 extension StudyDefinition {
@@ -15,11 +14,11 @@ extension StudyDefinition {
     public struct QuestionnaireComponent: Identifiable, StudyDefinitionElement {
         /// - parameter id: the id of this study component, **not** of the questionnaire
         public let id: UUID
-        public let questionnaire: Questionnaire
+        public let questionnaireFileRef: StudyDefinitionBundle.FileReference
         
-        public init(id: UUID, questionnaire: Questionnaire) {
+        public init(id: UUID, questionnaireFileRef: StudyDefinitionBundle.FileReference) {
             self.id = id
-            self.questionnaire = questionnaire
+            self.questionnaireFileRef = questionnaireFileRef
         }
     }
 }

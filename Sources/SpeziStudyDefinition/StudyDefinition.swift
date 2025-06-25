@@ -76,7 +76,7 @@ public typealias StudyDefinitionElement = Hashable & Codable & Sendable
 /// - ``validate()``
 public struct StudyDefinition: Identifiable, Hashable, Sendable, Encodable, DecodableWithConfiguration {
     /// The ``StudyDefinition`` type's current schema version.
-    public static let schemaVersion = Version(0, 7, 0)
+    public static let schemaVersion = Version(0, 8, 0)
     
     /// The revision of the study.
     ///
@@ -132,19 +132,24 @@ extension StudyDefinition {
     }
 }
 
-
-extension StudyDefinition.Component {
-    /// The components display title
-    public var displayTitle: String? {
-        switch self {
+extension StudyDefinitionBundle {
+    public func displayTitle(for component: StudyDefinition.Component, in locale: Locale) -> String? {
+        switch component {
         case .informational(let component):
-            component.title
+            guard let url = self.resolve(component.bodyFileRef, using: locale) else { // TODO `in locale:` vs `using locale:`?? (UNIFYYY!)))
+                return nil
+            }
+            guard let text = (try? Data(contentsOf: url)).flatMap({ String(data: $0, encoding: .utf8) }) else {
+                return nil
+            }
+            // TODO not ideal that we have a FS op every time this is accessed???
+            return (try? MarkdownDocument.Metadata(parsing: text))?.title
         case .questionnaire(let component):
-            component.questionnaire.title?.value?.string
-        case .timedWalkingTest(let component):
-            component.test.displayTitle
+            return questionnaire(for: component.questionnaireFileRef, locale: locale)?.title?.value?.string
         case .healthDataCollection:
-            nil
+            return nil
+        case .timedWalkingTest(let component):
+            return component.test.displayTitle
         }
     }
 }

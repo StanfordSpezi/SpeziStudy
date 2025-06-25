@@ -27,48 +27,65 @@ private actor TestStandard: Standard, HealthKitConstraint {
 }
 
 
-@Suite("StudyManagerTests")
-struct StudyManagerTests {
+final class StudyManagerTests: Sendable {
     private static let articleComponentId = UUID()
     
-    private let testStudy = StudyDefinition(
-        studyRevision: 0,
-        metadata: .init(
-            id: UUID(),
-            title: "",
-            explanationText: "",
-            shortExplanationText: "",
-            participationCriterion: true,
-            enrollmentConditions: .none
-        ),
-        components: [
-            .informational(.init(id: Self.articleComponentId, title: "", headerImage: "", body: ""))
-        ],
-        componentSchedules: [
-            .init(
+    private let studyBundle: StudyDefinitionBundle
+    
+    init() throws {
+        let testStudy = StudyDefinition(
+            studyRevision: 0,
+            metadata: .init(
                 id: UUID(),
-                componentId: Self.articleComponentId,
-                scheduleDefinition: .repeated(.daily(hour: 1, minute: 0)),
-                completionPolicy: .afterStart,
-                notifications: .enabled(thread: .custom("Articles"))
-            )
-        ]
-    )
+                title: "",
+                explanationText: "",
+                shortExplanationText: "",
+                participationCriterion: true,
+                enrollmentConditions: .none
+            ),
+            components: [
+                .informational(.init(
+                    id: Self.articleComponentId,
+                    title: "",
+                    headerImage: "",
+                    bodyFileRef: .init(category: .informationalArticle, filename: "a1", fileExtension: "md")
+                ))
+            ],
+            componentSchedules: [
+                .init(
+                    id: UUID(),
+                    componentId: Self.articleComponentId,
+                    scheduleDefinition: .repeated(.daily(hour: 1, minute: 0)),
+                    completionPolicy: .afterStart,
+                    notifications: .enabled(thread: .custom("Articles"))
+                )
+            ]
+        )
+        let tmpUrl = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
+        studyBundle = try StudyDefinitionBundle.writeToDisk(
+            at: tmpUrl,
+            definition: testStudy,
+            consentDocuments: [],
+            questionnaires: [],
+            informationalArticles: []
+        )
+    }
     
     @Test
-    func testOrphanHandling() async throws {
+    func orphanHandling() async throws {
         let allTime = Date.distantPast...Date.distantFuture
         let studyManager = StudyManager(persistence: .inMemory)
         await withDependencyResolution(standard: TestStandard()) {
             Scheduler(persistence: .inMemory)
             studyManager
         }
-        try await studyManager.enroll(in: testStudy)
+        try await studyManager.enroll(in: studyBundle)
         try await MainActor.run {
             #expect(studyManager.studyEnrollments.count == 1)
             let enrollment = try #require(studyManager.studyEnrollments.first)
-            #expect(enrollment.studyId == testStudy.id)
-            #expect(enrollment.study == testStudy)
+            #expect(enrollment.studyId == studyBundle.id)
+            #expect(enrollment.studyId == studyBundle.studyDefinition.id)
+            #expect(try #require(enrollment.studyBundle).studyDefinition == studyBundle.studyDefinition)
             try #expect(studyManager.scheduler.queryTasks(for: allTime).count == 1)
             studyManager.modelContext.delete(enrollment)
             try #expect(studyManager.scheduler.queryTasks(for: allTime).count == 1)
@@ -78,5 +95,10 @@ struct StudyManagerTests {
         try await MainActor.run {
             try #expect(studyManager.scheduler.queryTasks(for: allTime).isEmpty)
         }
+    }
+    
+    
+    deinit {
+        try? FileManager.default.removeItem(at: studyBundle.bundleUrl)
     }
 }

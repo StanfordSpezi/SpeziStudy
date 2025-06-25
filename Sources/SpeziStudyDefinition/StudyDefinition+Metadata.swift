@@ -47,6 +47,9 @@ extension StudyDefinition {
         /// The condition by which it is determined whether someone who satisfies the ``participationCriteria`` is allowed to enroll into the study.
         public var enrollmentConditions: EnrollmentConditions
         
+        /// The study's consent file.
+        public var consentFileRef: StudyDefinitionBundle.FileReference
+        
         /// Creates a new `Metadata` object.
         public init(
             id: UUID,
@@ -57,7 +60,8 @@ extension StudyDefinition {
             shortExplanationText: String,
             studyDependency: StudyDefinition.ID? = nil, // swiftlint:disable:this function_default_parameter_at_end
             participationCriterion: ParticipationCriterion,
-            enrollmentConditions: EnrollmentConditions
+            enrollmentConditions: EnrollmentConditions,
+            consentFileRef: StudyDefinitionBundle.FileReference = .init(category: .consent, filename: "Consent", fileExtension: "md")
         ) {
             self.id = id
             self.title = title
@@ -68,6 +72,7 @@ extension StudyDefinition {
             self.studyDependency = studyDependency
             self.participationCriterion = participationCriterion
             self.enrollmentConditions = enrollmentConditions
+            self.consentFileRef = consentFileRef
         }
     }
 }

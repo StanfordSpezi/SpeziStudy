@@ -36,6 +36,7 @@ extension UUID {
 
 extension Locale.Language {
     static let english = Locale.Language(identifier: "en")
+    static let spanish = Locale.Language(identifier: "es")
 }
 
 
@@ -51,8 +52,8 @@ enum MockStudyRevision: UInt {
 }
 
 
-func mockStudy(revision: MockStudyRevision) -> StudyDefinition { // swiftlint:disable:this function_body_length
-    StudyDefinition(
+func mockStudy(revision: MockStudyRevision) throws -> StudyDefinitionBundle { // swiftlint:disable:this function_body_length
+    let definition = StudyDefinition(
         studyRevision: revision.rawValue,
         metadata: StudyDefinition.Metadata(
             id: .studyId,
@@ -66,9 +67,7 @@ func mockStudy(revision: MockStudyRevision) -> StudyDefinition { // swiftlint:di
         components: Array { // swiftlint:disable:this closure_body_length
             StudyDefinition.Component.informational(.init(
                 id: .article1ComponentId,
-                title: "Article1 Title",
-                headerImage: "",
-                body: "Article1 Body"
+                bodyFileRef: .init(category: .informationalArticle, filename: "Article1", fileExtension: "md")
             ))
             StudyDefinition.Component.healthDataCollection(.init(
                 id: .healthComponentId,
@@ -81,37 +80,24 @@ func mockStudy(revision: MockStudyRevision) -> StudyDefinition { // swiftlint:di
             ))
             StudyDefinition.Component.informational(.init(
                 id: .article0ComponentId,
-                title: "Welcome to our TestStudy!",
-                headerImage: "",
-                body: ""
+                bodyFileRef: .init(category: .informationalArticle, filename: "Welcome", fileExtension: "md")
             ))
             StudyDefinition.Component.informational(.init(
                 id: .article3ComponentId,
-                title: "You have answered the SocialSupport questionnaire!",
-                headerImage: "",
-                body: ""
+                bodyFileRef: .init(category: .informationalArticle, filename: "SSQAnswered", fileExtension: "md")
             ))
             switch revision {
             case .v1:
                 StudyDefinition.Component.questionnaire(.init(
                     id: .questionnaireComponentId,
-                    questionnaire: { () -> Questionnaire in
-                        guard let url = Bundle.main.url(forResource: "SocialSupportQuestionnaire", withExtension: "json"),
-                              let data = try? Data(contentsOf: url),
-                              let questionnaire = try? JSONDecoder().decode(Questionnaire.self, from: data) else {
-                            fatalError("Unable to load questionnaire")
-                        }
-                        return questionnaire
-                    }()
+                    questionnaireFileRef: .init(category: .questionnaire, filename: "SocialSupport", fileExtension: "json")
                 ))
             case .v2:
                 let _ = () // swiftlint:disable:this redundant_discardable_let
             case .v3:
                 StudyDefinition.Component.informational(.init(
                     id: .article2ComponentId,
-                    title: "Article2 Title",
-                    headerImage: "",
-                    body: "Article2 Body"
+                    bodyFileRef: .init(category: .informationalArticle, filename: "Article2", fileExtension: "md")
                 ))
             }
         },
@@ -155,6 +141,72 @@ func mockStudy(revision: MockStudyRevision) -> StudyDefinition { // swiftlint:di
                     scheduleDefinition: .repeated(.weekly(weekday: .friday, hour: 09, minute: 00)),
                     completionPolicy: .anytime,
                     notifications: .enabled(thread: .none)
+                )
+            }
+        }
+    )
+    let url = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
+    return try StudyDefinitionBundle.writeToDisk(
+        at: url,
+        definition: definition,
+        files: Array {
+            try StudyDefinitionBundle.File(
+                fileRef: .init(category: .informationalArticle, filename: "Article1", fileExtension: "md"),
+                localization: .init(language: .english, region: .unitedStates),
+                contents: """
+                    ---
+                    title: Article 1
+                    ---
+                    """
+            )
+            try StudyDefinitionBundle.File(
+                fileRef: .init(category: .informationalArticle, filename: "Welcome", fileExtension: "md"),
+                localization: .init(language: .english, region: .unitedStates),
+                contents: """
+                    ---
+                    title: Welcome to the Study!
+                    ---
+                    
+                    # Welcome
+                    We welcome you to our study :)
+                    """
+            )
+            try StudyDefinitionBundle.File(
+                fileRef: .init(category: .informationalArticle, filename: "SSQAnswered", fileExtension: "md"),
+                localization: .init(language: .english, region: .unitedStates),
+                contents: """
+                    ---
+                    title: SSQAnswered
+                    ---
+                    SSQAnswered
+                    """
+            )
+            switch revision {
+            case .v1:
+                StudyDefinitionBundle.File(
+                    fileRef: .init(category: .questionnaire, filename: "SocialSupport", fileExtension: "json"),
+                    localization: .init(language: .english, region: .unitedStates),
+                    contents: try { () -> Data in
+                        guard let url = Bundle.main.url(forResource: "SocialSupportQuestionnaire", withExtension: "json") else {
+                            fatalError("Unable to find SocialSupport questionnaire")
+                        }
+                        return try Data(contentsOf: url)
+                    }()
+                )
+            case .v2:
+                let _ = ()
+            case .v3:
+                try StudyDefinitionBundle.File(
+                    fileRef: .init(category: .informationalArticle, filename: "Article2", fileExtension: "md"),
+                    localization: .init(language: .english, region: .unitedStates),
+                    contents: """
+                        ---
+                        title: Article 2 Title
+                        ---
+                        
+                        # Article 2
+                        heyoooo
+                        """
                 )
             }
         }
