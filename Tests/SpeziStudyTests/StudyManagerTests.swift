@@ -46,8 +46,6 @@ final class StudyManagerTests: Sendable {
             components: [
                 .informational(.init(
                     id: Self.articleComponentId,
-                    title: "",
-                    headerImage: "",
                     bodyFileRef: .init(category: .informationalArticle, filename: "a1", fileExtension: "md")
                 ))
             ],
@@ -65,9 +63,7 @@ final class StudyManagerTests: Sendable {
         studyBundle = try StudyBundle.writeToDisk(
             at: tmpUrl,
             definition: testStudy,
-            consentDocuments: [],
-            questionnaires: [],
-            informationalArticles: []
+            files: []
         )
     }
     
