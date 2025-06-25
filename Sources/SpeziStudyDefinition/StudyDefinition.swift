@@ -133,16 +133,15 @@ extension StudyDefinition {
 }
 
 extension StudyBundle {
+    /// The component's display title
     public func displayTitle(for component: StudyDefinition.Component, in locale: Locale) -> String? {
         switch component {
         case .informational(let component):
-            guard let url = self.resolve(component.bodyFileRef, using: locale) else { // TODO `in locale:` vs `using locale:`?? (UNIFYYY!)))
+            // TODO `in locale:` vs `using locale:`?? (UNIFYYY!)))
+            guard let url = self.resolve(component.bodyFileRef, using: locale),
+                  let text = (try? Data(contentsOf: url)).flatMap({ String(data: $0, encoding: .utf8) })else {
                 return nil
             }
-            guard let text = (try? Data(contentsOf: url)).flatMap({ String(data: $0, encoding: .utf8) }) else {
-                return nil
-            }
-            // TODO not ideal that we have a FS op every time this is accessed???
             return (try? MarkdownDocument.Metadata(parsing: text))?.title
         case .questionnaire(let component):
             return questionnaire(for: component.questionnaireFileRef, locale: locale)?.title?.value?.string

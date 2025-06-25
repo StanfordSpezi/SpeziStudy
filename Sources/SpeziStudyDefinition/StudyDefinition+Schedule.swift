@@ -111,19 +111,3 @@ extension StudyDefinition {
         }
     }
 }
-
-
-//extension StudyDefinition.ComponentSchedule.ScheduleDefinition: CustomStringConvertible {
-//    public var description: String {
-//        switch self {
-//        case let .repeated(.daily(interval: 1, hour, minute), offset):
-//            "daily @ "
-//        case .after(let studyLifecycleEvent, let offset):
-//            <#code#>
-//        case .once(let dateComponents):
-//            <#code#>
-//        case .repeated(let _, let offset):
-//            <#code#>
-//        }
-//    }
-//}

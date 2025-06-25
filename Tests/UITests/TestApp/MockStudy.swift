@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: MIT
 //
 
-// swiftlint:disable file_types_order
+// swiftlint:disable file_types_order closure_body_length
 
 import Foundation
 import class ModelsR4.Questionnaire
@@ -64,7 +64,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyBundle { // swiftlint
             // swiftlint:disable:previous line_length
             enrollmentConditions: .none
         ),
-        components: Array { // swiftlint:disable:this closure_body_length
+        components: Array {
             StudyDefinition.Component.informational(.init(
                 id: .article1ComponentId,
                 bodyFileRef: .init(category: .informationalArticle, filename: "Article1", fileExtension: "md")
@@ -101,7 +101,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyBundle { // swiftlint
                 ))
             }
         },
-        componentSchedules: Array { // swiftlint:disable:this closure_body_length
+        componentSchedules: Array {
             StudyDefinition.ComponentSchedule(
                 id: .schedule0Id,
                 componentId: .article0ComponentId,
@@ -194,7 +194,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyBundle { // swiftlint
                     }()
                 )
             case .v2:
-                let _ = ()
+                let _ = () // swiftlint:disable:this redundant_discardable_let
             case .v3:
                 try StudyBundle.File(
                     fileRef: .init(category: .informationalArticle, filename: "Article2", fileExtension: "md"),

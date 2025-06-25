@@ -31,11 +31,6 @@ public final class StudyEnrollment {
     /// This property stores the current revision of the study as last seen by this object.
     public private(set) var studyRevision: UInt
     
-////    /// JSON-encoded version of the study.
-////    private var encodedStudy: Data
-//    /// The path of the study bundle, relative to the application's Documents directory.
-//    private var studyBundlePath: String
-    
     var studyBundleUrl: URL {
         StudyManager.studyBundlesDirectory.appendingPathComponent(self.id.uuidString, conformingTo: .speziStudyBundle)
     }
@@ -70,7 +65,7 @@ public final class StudyEnrollment {
             return
         }
         try newBundle.copy(to: studyBundleUrl)
-        self.studyBundle = try! .init(bundleUrl: self.studyBundleUrl)
+        self.studyBundle = try .init(bundleUrl: self.studyBundleUrl)
         studyRevision = newBundle.studyDefinition.studyRevision
     }
 }

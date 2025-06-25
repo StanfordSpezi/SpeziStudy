@@ -20,15 +20,6 @@ import SwiftData
 import SwiftUI
 
 
-//extension Spezi {
-//    var locale: Locale {
-//        get {
-//            self.storage
-//        }
-//    }
-//}
-
-
 /// Manages enrollment and participation in studies.
 ///
 /// ## Usage
@@ -58,7 +49,8 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
         case inMemory
     }
     
-    nonisolated static let studyBundlesDirectory = URL.documentsDirectory.appending(path: "edu.stanford.SpeziStudy/StudyBundles", directoryHint: .isDirectory)
+    nonisolated static let studyBundlesDirectory = URL.documentsDirectory
+        .appending(path: "edu.stanford.SpeziStudy/StudyBundles", directoryHint: .isDirectory)
     
     /// The prefix used for SpeziScheduler Tasks created for study component schedules.
     private static let speziStudyDomainTaskIdPrefix = "edu.stanford.spezi.SpeziStudy.studyComponentTask."
@@ -186,8 +178,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
         }
         logger.notice("Found \(orphanedBundleUrls.count) orphaned study bundle(s). Will remove.")
         for url in orphanedBundleUrls {
-            logger.notice("will remove \(url)") // TODO actually do it!!!
-//            try fm.removeItem(at: url)
+            try fm.removeItem(at: url)
         }
     }
 }
@@ -220,7 +211,7 @@ extension StudyManager {
     }
     
     
-    @MainActor // swiftlint:disable:next cyclomatic_complexity
+    @MainActor // swiftlint:disable:next cyclomatic_complexity function_body_length
     private func registerStudyTasksWithScheduler(_ enrollments: some Collection<StudyEnrollment>) throws {
         for enrollment in enrollments {
             guard let studyBundle = enrollment.studyBundle else {
@@ -313,21 +304,6 @@ extension StudyManager {
         case .healthDataCollection:
             throw TaskCreationError.componentNotEligibleForTaskCreation
         }
-//        if let title = studyBundle.displayTitle(for: component, in: .current), title.contains("Welcome") {
-//            logger.notice("component.id: \(component.id.uuidString)")
-//            logger.notice("title: \(title)")
-//            switch component {
-//            case .informational(let component):
-//                let url = studyBundle.resolve(component.bodyFileRef, using: .current)!
-//                logger.notice("fileRef.url: \(url)")
-//                fatalError()
-//            default:
-//                fatalError()
-//            }
-//        } else {
-//            logger.notice("UUID \(component.id.uuidString)")
-//        }
-//        logger.notice("Creating Task for component w/ title '\(studyBundle.displayTitle(for: component, in: .current) ?? "(nil)")'")
         return try scheduler.createOrUpdateTask(
             id: taskId(for: componentSchedule, in: studyBundle),
             title: studyBundle.displayTitle(for: component, in: .current).map { "\($0)" } ?? "", // TODO how to inject/override locale here?

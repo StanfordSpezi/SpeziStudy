@@ -62,9 +62,9 @@ struct HomeTab: View {
     }
     
     @ViewBuilder private var actions: some View {
-        let mockStudyV1 = try! mockStudy(revision: .v1)
-        let mockStudyV2 = try! mockStudy(revision: .v2)
-        let mockStudyV3 = try! mockStudy(revision: .v3)
+        let mockStudyV1 = try! mockStudy(revision: .v1) // swiftlint:disable:this force_try
+        let mockStudyV2 = try! mockStudy(revision: .v2) // swiftlint:disable:this force_try
+        let mockStudyV3 = try! mockStudy(revision: .v3) // swiftlint:disable:this force_try
         AsyncButton("Enroll in \(mockStudyV1.studyDefinition.metadata.title) (v\(mockStudyV1.studyDefinition.studyRevision))", state: $viewState) {
             try await studyManager.enroll(in: mockStudyV1)
         }
