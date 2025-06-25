@@ -21,7 +21,7 @@ extension UTType {
 
 
 /// A handle for working with a Study Definition bundle
-public struct StudyDefinitionBundle: Hashable, Identifiable, Sendable { // TODO rename to just StudyBundle?!!!!
+public struct StudyBundle: Hashable, Identifiable, Sendable {
     public static let fileExtension = "spezistudybundle"
     
     private static let logger = Logger(subsystem: "edu.stanford.SpeziStudy", category: "StudyBundle")
@@ -148,7 +148,7 @@ public struct StudyDefinitionBundle: Hashable, Identifiable, Sendable { // TODO 
 }
 
 
-extension StudyDefinitionBundle {
+extension StudyBundle {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(bundleUrl)
     }
@@ -158,7 +158,7 @@ extension StudyDefinitionBundle {
     }
 }
 
-extension StudyDefinitionBundle {
+extension StudyBundle {
     public struct File {
         fileprivate let localizedFileRef: FileReferenceWithLocalization
         let contents: Data
@@ -193,7 +193,7 @@ extension StudyDefinitionBundle {
         at bundleUrl: URL,
         definition: StudyDefinition,
         files: [File]
-    ) throws -> StudyDefinitionBundle {
+    ) throws -> StudyBundle {
         precondition(bundleUrl.pathExtension == Self.fileExtension)
         let FM = FileManager.default
         try? FM.removeItem(at: bundleUrl)
@@ -229,7 +229,7 @@ extension StudyDefinitionBundle {
 }
 
 
-extension StudyDefinitionBundle {
+extension StudyBundle {
     /// A reference to a non-localized version of a file within the bundle
     public struct FileReference: Hashable, Sendable, Codable, CustomStringConvertible {
         public struct Category: RawRepresentable, Hashable, Codable, Sendable {

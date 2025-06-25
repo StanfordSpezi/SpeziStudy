@@ -44,13 +44,13 @@ public final class StudyEnrollment {
     ///
     /// - Note: In some circumstances (e.g., if the `StudyDefinition` schema changes, and this enrollment has yet to be updated),
     ///     this value may initially be `nil` for a bit, until ``StudyManager/informAboutStudies(_:)`` was called.
-    @Transient public private(set) lazy var studyBundle: StudyDefinitionBundle? = {
+    @Transient public private(set) lazy var studyBundle: StudyBundle? = {
         try? .init(bundleUrl: studyBundleUrl)
     }()
     
     
     /// Creates a new `StudyEnrollment` object.
-    init(enrollmentDate: Date, studyBundle: StudyDefinitionBundle) throws {
+    init(enrollmentDate: Date, studyBundle: StudyBundle) throws {
         self.enrollmentDate = enrollmentDate
         self.studyId = studyBundle.studyDefinition.id
         self.studyRevision = studyBundle.studyDefinition.studyRevision
@@ -60,27 +60,15 @@ public final class StudyEnrollment {
     /// Updates the enrollment's `StudyDefinition` to a new revision, if necessary.
     ///
     /// - Note: Attempting to update to a different study, or attempting to downgrade to an older revision, will result in the function simply not doing anything.
-    func updateStudyBundle(_ newBundle: StudyDefinitionBundle) throws {
+    func updateStudyBundle(_ newBundle: StudyBundle) throws {
         try updateStudyBundle(newBundle, performValidityChecks: true)
     }
     
     
-    private func updateStudyBundle(_ newBundle: StudyDefinitionBundle, performValidityChecks: Bool) throws {
+    private func updateStudyBundle(_ newBundle: StudyBundle, performValidityChecks: Bool) throws {
         guard !performValidityChecks || (newBundle.id == studyId && newBundle.studyDefinition.studyRevision > studyRevision) else {
             return
         }
-//        // do this first so that, in case the encoding fails, we don't have a partially-updated enrollment object.
-//        let studyData = try JSONEncoder().encode(newStudy)
-//        studyRevision = newStudy.studyRevision
-//        encodedStudy = studyData
-//        study = newStudy
-//        let FM = FileManager.default
-//        let tmpCopyUrl = URL.temporaryDirectory
-//            .appending(component: UUID().uuidString, directoryHint: .isDirectory)
-//            .appending(component: newBundle.bundleUrl.lastPathComponent)
-//        try! newBundle.copy(to: tmpCopyUrl)
-//        _ = try FM.replaceItemAt(self.studyBundleUrl, withItemAt: tmpCopyUrl)
-//        try? FM.removeItem(at: tmpCopyUrl) // TODO do we need to do this? does it happen automatically?
         try newBundle.copy(to: studyBundleUrl)
         self.studyBundle = try! .init(bundleUrl: self.studyBundleUrl)
     }

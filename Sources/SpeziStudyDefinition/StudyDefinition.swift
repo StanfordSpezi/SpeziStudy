@@ -132,7 +132,7 @@ extension StudyDefinition {
     }
 }
 
-extension StudyDefinitionBundle {
+extension StudyBundle {
     public func displayTitle(for component: StudyDefinition.Component, in locale: Locale) -> String? {
         switch component {
         case .informational(let component):

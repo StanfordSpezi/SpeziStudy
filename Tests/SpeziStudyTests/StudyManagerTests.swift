@@ -30,7 +30,7 @@ private actor TestStandard: Standard, HealthKitConstraint {
 final class StudyManagerTests: Sendable {
     private static let articleComponentId = UUID()
     
-    private let studyBundle: StudyDefinitionBundle
+    private let studyBundle: StudyBundle
     
     init() throws {
         let testStudy = StudyDefinition(
@@ -62,7 +62,7 @@ final class StudyManagerTests: Sendable {
             ]
         )
         let tmpUrl = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
-        studyBundle = try StudyDefinitionBundle.writeToDisk(
+        studyBundle = try StudyBundle.writeToDisk(
             at: tmpUrl,
             definition: testStudy,
             consentDocuments: [],

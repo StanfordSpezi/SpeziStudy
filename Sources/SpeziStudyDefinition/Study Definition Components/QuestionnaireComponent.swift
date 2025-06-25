@@ -14,9 +14,9 @@ extension StudyDefinition {
     public struct QuestionnaireComponent: Identifiable, StudyDefinitionElement {
         /// - parameter id: the id of this study component, **not** of the questionnaire
         public let id: UUID
-        public let questionnaireFileRef: StudyDefinitionBundle.FileReference
+        public let questionnaireFileRef: StudyBundle.FileReference
         
-        public init(id: UUID, questionnaireFileRef: StudyDefinitionBundle.FileReference) {
+        public init(id: UUID, questionnaireFileRef: StudyBundle.FileReference) {
             self.id = id
             self.questionnaireFileRef = questionnaireFileRef
         }

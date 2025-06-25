@@ -52,7 +52,7 @@ enum MockStudyRevision: UInt {
 }
 
 
-func mockStudy(revision: MockStudyRevision) throws -> StudyDefinitionBundle { // swiftlint:disable:this function_body_length
+func mockStudy(revision: MockStudyRevision) throws -> StudyBundle { // swiftlint:disable:this function_body_length
     let definition = StudyDefinition(
         studyRevision: revision.rawValue,
         metadata: StudyDefinition.Metadata(
@@ -146,11 +146,11 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyDefinitionBundle { //
         }
     )
     let url = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
-    return try StudyDefinitionBundle.writeToDisk(
+    return try StudyBundle.writeToDisk(
         at: url,
         definition: definition,
         files: Array {
-            try StudyDefinitionBundle.File(
+            try StudyBundle.File(
                 fileRef: .init(category: .informationalArticle, filename: "Article1", fileExtension: "md"),
                 localization: .init(language: .english, region: .unitedStates),
                 contents: """
@@ -159,7 +159,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyDefinitionBundle { //
                     ---
                     """
             )
-            try StudyDefinitionBundle.File(
+            try StudyBundle.File(
                 fileRef: .init(category: .informationalArticle, filename: "Welcome", fileExtension: "md"),
                 localization: .init(language: .english, region: .unitedStates),
                 contents: """
@@ -171,7 +171,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyDefinitionBundle { //
                     We welcome you to our study :)
                     """
             )
-            try StudyDefinitionBundle.File(
+            try StudyBundle.File(
                 fileRef: .init(category: .informationalArticle, filename: "SSQAnswered", fileExtension: "md"),
                 localization: .init(language: .english, region: .unitedStates),
                 contents: """
@@ -183,7 +183,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyDefinitionBundle { //
             )
             switch revision {
             case .v1:
-                StudyDefinitionBundle.File(
+                StudyBundle.File(
                     fileRef: .init(category: .questionnaire, filename: "SocialSupport", fileExtension: "json"),
                     localization: .init(language: .english, region: .unitedStates),
                     contents: try { () -> Data in
@@ -196,7 +196,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyDefinitionBundle { //
             case .v2:
                 let _ = ()
             case .v3:
-                try StudyDefinitionBundle.File(
+                try StudyBundle.File(
                     fileRef: .init(category: .informationalArticle, filename: "Article2", fileExtension: "md"),
                     localization: .init(language: .english, region: .unitedStates),
                     contents: """

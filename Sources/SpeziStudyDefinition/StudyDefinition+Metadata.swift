@@ -48,7 +48,7 @@ extension StudyDefinition {
         public var enrollmentConditions: EnrollmentConditions
         
         /// The study's consent file.
-        public var consentFileRef: StudyDefinitionBundle.FileReference
+        public var consentFileRef: StudyBundle.FileReference
         
         /// Creates a new `Metadata` object.
         public init(
@@ -61,7 +61,7 @@ extension StudyDefinition {
             studyDependency: StudyDefinition.ID? = nil, // swiftlint:disable:this function_default_parameter_at_end
             participationCriterion: ParticipationCriterion,
             enrollmentConditions: EnrollmentConditions,
-            consentFileRef: StudyDefinitionBundle.FileReference = .init(category: .consent, filename: "Consent", fileExtension: "md")
+            consentFileRef: StudyBundle.FileReference = .init(category: .consent, filename: "Consent", fileExtension: "md")
         ) {
             self.id = id
             self.title = title

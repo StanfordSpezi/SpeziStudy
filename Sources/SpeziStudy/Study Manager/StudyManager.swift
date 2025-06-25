@@ -382,15 +382,15 @@ extension StudyManager {
     }
     
     
-    private func taskIdPrefix(for studyBundle: StudyDefinitionBundle) -> String {
+    private func taskIdPrefix(for studyBundle: StudyBundle) -> String {
         taskIdPrefix(forStudyId: studyBundle.id)
     }
     
-    private func taskIdPrefix(forStudyId studyId: StudyDefinitionBundle.ID) -> String {
+    private func taskIdPrefix(forStudyId studyId: StudyBundle.ID) -> String {
         Self.speziStudyDomainTaskIdPrefix + studyId.uuidString
     }
     
-    private func taskId(for schedule: StudyDefinition.ComponentSchedule, in studyBundle: StudyDefinitionBundle) -> String {
+    private func taskId(for schedule: StudyDefinition.ComponentSchedule, in studyBundle: StudyBundle) -> String {
         "\(taskIdPrefix(for: studyBundle)).\(schedule.componentId).\(schedule.id)"
     }
     
@@ -403,7 +403,7 @@ extension StudyManager {
     /// - if `X < Y`: update the study enrollment, as if ``informAboutStudies(_:)`` was called with the new study revision;
     /// - if `X > Y`: throw an error.
     @MainActor
-    public func enroll(in studyBundle: StudyDefinitionBundle) async throws {
+    public func enroll(in studyBundle: StudyBundle) async throws {
         let study = studyBundle.studyDefinition
         // big issue in this function is that, if we throw somewhere we kinda need to unroll _all_ the changes we've made so far
         // (which is much easier said than done...)
@@ -499,7 +499,7 @@ extension StudyManager {
     /// Informs the Study Manager about current study definitions.
     ///
     /// Ths study manager will use these definitions to determine whether it needs to update any of the study participation contexts ic currently manages.
-    public func informAboutStudies(_ studyBundles: some Collection<StudyDefinitionBundle>) async throws {
+    public func informAboutStudies(_ studyBundles: some Collection<StudyBundle>) async throws {
         for studyBundle in studyBundles {
             let studyId = studyBundle.studyDefinition.id
             let studyRevision = studyBundle.studyDefinition.studyRevision
@@ -518,7 +518,7 @@ extension StudyManager {
 // MARK: Event-Based Scheduling
 
 extension StudyManager {
-    func handleStudyLifecycleEvent(_ event: StudyLifecycleEvent, for studyBundle: StudyDefinitionBundle) {
+    func handleStudyLifecycleEvent(_ event: StudyLifecycleEvent, for studyBundle: StudyBundle) {
         for enrollment in studyEnrollments where enrollment.studyId == studyBundle.id {
             guard let studyBundle = enrollment.studyBundle else {
                 continue

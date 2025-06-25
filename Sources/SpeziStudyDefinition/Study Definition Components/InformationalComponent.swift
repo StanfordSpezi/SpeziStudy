@@ -13,9 +13,9 @@ extension StudyDefinition {
     /// Study Component which prompts the participant to read an informational article
     public struct InformationalComponent: Identifiable, StudyDefinitionElement {
         public var id: UUID
-        public var bodyFileRef: StudyDefinitionBundle.FileReference
+        public var bodyFileRef: StudyBundle.FileReference
         
-        public init(id: UUID, bodyFileRef: StudyDefinitionBundle.FileReference) {
+        public init(id: UUID, bodyFileRef: StudyBundle.FileReference) {
             precondition(bodyFileRef.category == .informationalArticle)
             self.id = id
             self.bodyFileRef = bodyFileRef
