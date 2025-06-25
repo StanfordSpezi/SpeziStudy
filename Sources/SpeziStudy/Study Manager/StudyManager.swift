@@ -166,7 +166,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     
     
     @_spi(TestingSupport)
-    public func removeOrphanedStudyBundles() {
+    public func removeOrphanedStudyBundles() throws {
         let fm = FileManager.default // swiftlint:disable:this identifier_name
         let allStudyBundles = self.studyEnrollments
         let allStudyBundleUrls = (try? fm.contents(of: Self.studyBundlesDirectory)) ?? []
