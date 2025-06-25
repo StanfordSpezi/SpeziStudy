@@ -71,5 +71,6 @@ public final class StudyEnrollment {
         }
         try newBundle.copy(to: studyBundleUrl)
         self.studyBundle = try! .init(bundleUrl: self.studyBundleUrl)
+        studyRevision = newBundle.studyDefinition.studyRevision
     }
 }

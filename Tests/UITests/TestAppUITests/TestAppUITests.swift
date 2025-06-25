@@ -24,7 +24,7 @@ class TestAppUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         
-        let completeWelcomeArticleButton = app.buttons["Complete Informational: Welcome to our TestStudy!"]
+        let completeWelcomeArticleButton = app.buttons["Complete Informational: Welcome to the Study!"]
         let completeQuestionnaireButton = app.buttons["Complete Questionnaire: Social Support"]
         let completeInformationalArticleButton = app.buttons["Complete Informational: Article1 Title"]
         
@@ -65,7 +65,7 @@ class TestAppUITests: XCTestCase {
         app.buttons["Update enrollment to study revision 3"].tap()
         XCTAssert(app.staticTexts["Study Revision, 3"].waitForExistence(timeout: 1))
         XCTAssert(app.staticTexts["Article2 Title"].waitForExistence(timeout: 1))
-        XCTAssert(app.staticTexts["Welcome to our TestStudy!, Completed"].waitForExistence(timeout: 1))
+        XCTAssert(app.staticTexts["Welcome to the Study!, Completed"].waitForExistence(timeout: 1))
         XCTAssert(app.staticTexts["Article1 Title, Completed"].waitForExistence(timeout: 1))
         
         // unenroll and make sure that everything gets removed

@@ -155,7 +155,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyBundle { // swiftlint
                 localization: .init(language: .english, region: .unitedStates),
                 contents: """
                     ---
-                    title: Article 1
+                    title: Article1 Title
                     ---
                     """
             )
@@ -201,7 +201,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyBundle { // swiftlint
                     localization: .init(language: .english, region: .unitedStates),
                     contents: """
                         ---
-                        title: Article 2 Title
+                        title: Article2 Title
                         ---
                         
                         # Article 2
