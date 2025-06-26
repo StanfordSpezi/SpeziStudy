@@ -25,7 +25,8 @@ extension UTType {
 /// A handle for working with a Study Definition bundle.
 ///
 /// - Important: A ``StudyBundle`` represents an immutable resource; mutating the underlying file system item is not allowed and will result in undefined behaviour.
-///     If you wish to make changes to a ``StudyBundle``, create a new bundle using the ``StudyBundle/writeToDisk(at:definition:files:)`` method.
+///     If you wish to make changes to a ``StudyBundle``, create a new bundle using the ``StudyBundle/writeToDisk(at:definition:files:)`` function,
+///     or use ``copy(to:)`` to create a copy of the bundle's underlying file system item.
 ///
 /// ## Topics
 ///
