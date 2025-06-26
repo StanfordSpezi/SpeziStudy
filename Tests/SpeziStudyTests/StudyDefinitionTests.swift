@@ -6,6 +6,8 @@
 // SPDX-License-Identifier: MIT
 //
 
+// swiftlint:disable line_length
+
 import Foundation
 import class ModelsR4.Questionnaire
 import SpeziFoundation
@@ -24,7 +26,6 @@ struct StudyDefinitionTests {
         #expect(try decodedStudy == Self.testStudyBundle)
     }
     
-    
     @Test
     func decodedStudyVersionExtraction() throws {
         let input1 = try JSONEncoder().encode(Self.testStudyBundle)
@@ -33,11 +34,40 @@ struct StudyDefinitionTests {
         let input2 = try #require(#"{"schemaVersion":"1.2.3", "glorb": "florb"}"#.data(using: .utf8))
         #expect(try StudyDefinition.schemaVersion(of: input2, using: JSONDecoder()) == Version(1, 2, 3))
     }
+    
+    @Test
+    func componentScheduleDescriptions() {
+        typealias Schedule = StudyDefinition.ComponentSchedule.ScheduleDefinition
+        #expect(Schedule.once(.init(
+            timeZone: .losAngeles, year: 2025, month: 06, day: 27, hour: 13, minute: 37
+        )).description == "once; at 2025-06-27T20:37:00Z")
+        #expect(Schedule.once(.init(
+            timeZone: .berlin, year: 2025, month: 06, day: 27, hour: 13, minute: 37
+        )).description == "once; at 2025-06-27T11:37:00Z")
+        #expect(Schedule.repeated(.daily(interval: 1, hour: 12, minute: 00)).description == "daily @ 12:00")
+        #expect(Schedule.repeated(.daily(interval: 1, hour: 09, minute: 07)).description == "daily @ 09:07")
+        #expect(Schedule.repeated(.daily(interval: 2, hour: 09, minute: 07)).description == "every 2nd day @ 09:07")
+        #expect(Schedule.repeated(.daily(interval: 3, hour: 09, minute: 07)).description == "every 3rd day @ 09:07")
+        #expect(Schedule.repeated(.daily(interval: 4, hour: 09, minute: 07)).description == "every 4th day @ 09:07")
+        #expect(Schedule.repeated(.daily(interval: 1, hour: 12, minute: 00), offset: .days(2)).description == "daily @ 12:00; offset by 2 days")
+        #expect(Schedule.repeated(.daily(interval: 1, hour: 12, minute: 00), offset: .days(2.5)).description == "daily @ 12:00; offset by 2 days, 12 hours")
+        #expect(Schedule.repeated(.daily(interval: 1, hour: 09, minute: 07), offset: .minutes(12)).description == "daily @ 09:07; offset by 12 minutes")
+        #expect(Schedule.repeated(.daily(interval: 1, hour: 09, minute: 07), offset: .minutes(12.21)).description == "daily @ 09:07; offset by 12 minutes")
+        #expect(Schedule.repeated(.daily(interval: 1, hour: 09, minute: 07), offset: .minutes(12.5)).description == "daily @ 09:07; offset by 12 minutes")
+        #expect(Schedule.repeated(.daily(interval: 1, hour: 09, minute: 07), offset: .minutes(12.7)).description == "daily @ 09:07; offset by 13 minutes")
+        #expect(Schedule.repeated(.daily(interval: 2, hour: 09, minute: 07), offset: .hours(17)).description == "every 2nd day @ 09:07; offset by 17 hours")
+        #expect(Schedule.repeated(.daily(interval: 3, hour: 09, minute: 07), offset: .weeks(1)).description == "every 3rd day @ 09:07; offset by 1 week")
+        #expect(Schedule.repeated(.daily(interval: 4, hour: 09, minute: 07), offset: .weeks(2)).description == "every 4th day @ 09:07; offset by 2 weeks")
+        #expect(Schedule.after(.enrollment, offset: .zero).description == "after enrollment")
+        #expect(Schedule.after(.enrollment, offset: .days(2)).description == "after enrollment; offset by 2 days")
+    }
 }
 
 
 extension Locale.Language {
     static let english = Locale.Language(identifier: "en")
+    static let spanish = Locale.Language(identifier: "es")
+    static let german = Locale.Language(identifier: "de")
 }
 
 

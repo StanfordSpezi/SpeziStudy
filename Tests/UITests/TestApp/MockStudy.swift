@@ -150,7 +150,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyBundle { // swiftlint
         at: url,
         definition: definition,
         files: Array {
-            try StudyBundle.File(
+            try StudyBundle.FileInput(
                 fileRef: .init(category: .informationalArticle, filename: "Article1", fileExtension: "md"),
                 localization: .init(language: .english, region: .unitedStates),
                 contents: """
@@ -159,7 +159,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyBundle { // swiftlint
                     ---
                     """
             )
-            try StudyBundle.File(
+            try StudyBundle.FileInput(
                 fileRef: .init(category: .informationalArticle, filename: "Welcome", fileExtension: "md"),
                 localization: .init(language: .english, region: .unitedStates),
                 contents: """
@@ -171,7 +171,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyBundle { // swiftlint
                     We welcome you to our study :)
                     """
             )
-            try StudyBundle.File(
+            try StudyBundle.FileInput(
                 fileRef: .init(category: .informationalArticle, filename: "SSQAnswered", fileExtension: "md"),
                 localization: .init(language: .english, region: .unitedStates),
                 contents: """
@@ -183,7 +183,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyBundle { // swiftlint
             )
             switch revision {
             case .v1:
-                StudyBundle.File(
+                StudyBundle.FileInput(
                     fileRef: .init(category: .questionnaire, filename: "SocialSupport", fileExtension: "json"),
                     localization: .init(language: .english, region: .unitedStates),
                     contents: try { () -> Data in
@@ -196,7 +196,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyBundle { // swiftlint
             case .v2:
                 let _ = () // swiftlint:disable:this redundant_discardable_let
             case .v3:
-                try StudyBundle.File(
+                try StudyBundle.FileInput(
                     fileRef: .init(category: .informationalArticle, filename: "Article2", fileExtension: "md"),
                     localization: .init(language: .english, region: .unitedStates),
                     contents: """

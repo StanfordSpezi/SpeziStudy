@@ -15,6 +15,7 @@ import SpeziLocalStorage
 @_spi(APISupport)
 import SpeziScheduler
 import SpeziSchedulerUI
+@_documentation(visibility: internal)
 @_exported import SpeziStudyDefinition
 import SwiftData
 import SwiftUI

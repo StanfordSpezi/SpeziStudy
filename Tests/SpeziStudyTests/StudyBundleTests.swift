@@ -40,6 +40,36 @@ struct StudyBundleTests {
         }
     }
     
+    @Test
+    func filenameLocalizationParsing() throws {
+        typealias LocalizedFileRef = StudyBundle.LocalizedFileReference
+        #expect(StudyBundle.parse(filename: "Welcome+en-US.md", in: .consent) == LocalizedFileRef(
+            fileRef: .init(category: .consent, filename: "Welcome", fileExtension: "md"),
+            localization: .init(language: .english, region: .unitedStates)
+        ))
+        #expect(StudyBundle.parse(filename: "Welcome+es-US.md", in: .consent) == LocalizedFileRef(
+            fileRef: .init(category: .consent, filename: "Welcome", fileExtension: "md"),
+            localization: .init(language: .spanish, region: .unitedStates)
+        ))
+        #expect(StudyBundle.parse(filename: "Welcome+en_US.md", in: .consent) == nil)
+        #expect(StudyBundle.parse(filename: "Welcome+de-US.md", in: .consent) == LocalizedFileRef(
+            fileRef: .init(category: .consent, filename: "Welcome", fileExtension: "md"),
+            localization: .init(language: .german, region: .unitedStates)
+        ))
+        #expect(StudyBundle.parse(filename: "Welcome+en-DE.md", in: .consent) == LocalizedFileRef(
+            fileRef: .init(category: .consent, filename: "Welcome", fileExtension: "md"),
+            localization: .init(language: .english, region: .germany)
+        ))
+        #expect(StudyBundle.parse(filename: "Welcome+de-DE.md", in: .consent) == LocalizedFileRef(
+            fileRef: .init(category: .consent, filename: "Welcome", fileExtension: "md"),
+            localization: .init(language: .german, region: .germany)
+        ))
+        #expect(StudyBundle.parse(filename: "Welcome+en-GB.md", in: .consent) == LocalizedFileRef(
+            fileRef: .init(category: .consent, filename: "Welcome", fileExtension: "md"),
+            localization: .init(language: .english, region: .unitedKingdom)
+        ))
+    }
+    
     
 // MARK: Test Study
     
@@ -72,7 +102,8 @@ struct StudyBundleTests {
                 shortExplanationText: "This is our TestStudy",
                 participationCriterion: .ageAtLeast(18) && !.ageAtLeast(60) && (.isFromRegion(.unitedStates) || .isFromRegion(.unitedKingdom)) && .speaksLanguage(.english),
                 // swiftlint:disable:previous line_length
-                enrollmentConditions: .requiresInvitation(verificationEndpoint: try #require(URL(string: "https://mhc.stanford.edu/api/enroll")))
+                enrollmentConditions: .requiresInvitation(verificationEndpoint: try #require(URL(string: "https://mhc.stanford.edu/api/enroll"))),
+                consentFileRef: .init(category: .consent, filename: "Consent", fileExtension: "md")
             ),
             components: [
                 .informational(.init(
@@ -131,7 +162,18 @@ struct StudyBundleTests {
         )
         let url = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
         return try StudyBundle.writeToDisk(at: url, definition: definition, files: [
-            StudyBundle.File(
+            StudyBundle.FileInput(
+                fileRef: .init(category: .consent, filename: "Consent", fileExtension: "md"),
+                localization: .init(locale: locale),
+                contents: """
+                    ---
+                    title: Study Consent
+                    ---
+                    
+                    # Consent
+                    """
+            ),
+            StudyBundle.FileInput(
                 fileRef: .init(category: .informationalArticle, filename: "Info1", fileExtension: "md"),
                 localization: .init(locale: locale),
                 contents: """
@@ -143,7 +185,7 @@ struct StudyBundleTests {
                     This is the text of the first informational component
                     """
             ),
-            StudyBundle.File(
+            StudyBundle.FileInput(
                 fileRef: .init(category: .informationalArticle, filename: "Info2", fileExtension: "md"),
                 localization: .init(locale: locale),
                 contents: """
@@ -155,7 +197,7 @@ struct StudyBundleTests {
                     This is the text of the second informational component
                     """
             ),
-            StudyBundle.File(
+            StudyBundle.FileInput(
                 fileRef: .init(category: .questionnaire, filename: "SocialSupportQuestionnaire", fileExtension: "json"),
                 localization: .init(locale: locale),
                 contents: try Questionnaire.named("SocialSupportQuestionnaire")

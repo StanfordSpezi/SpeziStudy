@@ -15,6 +15,7 @@ import SpeziHealthKit
 public typealias StudyDefinitionElement = Hashable & Codable & Sendable
 
 
+// TODO move all of this documentation over to the StudyBundle?!
 /// Defines a Study, as a composition of metadata, components, and a schedule.
 ///
 /// ## Studies
@@ -67,7 +68,7 @@ public typealias StudyDefinitionElement = Hashable & Codable & Sendable
 /// ### Supporting Types
 /// - ``StudyDefinitionElement``
 /// - ``EnrollmentConditions``
-/// - ``ParticipationCriteria``
+/// - ``ParticipationCriterion``
 /// ### Working with a study definition
 /// - ``allCollectedHealthData``
 /// - ``healthDataCollectionComponents``
@@ -134,17 +135,24 @@ extension StudyDefinition {
 
 extension StudyBundle {
     /// The component's display title
-    public func displayTitle(for component: StudyDefinition.Component, in locale: Locale) -> String? {
+    public func displayTitle(
+        for component: StudyDefinition.Component,
+        in locale: Locale,
+        using localeMatchingBehaviour: StudyBundle.LocaleMatchingBehaviour = .default
+    ) -> String? {
         switch component {
         case .informational(let component):
-            // TODO `in locale:` vs `using locale:`?? (UNIFYYY!)))
-            guard let url = self.resolve(component.bodyFileRef, using: locale),
+            guard let url = self.resolve(component.bodyFileRef, in: locale, using: localeMatchingBehaviour),
                   let text = (try? Data(contentsOf: url)).flatMap({ String(data: $0, encoding: .utf8) })else {
                 return nil
             }
             return (try? MarkdownDocument.Metadata(parsing: text))?.title
         case .questionnaire(let component):
-            return questionnaire(for: component.questionnaireFileRef, locale: locale)?.title?.value?.string
+            return questionnaire(
+                for: component.questionnaireFileRef,
+                in: locale,
+                using: localeMatchingBehaviour
+            )?.title?.value?.string
         case .healthDataCollection:
             return nil
         case .timedWalkingTest(let component):

@@ -63,7 +63,13 @@ final class StudyManagerTests: Sendable {
         studyBundle = try StudyBundle.writeToDisk(
             at: tmpUrl,
             definition: testStudy,
-            files: []
+            files: [
+                StudyBundle.FileInput(
+                    fileRef: .init(category: .informationalArticle, filename: "a1", fileExtension: "md"),
+                    localization: .init(locale: .current),
+                    contents: ""
+                )
+            ]
         )
     }
     
