@@ -165,24 +165,6 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
                 }
             }
     }
-    
-    
-    @_spi(TestingSupport)
-    public func removeOrphanedStudyBundles() throws {
-        let fm = FileManager.default // swiftlint:disable:this identifier_name
-        let allStudyBundles = self.studyEnrollments
-        let allStudyBundleUrls = (try? fm.contents(of: Self.studyBundlesDirectory)) ?? []
-        let orphanedBundleUrls = allStudyBundleUrls.filter { url in
-            !allStudyBundles.contains { $0.studyBundleUrl == url }
-        }
-        guard !orphanedBundleUrls.isEmpty else {
-            return // nothing to do
-        }
-        logger.notice("Found \(orphanedBundleUrls.count) orphaned study bundle(s). Will remove.")
-        for url in orphanedBundleUrls {
-            try fm.removeItem(at: url)
-        }
-    }
 }
 
 
@@ -470,6 +452,24 @@ extension StudyManager {
         for task in orphanedTasks {
             logger.notice("Found orphaned task in SpeziStudy domain which doesn't match any current enrollment: '\(task.id)'. Will delete.")
             try scheduler.deleteAllVersions(of: task)
+        }
+    }
+    
+    /// Removes all entries in the ``StudyManager/studyBundlesDirectory`` which do not correspond to one of the current study enrollments.
+    @_spi(TestingSupport)
+    public func removeOrphanedStudyBundles() throws {
+        let fm = FileManager.default // swiftlint:disable:this identifier_name
+        let allStudyBundles = self.studyEnrollments
+        let allStudyBundleUrls = (try? fm.contents(of: Self.studyBundlesDirectory)) ?? []
+        let orphanedBundleUrls = allStudyBundleUrls.filter { url in
+            !allStudyBundles.contains { $0.studyBundleUrl == url }
+        }
+        guard !orphanedBundleUrls.isEmpty else {
+            return // nothing to do
+        }
+        logger.notice("Found \(orphanedBundleUrls.count) orphaned study bundle(s). Will remove.")
+        for url in orphanedBundleUrls {
+            try fm.removeItem(at: url)
         }
     }
 }

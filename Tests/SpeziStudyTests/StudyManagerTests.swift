@@ -74,7 +74,7 @@ final class StudyManagerTests: Sendable {
     }
     
     @Test
-    func orphanHandling() async throws {
+    func orphanTaskHandling() async throws {
         let allTime = Date.distantPast...Date.distantFuture
         let studyManager = StudyManager(persistence: .inMemory)
         await withDependencyResolution(standard: TestStandard()) {
@@ -96,6 +96,30 @@ final class StudyManagerTests: Sendable {
         try await _Concurrency.Task.sleep(for: .seconds(0.2))
         try await MainActor.run {
             try #expect(studyManager.scheduler.queryTasks(for: allTime).isEmpty)
+        }
+    }
+    
+    @Test
+    func orphanStudyBundleHandling() async throws {
+        let fileManager = FileManager.default
+        let studyManager = StudyManager(persistence: .inMemory)
+        await withDependencyResolution(standard: TestStandard()) {
+            Scheduler(persistence: .inMemory)
+            studyManager
+        }
+        try await studyManager.enroll(in: studyBundle)
+        try await MainActor.run {
+            #expect(studyManager.studyEnrollments.count == 1)
+            let enrollment = try #require(studyManager.studyEnrollments.first)
+            #expect(enrollment.studyId == studyBundle.id)
+            #expect(enrollment.studyId == studyBundle.studyDefinition.id)
+            #expect(try #require(enrollment.studyBundle).studyDefinition == studyBundle.studyDefinition)
+            #expect(try fileManager.contents(of: StudyManager.studyBundlesDirectory).contains(enrollment.studyBundleUrl))
+            studyManager.modelContext.delete(enrollment)
+            #expect(try fileManager.contents(of: StudyManager.studyBundlesDirectory).contains(enrollment.studyBundleUrl))
+            try studyManager.removeOrphanedTasks() // not what we're testing but important to ensure that the test doesn't crash
+            try studyManager.removeOrphanedStudyBundles()
+            #expect(try !fileManager.contents(of: StudyManager.studyBundlesDirectory).contains(enrollment.studyBundleUrl))
         }
     }
     
