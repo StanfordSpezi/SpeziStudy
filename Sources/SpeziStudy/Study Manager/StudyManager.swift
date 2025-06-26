@@ -126,6 +126,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
             try registerStudyTasksWithScheduler(enrollments)
             try await setupStudyBackgroundComponents(enrollments)
             try removeOrphanedTasks()
+            try removeOrphanedStudyBundles()
             #if targetEnvironment(simulator)
             guard autosaveTask == nil else {
                 return
@@ -440,7 +441,9 @@ extension StudyManager {
                 try scheduler.deleteAllVersions(of: task)
             }
         }
+        let studyBundleUrl = enrollment.studyBundleUrl
         modelContext.delete(enrollment)
+        try? FileManager.default.removeItem(at: studyBundleUrl)
         try modelContext.save()
     }
     

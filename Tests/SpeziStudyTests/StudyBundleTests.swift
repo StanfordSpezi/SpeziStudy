@@ -41,6 +41,18 @@ struct StudyBundleTests {
     }
     
     @Test
+    func bundleEquality() throws {
+        let bundle1 = try Self.testStudyBundle
+        let bundle2 = try Self.testStudyBundle
+        #expect(bundle1 == bundle2)
+        let bundle3Url = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
+        try bundle1.copy(to: bundle3Url)
+        let bundle3 = try StudyBundle(bundleUrl: bundle3Url)
+        #expect(bundle3 != bundle1)
+        #expect(bundle3 != bundle2)
+    }
+    
+    @Test
     func filenameLocalizationParsing() throws {
         typealias LocalizedFileRef = StudyBundle.LocalizedFileReference
         #expect(StudyBundle.parse(filename: "Welcome+en-US.md", in: .consent) == LocalizedFileRef(
@@ -52,6 +64,7 @@ struct StudyBundleTests {
             localization: .init(language: .spanish, region: .unitedStates)
         ))
         #expect(StudyBundle.parse(filename: "Welcome+en_US.md", in: .consent) == nil)
+        #expect(StudyBundle.parse(filename: "Welcome.md", in: .consent) == nil)
         #expect(StudyBundle.parse(filename: "Welcome+de-US.md", in: .consent) == LocalizedFileRef(
             fileRef: .init(category: .consent, filename: "Welcome", fileExtension: "md"),
             localization: .init(language: .german, region: .unitedStates)
@@ -68,6 +81,15 @@ struct StudyBundleTests {
             fileRef: .init(category: .consent, filename: "Welcome", fileExtension: "md"),
             localization: .init(language: .english, region: .unitedKingdom)
         ))
+    }
+    
+    @Test
+    func resourceFetching() throws {
+        let studyBundle = try Self.testStudyBundle
+        #expect(try studyBundle.consentText(
+            for: .init(category: .consent, filename: "Consent", fileExtension: "md"),
+            in: Self.locale
+        ) == "---\ntitle: Study Consent\n---\n\n# Consent")
     }
     
     
