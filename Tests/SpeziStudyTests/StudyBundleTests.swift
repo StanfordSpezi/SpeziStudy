@@ -130,15 +130,15 @@ struct StudyBundleTests {
             components: [
                 .informational(.init(
                     id: article1ComponentId,
-                    bodyFileRef: .init(category: .informationalArticle, filename: "Info1", fileExtension: "md")
+                    fileRef: .init(category: .informationalArticle, filename: "Info1", fileExtension: "md")
                 )),
                 .informational(.init(
                     id: article2ComponentId,
-                    bodyFileRef: .init(category: .informationalArticle, filename: "Info2", fileExtension: "md")
+                    fileRef: .init(category: .informationalArticle, filename: "Info2", fileExtension: "md")
                 )),
                 .questionnaire(.init(
                     id: questionnaireComponentId,
-                    questionnaireFileRef: .init(category: .questionnaire, filename: "SocialSupportQuestionnaire", fileExtension: "json")
+                    fileRef: .init(category: .questionnaire, filename: "SocialSupportQuestionnaire", fileExtension: "json")
                 )),
                 .healthDataCollection(.init(
                     id: healthDataCollectionComponentId,

@@ -67,7 +67,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyBundle { // swiftlint
         components: Array {
             StudyDefinition.Component.informational(.init(
                 id: .article1ComponentId,
-                bodyFileRef: .init(category: .informationalArticle, filename: "Article1", fileExtension: "md")
+                fileRef: .init(category: .informationalArticle, filename: "Article1", fileExtension: "md")
             ))
             StudyDefinition.Component.healthDataCollection(.init(
                 id: .healthComponentId,
@@ -80,24 +80,24 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyBundle { // swiftlint
             ))
             StudyDefinition.Component.informational(.init(
                 id: .article0ComponentId,
-                bodyFileRef: .init(category: .informationalArticle, filename: "Welcome", fileExtension: "md")
+                fileRef: .init(category: .informationalArticle, filename: "Welcome", fileExtension: "md")
             ))
             StudyDefinition.Component.informational(.init(
                 id: .article3ComponentId,
-                bodyFileRef: .init(category: .informationalArticle, filename: "SSQAnswered", fileExtension: "md")
+                fileRef: .init(category: .informationalArticle, filename: "SSQAnswered", fileExtension: "md")
             ))
             switch revision {
             case .v1:
                 StudyDefinition.Component.questionnaire(.init(
                     id: .questionnaireComponentId,
-                    questionnaireFileRef: .init(category: .questionnaire, filename: "SocialSupport", fileExtension: "json")
+                    fileRef: .init(category: .questionnaire, filename: "SocialSupport", fileExtension: "json")
                 ))
             case .v2:
                 let _ = () // swiftlint:disable:this redundant_discardable_let
             case .v3:
                 StudyDefinition.Component.informational(.init(
                     id: .article2ComponentId,
-                    bodyFileRef: .init(category: .informationalArticle, filename: "Article2", fileExtension: "md")
+                    fileRef: .init(category: .informationalArticle, filename: "Article2", fileExtension: "md")
                 ))
             }
         },

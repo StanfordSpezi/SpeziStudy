@@ -48,7 +48,7 @@ final class StudyManagerTests {
             components: [
                 .informational(.init(
                     id: Self.articleComponentId,
-                    bodyFileRef: .init(category: .informationalArticle, filename: "a1", fileExtension: "md")
+                    fileRef: .init(category: .informationalArticle, filename: "a1", fileExtension: "md")
                 ))
             ],
             componentSchedules: [
