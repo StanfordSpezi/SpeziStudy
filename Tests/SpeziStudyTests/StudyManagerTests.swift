@@ -27,7 +27,9 @@ private actor TestStandard: Standard, HealthKitConstraint {
 }
 
 
-@Suite @MainActor final class StudyManagerTests {
+@Suite
+@MainActor
+final class StudyManagerTests {
     private static let articleComponentId = UUID()
     
     private let studyBundle: StudyBundle
@@ -117,10 +119,8 @@ private actor TestStandard: Standard, HealthKitConstraint {
         #expect(try fileManager.contents(of: StudyManager.studyBundlesDirectory).contains(enrollment.studyBundleUrl))
         try studyManager.removeOrphanedTasks() // not what we're testing but important to ensure that the test doesn't crash
         try studyManager.removeOrphanedStudyBundles()
-        
         #expect(try !fileManager.contents(of: StudyManager.studyBundlesDirectory).contains(enrollment.studyBundleUrl))
     }
-    
     
     deinit {
         try? FileManager.default.removeItem(at: studyBundle.bundleUrl)
