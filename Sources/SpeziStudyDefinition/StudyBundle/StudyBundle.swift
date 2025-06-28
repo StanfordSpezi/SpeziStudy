@@ -108,6 +108,19 @@ public struct StudyBundle: Identifiable, Sendable {
         }
     }
     
+    /// Load a the quesrionnaire resource with the specified filename.
+    public func questionnaire(
+        named questionnaireName: String,
+        in locale: Locale,
+        using localeMatchingBehaviour: LocaleMatchingBehaviour = .default
+    ) -> Questionnaire? {
+        questionnaire(
+            for: .init(category: .questionnaire, filename: questionnaireName, fileExtension: "json"),
+            in: locale,
+            using: localeMatchingBehaviour
+        )
+    }
+    
     /// Load a consent text resource from a ``FileReference``.
     public func consentText(
         for fileRef: FileReference,
