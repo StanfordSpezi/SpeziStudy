@@ -13,12 +13,12 @@ extension StudyDefinition {
     /// Study Component which prompts the participant to read an informational article
     public struct InformationalComponent: Identifiable, StudyDefinitionElement {
         public var id: UUID
-        public var bodyFileRef: StudyBundle.FileReference
+        public var fileRef: StudyBundle.FileReference
         
-        public init(id: UUID, bodyFileRef: StudyBundle.FileReference) {
-            precondition(bodyFileRef.category == .informationalArticle)
+        public init(id: UUID, fileRef: StudyBundle.FileReference) {
+            precondition(fileRef.category == .informationalArticle)
             self.id = id
-            self.bodyFileRef = bodyFileRef
+            self.fileRef = fileRef
         }
     }
 }

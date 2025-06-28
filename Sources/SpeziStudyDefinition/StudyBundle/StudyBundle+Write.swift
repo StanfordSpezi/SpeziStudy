@@ -49,6 +49,12 @@ extension StudyBundle {
             self.localizedFileRef = .init(fileRef: fileRef, localization: localization)
             self.contents = try JSONEncoder().encode(contents)
         }
+        
+        /// Creates a new `FileInput`, with the file contents at the specified URL.
+        public init(fileRef: FileReference, localization: LocalizationKey, contentsOf url: URL) throws {
+            self.localizedFileRef = .init(fileRef: fileRef, localization: localization)
+            self.contents = try Data(contentsOf: url)
+        }
     }
     
     /// Creates a new Study Bundle, from the specified inputs.
@@ -89,9 +95,9 @@ extension StudyDefinition {
         for component in self.components {
             switch component {
             case .informational(let component):
-                fileRefs.insert(component.bodyFileRef)
+                fileRefs.insert(component.fileRef)
             case .questionnaire(let component):
-                fileRefs.insert(component.questionnaireFileRef)
+                fileRefs.insert(component.fileRef)
             case .healthDataCollection, .timedWalkingTest:
                 break
             }

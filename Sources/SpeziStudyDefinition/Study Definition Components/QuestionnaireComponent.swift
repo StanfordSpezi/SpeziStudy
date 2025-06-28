@@ -14,11 +14,12 @@ extension StudyDefinition {
     public struct QuestionnaireComponent: Identifiable, StudyDefinitionElement {
         /// - parameter id: the id of this study component, **not** of the questionnaire
         public let id: UUID
-        public let questionnaireFileRef: StudyBundle.FileReference
+        public let fileRef: StudyBundle.FileReference
         
-        public init(id: UUID, questionnaireFileRef: StudyBundle.FileReference) {
+        public init(id: UUID, fileRef: StudyBundle.FileReference) {
+            precondition(fileRef.category == .questionnaire)
             self.id = id
-            self.questionnaireFileRef = questionnaireFileRef
+            self.fileRef = fileRef
         }
     }
 }

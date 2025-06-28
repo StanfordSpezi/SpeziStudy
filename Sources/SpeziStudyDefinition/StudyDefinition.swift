@@ -142,14 +142,14 @@ extension StudyBundle {
     ) -> String? {
         switch component {
         case .informational(let component):
-            guard let url = self.resolve(component.bodyFileRef, in: locale, using: localeMatchingBehaviour),
+            guard let url = self.resolve(component.fileRef, in: locale, using: localeMatchingBehaviour),
                   let text = (try? Data(contentsOf: url)).flatMap({ String(data: $0, encoding: .utf8) })else {
                 return nil
             }
             return (try? MarkdownDocument.Metadata(parsing: text))?.title
         case .questionnaire(let component):
             return questionnaire(
-                for: component.questionnaireFileRef,
+                for: component.fileRef,
                 in: locale,
                 using: localeMatchingBehaviour
             )?.title?.value?.string
