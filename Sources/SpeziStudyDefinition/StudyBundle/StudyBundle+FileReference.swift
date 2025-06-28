@@ -77,6 +77,8 @@ extension StudyBundle {
     ///
     /// A ``LocalizationKey`` consists of a ``language`` and a ``region``.
     public struct LocalizationKey: Hashable, LosslessStringConvertible, Sendable {
+        static let enUS = Self(language: .init(identifier: "en"), region: .unitedStates)
+        
         public let language: Locale.Language
         public let region: Locale.Region
         
@@ -266,6 +268,10 @@ extension StudyBundle {
                 for candidate in candidates {
                     Self.logger.error("- \(candidate.score) @ \(candidate.fileRef.fullFilenameIncludingLocalization)")
                 }
+            }
+            if let fallback = candidates.first(where: { $0.fileRef.localization == .enUS }) {
+                Self.logger.warning("Falling back to en-US locale.")
+                return (fallback.url, fallback.fileRef)
             }
             return nil
         }
