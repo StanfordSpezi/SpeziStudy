@@ -460,10 +460,10 @@ extension StudyManager {
     @_spi(TestingSupport)
     public func removeOrphanedStudyBundles() throws {
         let fm = FileManager.default // swiftlint:disable:this identifier_name
-        let allStudyBundles = self.studyEnrollments
+        let allStudyEnrollments = self.studyEnrollments
         let allStudyBundleUrls = (try? fm.contents(of: Self.studyBundlesDirectory)) ?? []
         let orphanedBundleUrls = allStudyBundleUrls.filter { url in
-            !allStudyBundles.contains { $0.studyBundleUrl == url }
+            !allStudyEnrollments.contains { $0.studyBundleUrl.resolvingSymlinksInPath() == url.resolvingSymlinksInPath() }
         }
         guard !orphanedBundleUrls.isEmpty else {
             return // nothing to do
