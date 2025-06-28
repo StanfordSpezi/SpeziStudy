@@ -25,7 +25,6 @@ class TestAppUITests: XCTestCase {
         app.launch()
         
         let completeWelcomeArticleButton = app.buttons["Complete Informational: Welcome to the Study!"]
-        let completeQuestionnaireButton = app.buttons["Complete Questionnaire: Social Support"]
         let completeInformationalArticleButton = app.buttons["Complete Informational: Article1 Title"]
         
         // enroll into version 1 of the study
