@@ -278,7 +278,7 @@ extension StudyManager {
         switch component {
         case .questionnaire(let component):
             category = .questionnaire
-            action = .answerQuestionnaire(component, enrollmentId: enrollment.persistentModelID)
+            action = .answerQuestionnaire(component)
         case .informational(let component):
             category = .informational
             action = .presentInformationalStudyComponent(component)
@@ -309,7 +309,8 @@ extension StudyManager {
                 context.studyContext = .init(
                     studyId: studyBundle.studyDefinition.id,
                     componentId: component.id,
-                    scheduleId: componentSchedule.id
+                    scheduleId: componentSchedule.id,
+                    enrollmentId: enrollment.persistentModelID
                 )
                 context.studyScheduledTaskAction = action
             }
