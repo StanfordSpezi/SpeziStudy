@@ -19,7 +19,7 @@ import SpeziSchedulerUI
 @_exported import SpeziStudyDefinition
 import SwiftData
 import SwiftUI
-#if canImport(UIKit)
+#if canImport(UIKit) && !os(watchOS)
 import class UIKit.UIApplication
 #endif
 
@@ -182,7 +182,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
                 }
             }
         }
-        #if canImport(UIKit)
+        #if canImport(UIKit) && !os(watchOS)
         Task {
             let timeUpdates = NotificationCenter.default.notifications(named: UIApplication.significantTimeChangeNotification)
             for await _ in timeUpdates {
