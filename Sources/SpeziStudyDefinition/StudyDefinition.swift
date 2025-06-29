@@ -15,7 +15,6 @@ import SpeziHealthKit
 public typealias StudyDefinitionElement = Hashable & Codable & Sendable
 
 
-// TODO move all of this documentation over to the StudyBundle?!
 /// Defines a Study, as a composition of metadata, components, and a schedule.
 ///
 /// ## Studies

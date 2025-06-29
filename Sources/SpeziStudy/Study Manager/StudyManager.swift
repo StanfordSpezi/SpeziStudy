@@ -19,6 +19,9 @@ import SpeziSchedulerUI
 @_exported import SpeziStudyDefinition
 import SwiftData
 import SwiftUI
+#if canImport(UIKit)
+import class UIKit.UIApplication
+#endif
 
 
 /// Manages enrollment and participation in studies.
@@ -30,8 +33,7 @@ import SwiftUI
 /// ## Topics
 ///
 /// ### Initialization
-/// - ``init()``
-/// - ``init(persistence:)``
+/// - ``init(preferredLocale:persistence:)``
 ///
 /// ### Study Enrollment
 /// - ``enroll(in:)``
@@ -39,6 +41,9 @@ import SwiftUI
 /// - ``informAboutStudies(_:)``
 /// - ``StudyEnrollment``
 /// - ``StudyEnrollmentError``
+///
+/// ### Instance Properties
+/// - ``preferredLocale``
 @MainActor
 public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     /// How the ``StudyManager`` should persist its data.
@@ -50,17 +55,31 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
         case inMemory
     }
     
+    // ISSUE: on a mac, this will end up writing to ~/Documents (bad!)
     nonisolated static let studyBundlesDirectory = URL.documentsDirectory
         .appending(path: "edu.stanford.SpeziStudy/StudyBundles", directoryHint: .isDirectory)
     
     /// The prefix used for SpeziScheduler Tasks created for study component schedules.
     private static let speziStudyDomainTaskIdPrefix = "edu.stanford.spezi.SpeziStudy.studyComponentTask."
     
+    
     // swiftlint:disable attributes
     @Dependency(HealthKit.self) var healthKit
     @Dependency(Scheduler.self) var scheduler
     @Application(\.logger) var logger
     // swiftlint:enable attributes
+    
+    /// The `Locale` the study manager should use when loading localized elements from a Study Bundle.
+    ///
+    /// This value affects e.g. the titles used for scheduled tasks and their resulting notifications.
+    public var preferredLocale: Locale {
+        didSet {
+            guard preferredLocale.language != oldValue.language || preferredLocale.region != oldValue.region else {
+                return
+            }
+            handleLocaleUpdate()
+        }
+    }
     
     #if targetEnvironment(simulator)
     private var autosaveTask: _Concurrency.Task<Void, Never>?
@@ -79,14 +98,15 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
         (try? modelContext.fetch(FetchDescriptor<StudyEnrollment>())) ?? []
     }
     
-    /// Creates a new Study Manager.
-    public nonisolated convenience init() {
-        self.init(persistence: .onDisk)
-    }
-    
     /// Creates a new Study Manager, using the specified persistence configuration
-    public nonisolated init(persistence: PersistenceConfiguration) {
-        modelContainer = { () -> ModelContainer in
+    ///
+    /// - parameter preferredLocale: The `Locale` which should be used when
+    public nonisolated init(
+        preferredLocale: Locale = .autoupdatingCurrent,
+        persistence: PersistenceConfiguration = .onDisk
+    ) {
+        self.preferredLocale = preferredLocale
+        self.modelContainer = { () -> ModelContainer in
             let schema = Schema([StudyEnrollment.self], version: Schema.Version(0, 0, 2))
             let config: ModelConfiguration
             switch persistence {
@@ -121,22 +141,23 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     
     @_documentation(visibility: internal)
     public func configure() {
-        _Concurrency.Task { @MainActor in
+        typealias Task = _Concurrency.Task
+        Task { @MainActor in
             let enrollments = try modelContext.fetch(FetchDescriptor<StudyEnrollment>())
-            try registerStudyTasksWithScheduler(enrollments)
-            try await setupStudyBackgroundComponents(enrollments)
+            try registerStudyTasksWithScheduler(for: enrollments)
+            try await setupStudyBackgroundComponents(for: enrollments)
             try removeOrphanedTasks()
             try removeOrphanedStudyBundles()
             #if targetEnvironment(simulator)
             guard autosaveTask == nil else {
                 return
             }
-            autosaveTask = _Concurrency.Task.detached {
+            autosaveTask = Task.detached {
                 while true {
                     await MainActor.run {
                         try? self.modelContext.save()
                     }
-                    try? await _Concurrency.Task.sleep(for: .seconds(0.25))
+                    try? await Task.sleep(for: .seconds(0.25))
                 }
             }
             #endif
@@ -152,6 +173,23 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
                 )
             }
         }
+        
+        Task {
+            let localeUpdates = NotificationCenter.default.notifications(named: NSLocale.currentLocaleDidChangeNotification)
+            for await _ in localeUpdates {
+                if preferredLocale == .autoupdatingCurrent { // swiftlint:disable:this for_where
+                    handleLocaleUpdate()
+                }
+            }
+        }
+        #if canImport(UIKit)
+        Task {
+            let timeUpdates = NotificationCenter.default.notifications(named: UIApplication.significantTimeChangeNotification)
+            for await _ in timeUpdates {
+                handleLocaleUpdate()
+            }
+        }
+        #endif
     }
     
     
@@ -196,7 +234,7 @@ extension StudyManager {
     
     
     @MainActor // swiftlint:disable:next cyclomatic_complexity function_body_length
-    private func registerStudyTasksWithScheduler(_ enrollments: some Collection<StudyEnrollment>) throws {
+    private func registerStudyTasksWithScheduler(for enrollments: some Collection<StudyEnrollment>) throws {
         for enrollment in enrollments {
             guard let studyBundle = enrollment.studyBundle else {
                 continue
@@ -290,7 +328,7 @@ extension StudyManager {
         }
         return try scheduler.createOrUpdateTask(
             id: taskId(for: componentSchedule, in: studyBundle),
-            title: studyBundle.displayTitle(for: component, in: .current).map { "\($0)" } ?? "", // TODO how to inject/override locale here?
+            title: studyBundle.displayTitle(for: component, in: preferredLocale).map { "\($0)" } ?? "",
             instructions: "",
             category: category,
             schedule: taskSchedule,
@@ -319,7 +357,7 @@ extension StudyManager {
     
     
     @MainActor
-    private func setupStudyBackgroundComponents(_ enrollments: some Collection<StudyEnrollment>) async throws {
+    private func setupStudyBackgroundComponents(for enrollments: some Collection<StudyEnrollment>) async throws {
         for enrollment in enrollments {
             guard let studyBundle = enrollment.studyBundle else {
                 continue
@@ -401,11 +439,11 @@ extension StudyManager {
         let enrollment = try StudyEnrollment(enrollmentDate: .now, studyBundle: studyBundle)
         modelContext.insert(enrollment)
         try modelContext.save()
-        try registerStudyTasksWithScheduler(CollectionOfOne(enrollment))
+        try registerStudyTasksWithScheduler(for: CollectionOfOne(enrollment))
         // intentionally calling this before the background component setup, since that call is async and might take several seconds to return
         // (bc of the HealthKit permissions)
         handleStudyLifecycleEvent(.enrollment, for: studyBundle)
-        try await setupStudyBackgroundComponents(CollectionOfOne(enrollment))
+        try await setupStudyBackgroundComponents(for: CollectionOfOne(enrollment))
     }
     
     
@@ -477,6 +515,13 @@ extension StudyManager {
 
 
 extension StudyManager {
+    private func handleLocaleUpdate() {
+        try? registerStudyTasksWithScheduler(for: studyEnrollments)
+    }
+}
+
+
+extension StudyManager {
     /// Informs the Study Manager about current study definitions.
     ///
     /// Ths study manager will use these definitions to determine whether it needs to update any of the study participation contexts ic currently manages.
@@ -488,8 +533,8 @@ extension StudyManager {
                 $0.studyId == studyId && $0.studyRevision < studyRevision
             })) {
                 try enrollment.updateStudyBundle(studyBundle)
-                try registerStudyTasksWithScheduler(CollectionOfOne(enrollment))
-                try await setupStudyBackgroundComponents(CollectionOfOne(enrollment))
+                try registerStudyTasksWithScheduler(for: CollectionOfOne(enrollment))
+                try await setupStudyBackgroundComponents(for: CollectionOfOne(enrollment))
             }
         }
     }

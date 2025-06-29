@@ -118,8 +118,13 @@ extension StudyBundle {
         ///
         /// Determines how well the LocalizationKey matches the Locale, on a scale from 0 to 1.
         func score(against locale: Locale, using localeMatchingBehaviour: LocaleMatchingBehaviour) -> Double {
-            let languageMatches = locale.language.minimalIdentifier == self.language.minimalIdentifier
-            // TODO also allow mayching against parent regions? (eg: if the user is in DE, but the region in the key is EU, that should match...)
+            let languageMatches = if let selfCode = self.language.languageCode, let otherCode = locale.language.languageCode {
+                selfCode.identifier == otherCode.identifier
+            } else {
+                self.language.minimalIdentifier == locale.language.minimalIdentifier
+            }
+            // IDEA: maybe also allow matching against parent regions?
+            // (eg: if the user is in Canada, but the region in the key is just north america in general, that should still match...)
             let regionMatches = locale.region?.identifier == self.region.identifier
             guard !(languageMatches && regionMatches) else { // perfect match
                 return 1
@@ -280,6 +285,10 @@ extension StudyBundle {
             // swiftlint:disable:next force_unwrapping
             let equallyBestRanked = candidates.chunked(by: { $0.score == $1.score }).first!
             guard equallyBestRanked.count == 1 else {
+                Self.logger.error("Candidates:")
+                for candidate in candidates {
+                    Self.logger.error("- \(candidate.score) @ \(candidate.fileRef.fullFilenameIncludingLocalization)")
+                }
                 fatalError("Found multiple candidates, all of which are equally ranked!")
             }
         }

@@ -9,9 +9,11 @@
 import Foundation
 import Spezi
 import SpeziHealthKit
+@_spi(TestingSupport)
 import SpeziScheduler
 @_spi(TestingSupport)
 @testable import SpeziStudy
+@testable import SpeziStudyDefinition
 import SpeziTesting
 import Testing
 
@@ -34,7 +36,7 @@ final class StudyManagerTests {
     
     private let studyBundle: StudyBundle
     
-    init() throws {
+    init() throws { // swiftlint:disable:this function_body_length
         let testStudy = StudyDefinition(
             studyRevision: 0,
             metadata: .init(
@@ -68,12 +70,26 @@ final class StudyManagerTests {
             files: [
                 StudyBundle.FileInput(
                     fileRef: .init(category: .informationalArticle, filename: "a1", fileExtension: "md"),
-                    localization: .init(locale: .current),
-                    contents: ""
+                    localization: .init(language: .english, region: .unitedStates),
+                    contents: """
+                        ---
+                        title: Welcome to our Study!
+                        ---
+                        """
+                ),
+                StudyBundle.FileInput(
+                    fileRef: .init(category: .informationalArticle, filename: "a1", fileExtension: "md"),
+                    localization: .init(language: .spanish, region: .unitedStates),
+                    contents: """
+                        ---
+                        title: Bienvenido a nuestro estudio!
+                        ---
+                        """
                 )
             ]
         )
     }
+    
     
     @Test
     func orphanTaskHandling() async throws {
@@ -99,6 +115,7 @@ final class StudyManagerTests {
         try #expect(studyManager.scheduler.queryTasks(for: allTime).isEmpty)
     }
     
+    
     @Test
     func orphanStudyBundleHandling() async throws {
         let fileManager = FileManager.default
@@ -122,7 +139,63 @@ final class StudyManagerTests {
         #expect(try !fileManager.contents(of: StudyManager.studyBundlesDirectory).contains(enrollment.studyBundleUrl))
     }
     
+    
+    @Test
+    func localeMatching() throws {
+        typealias LocalizationKey = StudyBundle.LocalizationKey
+        #expect(LocalizationKey(language: .english, region: .unitedStates).score(against: .init(identifier: "en_US"), using: .default) == 1)
+        #expect(LocalizationKey(language: .spanish, region: .unitedStates).score(against: .init(identifier: "es_US"), using: .default) == 1)
+        #expect(LocalizationKey(language: .german, region: .unitedStates).score(against: .init(identifier: "es_US"), using: .default) == 0.75)
+    }
+    
+    
+    /// Tests that the StudyManager properly updates itself when the preferred locale changes.
+    @Test
+    func localeUpdate() async throws {
+        let localeEnUS = Locale(identifier: "en_US")
+        let localeEsUS = Locale(identifier: "es_US")
+        let studyManager = StudyManager(preferredLocale: localeEnUS, persistence: .inMemory)
+        let scheduler = Scheduler(persistence: .inMemory)
+        withDependencyResolution(standard: TestStandard()) {
+            scheduler
+            studyManager
+        }
+        try await studyManager.enroll(in: studyBundle)
+        #expect(studyManager.studyEnrollments.count == 1)
+        let enrollment = try #require(studyManager.studyEnrollments.first)
+        
+        do {
+            let tasks = try scheduler.queryAllTasks()
+            #expect(tasks.count == 1)
+            let task = try #require(tasks.first)
+            #expect(String(localized: task.title) == "Welcome to our Study!")
+        }
+        studyManager.preferredLocale = localeEsUS
+        do {
+            let tasks = try scheduler.queryAllTasks()
+            #expect(tasks.count == 2)
+            #expect(tasks.mapIntoSet(\.id).count == 1)
+            let task = try #require(tasks.first).latestVersion
+            #expect(String(localized: task.title) == "Bienvenido a nuestro estudio!")
+        }
+        try studyManager.unenroll(from: enrollment)
+    }
+    
+    
+    @Test
+    func localeUtils() {
+        let locale1 = Locale(language: .english, region: .germany)
+        #expect(locale1.language == .english)
+        #expect(locale1.region == .germany)
+        
+        let locale2 = Locale(language: .spanish, region: .antarctica)
+        #expect(locale2.language == .spanish)
+        #expect(locale2.region == .antarctica)
+    }
+    
+    
     deinit {
         try? FileManager.default.removeItem(at: studyBundle.bundleUrl)
+        try? FileManager.default.removeItem(at: StudyManager.studyBundlesDirectory)
     }
 }

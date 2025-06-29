@@ -36,6 +36,5 @@ struct UITestsApp: App {
                 }
             }
         }
-//        .environment(\.locale, Locale(identifier: "en_US"))
     }
 }
