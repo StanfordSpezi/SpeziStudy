@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import SpeziLocalization
 
 
 extension StudyBundle {
@@ -73,76 +74,6 @@ extension StudyBundle {
 
 
 extension StudyBundle {
-    /// Locale information used to localize files, and to resolve them.
-    ///
-    /// A ``LocalizationKey`` consists of a ``language`` and a ``region``.
-    public struct LocalizationKey: Hashable, LosslessStringConvertible, Sendable {
-        static let enUS = Self(language: .init(identifier: "en"), region: .unitedStates)
-        
-        public let language: Locale.Language
-        public let region: Locale.Region
-        
-        public var description: String {
-            language.minimalIdentifier + "-" + region.identifier
-        }
-        
-        public init(locale: Locale) {
-            guard let region = locale.region else {
-                // this should be exceedingly unlikely to happen: https://stackoverflow.com/a/74563008
-                preconditionFailure("Invalid input: locale.region is nil")
-            }
-            self.init(language: locale.language, region: region)
-        }
-        
-        public init(language: Locale.Language, region: Locale.Region) {
-            self.language = language
-            self.region = region
-        }
-        
-        /// Attempts to create a Localization Key, by parsing the input.
-        public init?(_ description: String) {
-            let components = description.split(separator: "-")
-            guard components.count == 2 else {
-                return nil
-            }
-            let languageIdentifier = components[0]
-            let regionIdentifier = components[1]
-            guard let language = Locale.Language.systemLanguages.first(where: { $0.minimalIdentifier == languageIdentifier }),
-                  let region = Locale.Region.isoRegions.first(where: { $0.identifier == regionIdentifier }) else {
-                return nil
-            }
-            self.init(language: language, region: region)
-        }
-        
-        /// Match a Localization Key against a Locale.
-        ///
-        /// Determines how well the LocalizationKey matches the Locale, on a scale from 0 to 1.
-        func score(against locale: Locale, using localeMatchingBehaviour: LocaleMatchingBehaviour) -> Double {
-            let languageMatches = if let selfCode = self.language.languageCode, let otherCode = locale.language.languageCode {
-                selfCode.identifier == otherCode.identifier
-            } else {
-                self.language.minimalIdentifier == locale.language.minimalIdentifier
-            }
-            // IDEA: maybe also allow matching against parent regions?
-            // (eg: if the user is in Canada, but the region in the key is just north america in general, that should still match...)
-            let regionMatches = locale.region?.identifier == self.region.identifier
-            guard !(languageMatches && regionMatches) else { // perfect match
-                return 1
-            }
-            switch localeMatchingBehaviour {
-            case .requirePerfectMatch:
-                return 0 // we've already checked for a perfect match above...
-            case .preferLanguageMatch:
-                return languageMatches ? 0.8 : regionMatches ? 0.75 : 0
-            case .preferRegionMatch:
-                return regionMatches ? 0.8 : languageMatches ? 0.75 : 0
-            case .custom(let imp):
-                return imp(self, .init(locale: locale))
-            }
-        }
-    }
-    
-    
     /// A localized file reference is the combination of a ``FileReference`` and a ``LocalizationKey``
     struct LocalizedFileReference: Hashable, Sendable {
         let fileRef: FileReference
@@ -162,38 +93,6 @@ extension StudyBundle {
 // MARK: URL/path resolution
 
 extension StudyBundle {
-    /// How a `Locale` should be matched against a localized Study Bundle resource's localization key.
-    ///
-    /// ## Topics
-    ///
-    /// ### Enumeration Cases
-    /// - ``requirePerfectMatch``
-    /// - ``preferLanguageMatch``
-    /// - ``preferRegionMatch``
-    /// - ``custom(_:)``
-    public enum LocaleMatchingBehaviour {
-        /// Only perfect matches are allowed
-        ///
-        /// If no perfect match exists, but there does exist a match where e.g. the resource's language matches but its region doesn't, it will still get ignored.
-        case requirePerfectMatch
-        /// If no perfect match exists, prefer partial matches where the language matches but the region does not over those where the region matches but the language does not.
-        ///
-        /// When using this option, perfect matches will still always take precedence over partial ones.
-        case preferLanguageMatch
-        /// If no perfect match exists, prefer partial matches where the region matches but the language does not over those where the language matches but the region does not.
-        ///
-        /// When using this option, perfect matches will still always take precedence over partial ones.
-        case preferRegionMatch
-        /// The matching should happen based on a fully custom behaviour.
-        ///
-        /// - parameter match: A closure that determines how well two ``LocalizationKey``s match.
-        ///     The closure should return a score in the range `0...1`; any values exceeding that range will get clamped.
-        case custom(_ match: (LocalizationKey, LocalizationKey) -> Double)
-        
-        /// The default matching behaviour
-        @inlinable public static var `default`: Self { .preferLanguageMatch }
-    }
-    
     static func folderUrl(for category: FileReference.Category, relativeTo baseUrl: URL) -> URL {
         baseUrl.appending(component: category.rawValue, directoryHint: .isDirectory)
     }
@@ -257,41 +156,14 @@ extension StudyBundle {
         localeMatchingBehaviour: LocaleMatchingBehaviour
     ) -> (url: URL, localizedFileRef: LocalizedFileReference)? {
         let dirUrl = Self.folderUrl(for: fileRef.category, relativeTo: bundleUrl)
-        let candidates = ((try? FileManager.default.contents(of: dirUrl)) ?? [])
-            .compactMap { url -> (URL, LocalizedFileReference)? in
-                Self.parse(filename: url.lastPathComponent, in: fileRef.category).map { (url, $0) }
-            }
-            .filter { $1.fileRef == fileRef }
-            .map { (url: $0.0, fileRef: $0.1, score: $0.1.localization.score(against: locale, using: localeMatchingBehaviour)) }
-            .sorted(using: KeyPathComparator(\.score, order: .reverse))
-        guard let candidate = candidates.first, candidate.score > 0.5 else {
-            Self.logger.error("Unable to find url for \(String(describing: fileRef)) and locale \(locale) (key: \(LocalizationKey(locale: locale))).")
-            if candidates.isEmpty {
-                Self.logger.error("No candidates")
-            } else {
-                Self.logger.error("Candidates:")
-                for candidate in candidates {
-                    Self.logger.error("- \(candidate.score) @ \(candidate.fileRef.fullFilenameIncludingLocalization)")
-                }
-            }
-            if let fallback = candidates.first(where: { $0.fileRef.localization == .enUS }) {
-                Self.logger.warning("Falling back to en-US locale.")
-                return (fallback.url, fallback.fileRef)
-            }
+        guard let candidateUrls = try? FileManager.default.contents(of: dirUrl) else {
             return nil
         }
-        do {
-            // SAFETY: we've checked above that there is at least one element in the array.
-            // swiftlint:disable:next force_unwrapping
-            let equallyBestRanked = candidates.chunked(by: { $0.score == $1.score }).first!
-            guard equallyBestRanked.count == 1 else {
-                Self.logger.error("Candidates:")
-                for candidate in candidates {
-                    Self.logger.error("- \(candidate.score) @ \(candidate.fileRef.fullFilenameIncludingLocalization)")
-                }
-                fatalError("Found multiple candidates, all of which are equally ranked!")
-            }
-        }
-        return (candidate.url, candidate.fileRef)
+        return Localization.resolveFile(
+            named: "\(fileRef.filename).\(fileRef.fileExtension)",
+            from: candidateUrls,
+            locale: locale, using: localeMatchingBehaviour,
+            fallback: .enUS
+        ).map { ($0, .init(fileRef: fileRef, localization: $1)) }
     }
 }

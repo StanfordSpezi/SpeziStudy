@@ -9,6 +9,7 @@
 import Foundation
 import SpeziFoundation
 import SpeziHealthKit
+import SpeziLocalization
 
 
 /// A type that can appear in a ``StudyDefinition``.
@@ -137,7 +138,7 @@ extension StudyBundle {
     public func displayTitle(
         for component: StudyDefinition.Component,
         in locale: Locale,
-        using localeMatchingBehaviour: StudyBundle.LocaleMatchingBehaviour = .default
+        using localeMatchingBehaviour: LocaleMatchingBehaviour = .default
     ) -> String? {
         switch component {
         case .informational(let component):

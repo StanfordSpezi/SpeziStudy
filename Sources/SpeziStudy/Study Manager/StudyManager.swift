@@ -174,19 +174,25 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
             }
         }
         
-        Task {
+        Task { [weak self] in
             let localeUpdates = NotificationCenter.default.notifications(named: NSLocale.currentLocaleDidChangeNotification)
             for await _ in localeUpdates {
-                if preferredLocale == .autoupdatingCurrent { // swiftlint:disable:this for_where
-                    handleLocaleUpdate()
+                guard let self else {
+                    return
+                }
+                if self.preferredLocale == .autoupdatingCurrent { // swiftlint:disable:this for_where
+                    self.handleLocaleUpdate()
                 }
             }
         }
         #if canImport(UIKit) && !os(watchOS)
-        Task {
+        Task { [weak self] in
             let timeUpdates = NotificationCenter.default.notifications(named: UIApplication.significantTimeChangeNotification)
             for await _ in timeUpdates {
-                handleLocaleUpdate()
+                guard let self else {
+                    return
+                }
+                self.handleLocaleUpdate()
             }
         }
         #endif

@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import SpeziLocalization
 
 
 extension StudyBundle {

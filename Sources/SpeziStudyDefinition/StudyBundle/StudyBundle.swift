@@ -12,6 +12,7 @@ import Foundation
 import class ModelsR4.Questionnaire
 import OSLog
 import SpeziFoundation
+import SpeziLocalization
 import UniformTypeIdentifiers
 
 

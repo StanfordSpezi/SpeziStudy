@@ -14,6 +14,7 @@ import SpeziScheduler
 @_spi(TestingSupport)
 @testable import SpeziStudy
 @testable import SpeziStudyDefinition
+import SpeziLocalization
 import SpeziTesting
 import Testing
 
@@ -142,7 +143,6 @@ final class StudyManagerTests {
     
     @Test
     func localeMatching() throws {
-        typealias LocalizationKey = StudyBundle.LocalizationKey
         #expect(LocalizationKey(language: .english, region: .unitedStates).score(against: .init(identifier: "en_US"), using: .default) == 1)
         #expect(LocalizationKey(language: .spanish, region: .unitedStates).score(against: .init(identifier: "es_US"), using: .default) == 1)
         #expect(LocalizationKey(language: .german, region: .unitedStates).score(against: .init(identifier: "es_US"), using: .default) == 0.75)
