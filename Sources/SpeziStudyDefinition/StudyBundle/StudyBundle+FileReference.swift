@@ -162,8 +162,10 @@ extension StudyBundle {
         return Localization.resolveFile(
             named: "\(fileRef.filename).\(fileRef.fileExtension)",
             from: candidateUrls,
-            locale: locale, using: localeMatchingBehaviour,
+            locale: locale,
+            using: localeMatchingBehaviour,
             fallback: .enUS
-        ).map { ($0, .init(fileRef: fileRef, localization: $1)) }
+        )
+        .map { ($0.url, .init(fileRef: fileRef, localization: $0.localization)) }
     }
 }

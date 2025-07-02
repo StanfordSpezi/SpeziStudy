@@ -15,10 +15,19 @@ import Testing
 struct LocalizationTests {
     @Test
     func parseFilename() throws {
-        let result = try #require(Localization.parseLocalizedFilename("Consent+en-US.md"))
+        let result = try #require(Localization.parseLocalizedFileResource(from: URL(filePath: "Consent+en-US.md")))
         #expect(result.unlocalizedFilename == "Consent.md")
         #expect(result.fullFilenameIncludingLocalization == "Consent+en-US.md")
         #expect(result.localization == .enUS)
+    }
+    
+    @Test
+    func urlExtensions() {
+        #expect(URL(filePath: "/abc/def+en-US.txt").strippingLocalizationSuffix() == URL(filePath: "/abc/def.txt"))
+        #expect(URL(filePath: "/def+en-US.txt").strippingLocalizationSuffix() == URL(filePath: "/def.txt"))
+        #expect(URL(filePath: "def+en-US.txt").strippingLocalizationSuffix().absoluteURL == URL(filePath: "def.txt").absoluteURL)
+        #expect(URL(filePath: "/def+en-US").strippingLocalizationSuffix() == URL(filePath: "/def"))
+        #expect(URL(filePath: "def+en-US").strippingLocalizationSuffix().absoluteURL == URL(filePath: "def").absoluteURL)
     }
     
     @Test
@@ -43,14 +52,13 @@ struct LocalizationTests {
             #expect(result.url == URL(filePath: "/news/Welcome+en-US.md"))
             #expect(result.localization == .enUS)
         }
-        // TODO support this!
-//        do {
-//            let result = try #require(
-//                Localization.resolveFile(named: "/news/Welcome.md", from: inputUrls, locale: .init(identifier: "en-US"), using: .requirePerfectMatch)
-//            )
-//            #expect(result.url == URL(filePath: "/news/Welcome+en-US.md"))
-//            #expect(result.localization == .enUS)
-//        }
+        do {
+            let result = try #require(
+                Localization.resolveFile(named: "/news/Welcome.md", from: inputUrls, locale: .enUS, using: .requirePerfectMatch)
+            )
+            #expect(result.url == URL(filePath: "/news/Welcome+en-US.md"))
+            #expect(result.localization == .enUS)
+        }
         do {
             #expect(Localization.resolveFile(named: "Welcome.md", from: inputUrls, locale: .deDE) != nil)
             #expect(Localization.resolveFile(named: "Welcome.md", from: inputUrls, locale: .deUS) != nil)

@@ -140,7 +140,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     
     
     @_documentation(visibility: internal)
-    public func configure() {
+    public func configure() { // swiftlint:disable:this function_body_length
         typealias Task = _Concurrency.Task
         Task { @MainActor in
             let enrollments = try modelContext.fetch(FetchDescriptor<StudyEnrollment>())
@@ -180,7 +180,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
                 guard let self else {
                     return
                 }
-                if self.preferredLocale == .autoupdatingCurrent { // swiftlint:disable:this for_where
+                if self.preferredLocale == .autoupdatingCurrent {
                     self.handleLocaleUpdate()
                 }
             }

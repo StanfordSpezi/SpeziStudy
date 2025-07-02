@@ -9,12 +9,12 @@
 import Foundation
 import Spezi
 import SpeziHealthKit
+import SpeziLocalization
 @_spi(TestingSupport)
 import SpeziScheduler
 @_spi(TestingSupport)
 @testable import SpeziStudy
 @testable import SpeziStudyDefinition
-import SpeziLocalization
 import SpeziTesting
 import Testing
 
