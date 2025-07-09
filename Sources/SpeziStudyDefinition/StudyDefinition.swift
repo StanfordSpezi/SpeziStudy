@@ -143,7 +143,7 @@ extension StudyBundle {
         switch component {
         case .informational(let component):
             guard let url = self.resolve(component.fileRef, in: locale, using: localeMatchingBehaviour),
-                  let text = (try? Data(contentsOf: url)).flatMap({ String(data: $0, encoding: .utf8) })else {
+                  let text = (try? Data(contentsOf: url)).flatMap({ String(data: $0, encoding: .utf8) }) else {
                 return nil
             }
             return (try? MarkdownDocument.Metadata(parsing: text))?.title
@@ -156,7 +156,7 @@ extension StudyBundle {
         case .healthDataCollection:
             return nil
         case .timedWalkingTest(let component):
-            return component.test.displayTitle
+            return String(localized: component.test.displayTitle)
         }
     }
 }

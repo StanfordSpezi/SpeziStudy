@@ -32,7 +32,7 @@ extension StudyBundle {
             /// The File Category for questionnaires.
             public static let questionnaire = Self(rawValue: "questionnaire")
             /// The File Category for informative articles.
-            public static let informationalArticle = Self(rawValue: "informationalArticle")
+            public static let informationalArticle = Self(rawValue: "article")
             
             public let rawValue: String
             
