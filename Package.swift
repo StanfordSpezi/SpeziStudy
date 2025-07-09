@@ -14,6 +14,7 @@ import PackageDescription
 
 let package = Package(
     name: "SpeziStudy",
+    defaultLocalization: "en",
     platforms: [
         .iOS(.v18),
         .macOS(.v15),
@@ -22,21 +23,31 @@ let package = Package(
     ],
     products: [
         .library(name: "SpeziStudy", targets: ["SpeziStudy"]),
+        .library(name: "SpeziLocalization", targets: ["SpeziLocalization"]),
         .library(name: "SpeziStudyDefinition", targets: ["SpeziStudyDefinition"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/FHIRModels.git", from: "0.7.0"),
         .package(url: "https://github.com/StanfordSpezi/Spezi.git", from: "1.8.1"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", from: "2.1.4"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", from: "2.2.0"),
         .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", from: "1.1.0"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", from: "1.2.7"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", from: "1.2.10"),
         .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", from: "2.1.0"),
-        .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4")
+        .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4"),
+        .package(url: "https://github.com/apple/swift-algorithms", from: "1.2.1")
     ] + swiftLintPackage(),
     targets: [
         .target(
+            name: "SpeziLocalization",
+            dependencies: [
+                .product(name: "SpeziFoundation", package: "SpeziFoundation"),
+                .product(name: "Algorithms", package: "swift-algorithms")
+            ]
+        ),
+        .target(
             name: "SpeziStudyDefinition",
             dependencies: [
+                .target(name: "SpeziLocalization"),
                 .product(name: "ModelsR4", package: "FHIRModels"),
                 .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
                 .product(name: "SpeziHealthKitBulkExport", package: "SpeziHealthKit"),
@@ -44,6 +55,7 @@ let package = Package(
                 .product(name: "SpeziScheduler", package: "SpeziScheduler"),
                 .product(name: "DequeModule", package: "swift-collections")
             ],
+            resources: [.process("Resources")],
             swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
             plugins: [] + swiftLintPlugin()
         ),
@@ -64,12 +76,21 @@ let package = Package(
         .testTarget(
             name: "SpeziStudyTests",
             dependencies: [
+                .target(name: "SpeziLocalization"),
                 .target(name: "SpeziStudy"),
                 .target(name: "SpeziStudyDefinition"),
                 .product(name: "SpeziTesting", package: "Spezi"),
                 .product(name: "ModelsR4", package: "FHIRModels")
             ],
             resources: [.process("Resources")],
+            swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
+            plugins: [] + swiftLintPlugin()
+        ),
+        .testTarget(
+            name: "SpeziLocalizationTests",
+            dependencies: [
+                .target(name: "SpeziLocalization")
+            ],
             swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
             plugins: [] + swiftLintPlugin()
         )
