@@ -84,6 +84,25 @@ extension StudyDefinition {
             }
         }
         
+        /// What should happen with missed occurrences of events scheduled based on ``ScheduleDefinition-swift.enum``s,
+        /// i.e. Tasks the user was prompted to complete but didn't complete and which are now in the past.
+        public enum MissedOccurrenceRule: StudyDefinitionElement {
+            /// The missed occurrence of the scheduled task should be discarded, and it should not be possible for the user to complete the event retroactively.
+            case discard
+            /// The user should be given the option to retroactively complete the event, even if it occurred on a date that has already passed.
+            case allowCompletion(AllowCompletionDeadline)
+            
+            /// Until when a user should be allowed to complete an already-passed occurrence of a Task.
+            public enum AllowCompletionDeadline: StudyDefinitionElement {
+                /// Retroactive completion should always be possible, regardless of how long ago the missed occurrence was.
+                case forever
+                /// Retroactive completion should be possible, until the next regular occurrence of the Task.
+                ///
+                /// For example, if you have a weekly schedule, and the user misses completion, they'd be given the option to retroactively complete the task for the next 6 days.
+                case untilNextOccurrence
+            }
+        }
+        
         /// This schedule's unique, stable identifier.
         public var id: UUID
         /// The identifier of the component this schedule is referencing
@@ -94,6 +113,8 @@ extension StudyDefinition {
         public var completionPolicy: SpeziScheduler.AllowedCompletionPolicy
         /// Whether notifications should be sent for occurrences of this schedule.
         public var notifications: NotificationsConfig
+        /// How missed occurrences of the scheduled task should be handled.
+        public var missedOccurrenceRule: MissedOccurrenceRule
         
         /// Creates a new `ComponentSchedule`.
         public init(
@@ -101,13 +122,15 @@ extension StudyDefinition {
             componentId: StudyDefinition.Component.ID,
             scheduleDefinition: ScheduleDefinition,
             completionPolicy: SpeziScheduler.AllowedCompletionPolicy,
-            notifications: NotificationsConfig
+            notifications: NotificationsConfig,
+            missedOccurrenceRule: MissedOccurrenceRule = .discard
         ) {
             self.id = id
             self.componentId = componentId
             self.scheduleDefinition = scheduleDefinition
             self.completionPolicy = completionPolicy
             self.notifications = notifications
+            self.missedOccurrenceRule = missedOccurrenceRule
         }
     }
 }
