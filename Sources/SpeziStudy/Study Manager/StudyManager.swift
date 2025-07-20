@@ -274,7 +274,11 @@ extension StudyManager {
                     }
                     taskSchedule = .once(at: date, duration: .tillEndOfDay)
                 case .repeated:
-                    taskSchedule = .fromRepeated(schedule.scheduleDefinition, participationStartDate: enrollment.enrollmentDate)
+                    taskSchedule = .fromRepeated(
+                        schedule.scheduleDefinition,
+                        in: preferredLocale.calendar,
+                        participationStartDate: enrollment.enrollmentDate
+                    )
                 }
                 do {
                     let task = try createOrUpdateTask(
