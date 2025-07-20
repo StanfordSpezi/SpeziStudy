@@ -127,7 +127,7 @@ extension Calendar {
             .flatMap(\.self)
             .dropFirst(self.firstWeekday - 1)
             .dropFirst(rawValue + self.weekdaySymbols.count - self.firstWeekday)
-            // SAFETY: we operate on what is essentially a neverending sequence of weekdays; there will always be an element
+            // SAFETY: we operate on what is effectively a neverending sequence; there will always be an element
             .first! // swiftlint:disable:this force_unwrapping
     }
 }
