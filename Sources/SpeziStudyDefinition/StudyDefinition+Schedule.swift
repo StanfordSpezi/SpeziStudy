@@ -64,7 +64,13 @@ extension StudyDefinition {
                 /// A repetition pattern that will take effect daily, at the specified `hour` and `minute`.
                 case daily(interval: Int = 1, hour: Int, minute: Int = 0)
                 /// A repetition pattern that will take effect weekly, at the specified `weekday`, `hour`, and `minute`.
-                case weekly(interval: Int = 1, weekday: Locale.Weekday, hour: Int, minute: Int = 0)
+                /// - parameter weekday: the day of the week at which the schedule should repeat.
+                ///     specifying `nil` causes the schedule to repeat weekly relative to the study enrollment date.
+                case weekly(interval: Int = 1, weekday: Locale.Weekday?, hour: Int, minute: Int = 0)
+                /// A repetition pattern that will take effect monthly, at the specified `day`, `hour`, and `minute`.
+                /// - parameter day: the day of the month at which the schedule should repeat.
+                ///     specifying `nil` causes the schedule to repeat monthly relative to the study enrollment date.
+                case monthly(interval: Int = 1, day: Int?, hour: Int, minute: Int = 0)
             }
         }
         
@@ -135,7 +141,17 @@ extension StudyDefinition.ComponentSchedule.ScheduleDefinition: CustomStringConv
             case 1: "weekly"
             default: "every \(Self.ordinalsFormatter.string(from: .init(value: interval)) ?? "\(interval)th") week"
             }
-            return "\(intervalDesc) @ \(weekday.rawValue) \(String(format: "%.2d", hour)):\(String(format: "%.2d", minute))\(Self.offsetDesc(offset))"
+            let timeDesc = "\(String(format: "%.2d", hour)):\(String(format: "%.2d", minute))\(Self.offsetDesc(offset))"
+            return "\(intervalDesc) @ \(weekday?.rawValue ?? "(study enrollment weekday)") \(timeDesc)"
+        case let .repeated(.monthly(interval, day, hour, minute), offset):
+            let intervalDesc = switch interval {
+            case ...0: ""
+            case 1: "monthly"
+            default: "every \(Self.ordinalsFormatter.string(from: .init(value: interval)) ?? "\(interval)th") month"
+            }
+            let timeDesc = "\(String(format: "%.2d", hour)):\(String(format: "%.2d", minute))\(Self.offsetDesc(offset))"
+            let dayDesc = day.map { "\(Self.ordinalsFormatter.string(from: .init(value: $0)) ?? "\($0)th") day" } ?? "(study enrollment day)"
+            return "\(intervalDesc) @ \(dayDesc) \(timeDesc)"
         case let .after(studyLifecycleEvent, offset):
             return "after \(studyLifecycleEvent)\(Self.offsetDesc(offset))"
         case .once(let dateComponents):

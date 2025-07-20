@@ -70,10 +70,11 @@ extension SpeziScheduler.Schedule {
     /// - parameter participationStartDate: the date at which the user started to participate in the study.
     ///
     /// - invariant: `other` MUST be a `.repeated` `ScheduleDefinition`, otherwise the function will abort.
-    static func fromRepeated(_ other: StudyDefinition.ComponentSchedule.ScheduleDefinition, participationStartDate: Date) -> Self {
+    static func fromRepeated(_ other: StudyDefinition.ComponentSchedule.ScheduleDefinition, in cal: Calendar, participationStartDate: Date) -> Self {
         switch other {
         case let .repeated(.daily(interval, hour, minute), offset):
             return .daily(
+                calendar: cal,
                 interval: interval,
                 hour: hour,
                 minute: minute,
@@ -84,8 +85,26 @@ extension SpeziScheduler.Schedule {
             )
         case let .repeated(.weekly(interval, weekday, hour, minute), offset):
             return .weekly(
+                calendar: cal,
                 interval: interval,
-                weekday: weekday,
+                weekday: weekday ?? { () -> Locale.Weekday in
+                    guard let weekday = cal.dateComponents([.weekday], from: participationStartDate).weekday else {
+                        preconditionFailure("Unable to determine study enrollment weekday")
+                    }
+                    return cal.weekday(from: weekday)
+                }(),
+                hour: hour,
+                minute: minute,
+                second: 0,
+                startingAt: participationStartDate.addingTimeInterval(offset.timeInterval),
+                end: .never,
+                duration: .tillEndOfDay
+            )
+        case let .repeated(.monthly(interval, day, hour, minute), offset):
+            return .monthly(
+                calendar: cal,
+                interval: interval,
+                day: day ?? cal.component(.day, from: participationStartDate),
                 hour: hour,
                 minute: minute,
                 second: 0,
@@ -96,5 +115,19 @@ extension SpeziScheduler.Schedule {
         case .after, .once:
             preconditionFailure("Unexpected input: expected .repeated, got '\(other)'")
         }
+    }
+}
+
+
+extension Calendar {
+    /// Obtains, for a `DateComponents/weekday` value, the corresponding `Locale.Weekday`.
+    func weekday(from rawValue: Int) -> Locale.Weekday {
+        repeatElement([Locale.Weekday.sunday, .monday, .tuesday, .wednesday, .thursday, .friday, .saturday], count: .max)
+            .lazy
+            .flatMap(\.self)
+            .dropFirst(self.firstWeekday - 1)
+            .dropFirst(rawValue + self.weekdaySymbols.count - self.firstWeekday)
+            // SAFETY: we operate on what is essentially a neverending sequence of weekdays; there will always be an element
+            .first! // swiftlint:disable:this force_unwrapping
     }
 }
