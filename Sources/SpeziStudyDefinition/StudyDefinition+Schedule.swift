@@ -40,7 +40,7 @@ extension StudyDefinition {
     /// - ``ScheduleDefinition-swift.enum``
     public struct ComponentSchedule: StudyDefinitionElement, Identifiable {
         /// Time Components
-        public struct Time: Hashable, Codable, Sendable {
+        public struct Time: Hashable, Codable, Sendable, CustomStringConvertible {
             /// The hour
             public let hour: Int
             /// The minute
@@ -56,17 +56,26 @@ extension StudyDefinition {
                 precondition((0...60).contains(hour), "Invalid minute value")
                 precondition((0...60).contains(hour), "Invalid second value")
             }
+            
+            public var description: String {
+                if second == 0 {
+                    String(format: "%02lld:%02lld", hour, minute)
+                } else {
+                    String(format: "%02lld:%02lld:%02lld", hour, minute, second)
+                }
+            }
         }
         
         /// A schedule, defining when a ``Component`` should be activated.
         ///
         /// ## Topics
         /// ### Schedule Kinds
+        /// - ``once(_:)``
         /// - ``repeated(_:offset:)``
         /// ### Supporting Types
         /// - ``RepetitionPattern``
         public enum ScheduleDefinition: StudyDefinitionElement {
-            /// A schedule that should run exactly once, at a specific date in the user's time zone.
+            /// A schedule that should run exactly once.
             case once(OneTimeSchedule)
             
             /// A schedule that will run multiple times, based on a repetition pattern (e.g.: weekly).
