@@ -133,6 +133,7 @@ extension StudyDefinition {
     }
 }
 
+
 extension StudyBundle {
     /// The component's display title
     public func displayTitle(
@@ -158,6 +159,26 @@ extension StudyBundle {
         case .timedWalkingTest(let component):
             return String(localized: component.test.displayTitle)
         }
+    }
+    
+    
+    /// The component's instructions test, if applicable.
+    public func instructions(
+        for component: StudyDefinition.Component,
+        in locale: Locale,
+        using localeMatchingBehaviour: LocaleMatchingBehaviour = .default
+    ) -> String? {
+//        switch component {
+//        case .informational(let informationalComponent):
+//            <#code#>
+//        case .questionnaire(let questionnaireComponent):
+//            <#code#>
+//        case .healthDataCollection(let healthDataCollectionComponent):
+//            <#code#>
+//        case .timedWalkingTest(let timedWalkingTestComponent):
+//            <#code#>
+//        }
+        "Please take a look at this :)"
     }
 }
 

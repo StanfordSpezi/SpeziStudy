@@ -52,13 +52,22 @@ extension Task.Category {
     
     /// An active task, i.e., some action the participant should perform
     public static let activeTask = Self.custom("edu.stanford.spezi.SpeziStudy.task.activeTask")
+    
+    /// A Timed Walking Test Task
+    public static let timedWalkingTest = Self.custom("edu.stanford.spezi.SpeziStudy.task.timedWalkingTest")
+    
+    /// A Timed Running Test Task
+    public static let timedRunningTest = Self.custom("edu.stanford.spezi.SpeziStudy.task.timedRunningTest")
 }
 
 
 extension View {
     /// Configures the SpeziStudy-specific task category appearances
     public func injectingCustomTaskCategoryAppearances() -> some View {
-        self.taskCategoryAppearance(for: .informational, label: "Informational", image: .system("text.rectangle.page"))
+        self
+            .taskCategoryAppearance(for: .informational, label: "Informational", image: .system("text.rectangle.page"))
+            .taskCategoryAppearance(for: .timedWalkingTest, label: "Active Task", image: .system("figure.walk"))
+            .taskCategoryAppearance(for: .timedRunningTest, label: "Active Task", image: .system("figure.run"))
     }
 }
 
@@ -112,7 +121,7 @@ extension SpeziScheduler.Schedule {
                 end: .never,
                 duration: .tillEndOfDay
             )
-        case .after, .once:
+        case .once:
             preconditionFailure("Unexpected input: expected .repeated, got '\(other)'")
         }
     }

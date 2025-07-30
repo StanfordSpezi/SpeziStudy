@@ -9,6 +9,7 @@
 import Foundation
 import enum SpeziScheduler.AllowedCompletionPolicy
 import enum SpeziScheduler.NotificationThread
+import struct SpeziScheduler.NotificationTime
 
 
 extension StudyDefinition {
@@ -38,6 +39,25 @@ extension StudyDefinition {
     /// ### Other
     /// - ``ScheduleDefinition-swift.enum``
     public struct ComponentSchedule: StudyDefinitionElement, Identifiable {
+        /// Time Components
+        public struct Time: Hashable, Codable, Sendable {
+            /// The hour
+            public let hour: Int
+            /// The minute
+            public let minute: Int
+            /// The second
+            public let second: Int
+            
+            public init(hour: Int, minute: Int = 0, second: Int = 0) {
+                self.hour = hour
+                self.minute = minute
+                self.second = second
+                precondition((0...24).contains(hour), "Invalid hour value")
+                precondition((0...60).contains(hour), "Invalid minute value")
+                precondition((0...60).contains(hour), "Invalid second value")
+            }
+        }
+        
         /// A schedule, defining when a ``Component`` should be activated.
         ///
         /// ## Topics
@@ -46,11 +66,8 @@ extension StudyDefinition {
         /// ### Supporting Types
         /// - ``RepetitionPattern``
         public enum ScheduleDefinition: StudyDefinitionElement {
-            /// A schedule that should run in response to an event within the study's lifecycle.
-            case after(StudyLifecycleEvent, offset: Duration = .zero)
-            
             /// A schedule that should run exactly once, at a specific date in the user's time zone.
-            case once(DateComponents) // DateComponents bc we need it to be TimeZone independent...
+            case once(OneTimeSchedule)
             
             /// A schedule that will run multiple times, based on a repetition pattern (e.g.: weekly).
             ///
@@ -58,6 +75,23 @@ extension StudyDefinition {
             /// - parameter pattern: The pattern based on which the schedule should repeat itself.
             /// - parameter offset: The offsetbetween the participant's enrollment into the study and the first time the schedule should take effect.
             case repeated(_ pattern: RepetitionPattern, offset: Duration = .zero)
+            
+            public enum OneTimeSchedule: StudyDefinitionElement {
+                /// A schedule that should run only once, at a specific date in the user's time zone.
+                case date(DateComponents) // DateComponents bc we need it to be TimeZone independent...
+                /// A schedule that should run only once, in response to an event within the study's lifecycle.
+                ///
+                /// For example, the following definition schedules a component to occur at 9 AM, 2 days after the user enrolled in the study:
+                /// ```swift
+                /// let schedule: ScheduleDefinition = .once(.event(.enrollment), offsetInDays: 2, time: .init(hour: 9))
+                /// ```
+                /// Regardless of whether the participant enrolled before or after 9 AM, the event will trigger on the 2nd day after the enrollment, at 9 AM.
+                ///
+                /// - parameter event: The event to which the schedule should be anchored.
+                /// - parameter offsetInDays: Allows moving the schedule to occur `offsetInDays` after the day on which the event occurred.
+                /// - parameter time: The specific time for which the occurrence should be scheduled.
+                case event(_ event: StudyLifecycleEvent, offsetInDays: Int = 0, time: Time? = nil)
+            }
             
             /// Pattern defining how a repeating ``StudyDefinition/ComponentSchedule/ScheduleDefinition-swift.enum`` should repeat itself.
             public enum RepetitionPattern: StudyDefinitionElement { // swiftlint:disable:this nesting
@@ -79,13 +113,21 @@ extension StudyDefinition {
             case disabled
             /// There should be notifications for occurrences of this schedule.
             /// - parameter thread: the notification thread used to group the notifications
-            case enabled(thread: SpeziScheduler.NotificationThread)
+            case enabled(thread: SpeziScheduler.NotificationThread, time: SpeziScheduler.NotificationTime? = nil)
             
             /// The resulting effective notification thread
             public var thread: SpeziScheduler.NotificationThread {
                 switch self {
                 case .disabled: .none
-                case .enabled(let thread): thread
+                case .enabled(let thread, time: _): thread
+                }
+            }
+            
+            /// The notification time override, if specified
+            public var time: SpeziScheduler.NotificationTime? {
+                switch self {
+                case .disabled: nil
+                case .enabled(thread: _, let time): time
                 }
             }
         }
@@ -152,11 +194,18 @@ extension StudyDefinition.ComponentSchedule.ScheduleDefinition: CustomStringConv
             let timeDesc = "\(String(format: "%.2d", hour)):\(String(format: "%.2d", minute))\(Self.offsetDesc(offset))"
             let dayDesc = day.map { "\(Self.ordinalsFormatter.string(from: .init(value: $0)) ?? "\($0)th") day" } ?? "(study enrollment day)"
             return "\(intervalDesc) @ \(dayDesc) \(timeDesc)"
-        case let .after(studyLifecycleEvent, offset):
-            return "after \(studyLifecycleEvent)\(Self.offsetDesc(offset))"
-        case .once(let dateComponents):
+        case let .once(.date(dateComponents)):
             let date = Calendar.current.date(from: dateComponents)
             return "once; at \(date?.ISO8601Format() ?? dateComponents.description)"
+        case let .once(.event(event, offsetInDays, time)):
+            var desc = "once; at \(event)"
+            if offsetInDays != 0 {
+                desc += " \(offsetInDays < 0 ? "-" : "+") \(abs(offsetInDays)) day\(abs(offsetInDays) != 1 ? "s" : "")"
+            }
+            if let time {
+                desc += "; at \(time)"
+            }
+            return desc
         }
     }
     
