@@ -48,6 +48,15 @@ extension StudyDefinition {
             /// The second
             public let second: Int
             
+            public var description: String {
+                if second == 0 {
+                    String(format: "%02lld:%02lld", hour, minute)
+                } else {
+                    String(format: "%02lld:%02lld:%02lld", hour, minute, second)
+                }
+            }
+            
+            /// Creates a new `Time` object.
             public init(hour: Int, minute: Int = 0, second: Int = 0) {
                 self.hour = hour
                 self.minute = minute
@@ -55,14 +64,6 @@ extension StudyDefinition {
                 precondition((0...24).contains(hour), "Invalid hour value")
                 precondition((0...60).contains(hour), "Invalid minute value")
                 precondition((0...60).contains(hour), "Invalid second value")
-            }
-            
-            public var description: String {
-                if second == 0 {
-                    String(format: "%02lld:%02lld", hour, minute)
-                } else {
-                    String(format: "%02lld:%02lld:%02lld", hour, minute, second)
-                }
             }
         }
         
@@ -85,7 +86,7 @@ extension StudyDefinition {
             /// - parameter offset: The offsetbetween the participant's enrollment into the study and the first time the schedule should take effect.
             case repeated(_ pattern: RepetitionPattern, offset: Duration = .zero)
             
-            public enum OneTimeSchedule: StudyDefinitionElement {
+            public enum OneTimeSchedule: StudyDefinitionElement { // swiftlint:disable:this nesting
                 /// A schedule that should run only once, at a specific date in the user's time zone.
                 case date(DateComponents) // DateComponents bc we need it to be TimeZone independent...
                 /// A schedule that should run only once, in response to an event within the study's lifecycle.

@@ -311,7 +311,7 @@ extension StudyManager {
     
     /// Creates (or updates) a `Task` for a study component, based on a schedule.
     @MainActor
-    private func createOrUpdateTask(
+    private func createOrUpdateTask( // swiftlint:disable:this function_body_length
         componentSchedule: StudyDefinition.ComponentSchedule,
         enrollment: StudyEnrollment,
         taskSchedule: SpeziScheduler.Schedule
