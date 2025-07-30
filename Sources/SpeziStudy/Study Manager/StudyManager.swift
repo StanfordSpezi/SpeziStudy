@@ -571,12 +571,15 @@ extension StudyManager {
                     continue
                 case let .once(.event(lifecycleEvent, offsetInDays, time)):
                     guard lifecycleEvent == event else {
+                        logger.error("Skipping \(schedule.scheduleDefinition) bc the events don't match up (\(event) vs \(lifecycleEvent))")
                         continue
                     }
                     guard let occurrenceDate = cal
                         .date(byAdding: .day, value: offsetInDays, to: now)
-                        .flatMap({ date in time.flatMap { cal.date(bySettingHour: $0.hour, minute: $0.minute, second: $0.second, of: date) } }) else {
-                        logger.error("Unable to compute occurrence date")
+                        .flatMap({ date in
+                            time.flatMap { cal.date(bySettingHour: $0.hour, minute: $0.minute, second: $0.second, of: date) } ?? date
+                        }) else {
+                        logger.error("Unable to compute occurrence date. Skipping \(schedule.scheduleDefinition)")
                         continue
                     }
                     do {

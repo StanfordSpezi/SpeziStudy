@@ -105,7 +105,7 @@ func mockStudy(revision: MockStudyRevision) throws -> StudyBundle { // swiftlint
             StudyDefinition.ComponentSchedule(
                 id: .schedule0Id,
                 componentId: .article0ComponentId,
-                scheduleDefinition: .once(.event(.enrollment)),
+                scheduleDefinition: .once(.event(.enrollment, time: .midnight)),
                 completionPolicy: .afterStart,
                 notifications: .disabled
             )

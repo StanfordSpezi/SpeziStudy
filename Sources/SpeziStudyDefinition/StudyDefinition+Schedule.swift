@@ -41,6 +41,16 @@ extension StudyDefinition {
     public struct ComponentSchedule: StudyDefinitionElement, Identifiable {
         /// Time Components
         public struct Time: Hashable, Codable, Sendable, CustomStringConvertible {
+            /// Midnight
+            @inlinable public static var midnight: Self {
+                Time(hour: 0, minute: 0, second: 0)
+            }
+            
+            /// Noon
+            @inlinable public static var noon: Self {
+                Time(hour: 12, minute: 0, second: 0)
+            }
+            
             /// The hour
             public let hour: Int
             /// The minute
