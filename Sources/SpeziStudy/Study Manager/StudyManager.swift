@@ -265,8 +265,6 @@ extension StudyManager {
                 let taskSchedule: SpeziScheduler.Schedule
                 switch schedule.scheduleDefinition {
                 case .once(.event):
-                    // ISSUE: this will, when responding to a locale update, skip tasks that have been configured in response to an event and now need their title/etc updated!
-                    // study-lifecycle-relative schedules aren't configured here...
                     let taskId = taskId(for: schedule, in: studyBundle)
                     activeTaskIds.insert(taskId)
                     if let task = try scheduler.queryTasks(
