@@ -28,7 +28,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/FHIRModels.git", from: "0.7.0"),
         .package(url: "https://github.com/StanfordSpezi/Spezi.git", from: "1.8.1"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", revision: "265d734811f24d88d2589aff1e74d93ee88b3d14"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", from: "2.3.0"),
         .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", from: "1.1.0"),
         .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", from: "1.2.12"),
         .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", from: "2.1.0"),
