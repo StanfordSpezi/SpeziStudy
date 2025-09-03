@@ -31,6 +31,7 @@ let package = Package(
         .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", from: "2.3.0"),
         .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", from: "1.1.0"),
         .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", from: "1.2.12"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziNotifications.git", from: "1.0.8"),
         .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", from: "2.1.0"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4")
     ] + swiftLintPackage(),
