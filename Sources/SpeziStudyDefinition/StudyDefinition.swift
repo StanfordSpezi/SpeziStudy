@@ -121,7 +121,7 @@ extension StudyDefinition {
             switch component {
             case .healthDataCollection(let component):
                 component
-            case .informational, .questionnaire, .timedWalkingTest:
+            case .informational, .questionnaire, .timedWalkingTest, .ecg:
                 nil
             }
         }
@@ -152,6 +152,8 @@ extension StudyBundle {
             )?.title?.value?.string
         case .timedWalkingTest(let component):
             String(localized: component.test.displayTitle)
+        case .ecg:
+            String(localized: "ECG")
         case .healthDataCollection:
             nil
         }
@@ -173,7 +175,7 @@ extension StudyBundle {
             documentMetadata(for: component, in: locale, using: localeMatchingBehaviour)?["lede"]
         case .questionnaire(let component):
             questionnaire(for: component.fileRef, in: locale, using: localeMatchingBehaviour)?.purpose?.value?.string
-        case .timedWalkingTest:
+        case .timedWalkingTest, .ecg:
             nil
         case .healthDataCollection:
             nil
