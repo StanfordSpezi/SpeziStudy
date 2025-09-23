@@ -87,7 +87,10 @@ extension StudyDefinition {
         /// ### Supporting Types
         /// - ``RepetitionPattern``
         public enum ScheduleDefinition: StudyDefinitionElement {
-            /// A schedule that should run exactly once.
+            /// A schedule that should not repeat on its own.
+            ///
+            /// Note that `once` schedules only run "once" in the sense that they are not inherently repetitive.
+            /// Depending on its specific ``OneTimeSchedule``, a `once` schedule can get scheduled multiple times, but every time it is scheduled, it only gets triggered once.
             case once(OneTimeSchedule)
             
             /// A schedule that will run multiple times, based on a repetition pattern (e.g.: weekly).

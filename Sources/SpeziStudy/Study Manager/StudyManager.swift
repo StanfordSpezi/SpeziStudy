@@ -149,15 +149,14 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
             try removeOrphanedTasks()
             try removeOrphanedStudyBundles()
             #if targetEnvironment(simulator)
-            guard autosaveTask == nil else {
-                return
-            }
-            autosaveTask = Task.detached {
-                while true {
-                    await MainActor.run {
-                        try? self.modelContext.save()
+            if autosaveTask == nil {
+                autosaveTask = Task.detached {
+                    while true {
+                        await MainActor.run {
+                            try? self.modelContext.save()
+                        }
+                        try? await Task.sleep(for: .seconds(0.25))
                     }
-                    try? await Task.sleep(for: .seconds(0.25))
                 }
             }
             #endif
@@ -169,7 +168,8 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
                 }
                 self.handleStudyLifecycleEvent(
                     .completedTask(componentId: studyContext.componentId),
-                    for: studyBundle
+                    for: studyBundle,
+                    at: .now
                 )
             }
         }
@@ -448,10 +448,12 @@ extension StudyManager {
                 if enrollment.studyRevision == study.studyRevision {
                     // already enrolled in this study, at this revision.
                     // this is a no-op.
+                    logger.notice("Ignoring enrollment request bc we're already enrolled, at this revision.")
                     return
                 } else if enrollment.studyRevision < study.studyRevision {
                     // if we have only one enrollment, and it is for an older version of the study,
                     // we treat the enroll call as a study definition update
+                    logger.notice("Already enrolled in older version of the study; fwd'ing to -informAboutStudies.")
                     try await informAboutStudies(CollectionOfOne(studyBundle))
                     return
                 } else {
@@ -475,17 +477,14 @@ extension StudyManager {
         try registerStudyTasksWithScheduler(for: CollectionOfOne(enrollment))
         // intentionally doing this before the background component setup, since that call is async and might take several seconds to return
         // (bc of the HealthKit permissions)
-        if preferredLocale.calendar.isDateInToday(enrollmentDate) {
-            // if we enrolled for the current day, we trigger the enrollment-event-based component scheduled.
-            // we intentionally skip this if the enrollment is for a different date.
-            handleStudyLifecycleEvent(.enrollment, for: studyBundle)
-        }
+        handleStudyLifecycleEvent(.enrollment, for: studyBundle, at: enrollmentDate)
         try await setupStudyBackgroundComponents(for: CollectionOfOne(enrollment))
     }
     
     
     /// Unenroll from a study.
     public func unenroll(from enrollment: StudyEnrollment) throws {
+        logger.notice("Unenrolling from study '\(enrollment.studyId)' (\(enrollment.studyBundle?.studyDefinition.metadata.title ?? "n/a"))")
         do {
             // Delete all Tasks associated with this study.
             // Note that we do this by simply fetching & deleting all Tasks with a matching prefix,
@@ -581,8 +580,10 @@ extension StudyManager {
 // MARK: Event-Based Scheduling
 
 extension StudyManager {
-    private func handleStudyLifecycleEvent(_ event: StudyLifecycleEvent, for studyBundle: StudyBundle) {
-        let now = Date.now
+    private func handleStudyLifecycleEvent(_ event: StudyLifecycleEvent, for studyBundle: StudyBundle, at date: Date) {
+        logger.notice(
+            "Handling study lifecycle event '\(String(describing: event))' for study \(studyBundle.id) (\(studyBundle.studyDefinition.metadata.title))"
+        )
         let cal = preferredLocale.calendar
         for enrollment in studyEnrollments where enrollment.studyId == studyBundle.id {
             guard let studyBundle = enrollment.studyBundle else {
@@ -598,7 +599,7 @@ extension StudyManager {
                         continue
                     }
                     guard let occurrenceDate = cal
-                        .date(byAdding: .day, value: offsetInDays, to: now)
+                        .date(byAdding: .day, value: offsetInDays, to: date)
                         .flatMap({ date in
                             time.flatMap { cal.date(bySettingHour: $0.hour, minute: $0.minute, second: $0.second, of: date) } ?? date
                         }) else {
