@@ -348,9 +348,9 @@ extension StudyManager {
             case .running: .timedRunningTest
             }
             action = .promptTimedWalkingTest(component)
-        case .ecg(let component):
-            category = .ecg
-            action = .performECG(component)
+        case .customActiveTask(let component):
+            category = .customActiveTask(component.activeTask)
+            action = .performCustomActiveTask(component)
         case .healthDataCollection:
             throw TaskCreationError.componentNotEligibleForTaskCreation
         }

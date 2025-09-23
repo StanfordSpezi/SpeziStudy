@@ -20,7 +20,7 @@ extension StudyManager {
         case presentInformationalStudyComponent(StudyDefinition.InformationalComponent)
         case answerQuestionnaire(StudyDefinition.QuestionnaireComponent)
         case promptTimedWalkingTest(StudyDefinition.TimedWalkingTestComponent)
-        case performECG(StudyDefinition.ECGComponent)
+        case performCustomActiveTask(StudyDefinition.CustomActiveTaskComponent)
     }
 }
 
@@ -59,8 +59,10 @@ extension Task.Category {
     /// A Timed Running Test Task
     public static let timedRunningTest = Self.custom("edu.stanford.spezi.SpeziStudy.task.timedRunningTest")
     
-    /// An ECG active task
-    public static let ecg = Self.custom("edu.stanford.spezi.SpeziStudy.task.ecg")
+    /// A custom active task.
+    public static func customActiveTask(_ activeTask: StudyDefinition.CustomActiveTaskComponent.ActiveTask) -> Self {
+        .custom("edu.stanford.spezi.SpeziStudy.task.customActiveTask:\(activeTask.identifier)")
+    }
 }
 
 
