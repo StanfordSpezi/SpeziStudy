@@ -63,10 +63,7 @@ struct StudyBundleTests {
             fileRef: .init(category: .consent, filename: "Welcome", fileExtension: "md"),
             localization: .init(language: .spanish, region: .unitedStates)
         ))
-        #expect(StudyBundle.parse(filename: "Welcome+en_US.md", in: .consent) == LocalizedFileRef(
-            fileRef: .init(category: .consent, filename: "Welcome", fileExtension: "md"),
-            localization: .init(language: .english, region: .unitedStates)
-        ))
+        #expect(StudyBundle.parse(filename: "Welcome+en_US.md", in: .consent) == nil)
         #expect(StudyBundle.parse(filename: "Welcome.md", in: .consent) == nil)
         #expect(StudyBundle.parse(filename: "Welcome+de-US.md", in: .consent) == LocalizedFileRef(
             fileRef: .init(category: .consent, filename: "Welcome", fileExtension: "md"),
