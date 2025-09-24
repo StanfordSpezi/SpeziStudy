@@ -477,7 +477,12 @@ extension StudyManager {
         try registerStudyTasksWithScheduler(for: CollectionOfOne(enrollment))
         // intentionally doing this before the background component setup, since that call is async and might take several seconds to return
         // (bc of the HealthKit permissions)
-        handleStudyLifecycleEvent(.enrollment, for: studyBundle, at: enrollmentDate)
+        if preferredLocale.calendar.isDateInToday(enrollmentDate) {
+            // if we enrolled for the current day, we trigger the enrollment-event-based component scheduled.
+            // we intentionally skip this if the enrollment is for a different date.
+            handleStudyLifecycleEvent(.enrollment, for: studyBundle, at: enrollmentDate)
+        }
+        handleStudyLifecycleEvent(.activation, for: studyBundle, at: .now)
         try await setupStudyBackgroundComponents(for: CollectionOfOne(enrollment))
     }
     
@@ -595,7 +600,9 @@ extension StudyManager {
                     continue
                 case let .once(.event(lifecycleEvent, offsetInDays, time)):
                     guard lifecycleEvent == event else {
-                        logger.error("Skipping \(schedule.scheduleDefinition) bc the events don't match up (\(event) vs \(lifecycleEvent))")
+                        logger.error(
+                            "Skipping \(schedule.scheduleDefinition) bc the events don't match up (\(event.debugDescription) vs \(lifecycleEvent.debugDescription))"
+                        )
                         continue
                     }
                     guard let occurrenceDate = cal

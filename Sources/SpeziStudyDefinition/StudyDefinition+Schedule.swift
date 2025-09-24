@@ -243,11 +243,13 @@ extension StudyDefinition.ComponentSchedule.ScheduleDefinition: CustomStringConv
 }
 
 
-extension StudyLifecycleEvent: CustomStringConvertible {
-    public var description: String {
+extension StudyLifecycleEvent: CustomDebugStringConvertible {
+    public var debugDescription: String {
         switch self {
         case .enrollment:
             "enrollment"
+        case .activation:
+            "activation"
         case .unenrollment:
             "unenrollment"
         case .studyEnd:
