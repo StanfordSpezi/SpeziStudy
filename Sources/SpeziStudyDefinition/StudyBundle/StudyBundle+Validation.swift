@@ -1,5 +1,5 @@
 //
-// This source file is part of the My Heart Counts iOS application based on the Stanford Spezi Template Application project
+// This source file is part of the Stanford Spezi open source project
 //
 // SPDX-FileCopyrightText: 2025 Stanford University
 //
@@ -84,6 +84,19 @@ extension StudyBundle {
     }
     
     
+    /// Validates the StudyBundle.
+    ///
+    /// This function performs the following checks:
+    /// - for informational components:
+    ///     - check that each informational component's file ref can be resolved;
+    ///     - check that for each article, all localized variants have the same `id` in their metadata;
+    /// - for questionnaire components:
+    ///     - check that each questionnaire component's file ref can be resolved;
+    ///     - check that for each questionnaire, all localized variants share the following properties:
+    ///         - questionnaire id
+    ///         - number of items in the questionnaire
+    ///         - item identifiers
+    ///         - item types
     func validate() throws -> [BundleValidationIssue] {
         var issues: [BundleValidationIssue] = []
         issues.append(contentsOf: try validateArticles())
