@@ -20,13 +20,19 @@ extension StudyBundle {
         
         /// A `String` passed to e.g. ``StudyBundle/FileInput/init(fileRef:localization:contents:)-(_,_,String)`` didn't have a valid UTF-8 representation.
         case nonUTF8Input
+        
+        /// The ``FileInput``s passed to ``StudyBundle/writeToDisk(at:definition:files:)`` contained multiple entries (with conflicting locales) for the specified file reference.
+        case conflictigLocalizations(StudyBundle.FileReference)
+        
+        /// The Study Bundle failed to pass the validation checks.
+        case failedValidation(reason: String)
     }
     
     
     /// A file which should be included when creating a ``StudyBundle``.
     public struct FileInput {
         /// The file's name, extension, and localization info.
-        fileprivate let localizedFileRef: LocalizedFileReference
+        let localizedFileRef: LocalizedFileReference
         /// The raw contents of the file
         let contents: Data
         
@@ -65,11 +71,6 @@ extension StudyBundle {
         files: [FileInput]
     ) throws -> StudyBundle {
         try Self.assertIsStudyBundleUrl(bundleUrl)
-        for fileRef in definition.allFileRefs {
-            guard files.contains(where: { $0.localizedFileRef.fileRef == fileRef }) else {
-                throw CreateBundleError.missingFile(fileRef: fileRef)
-            }
-        }
         let fileManager = FileManager.default
         try? fileManager.removeItem(at: bundleUrl)
         try fileManager.createDirectory(at: bundleUrl, withIntermediateDirectories: true)
@@ -82,7 +83,12 @@ extension StudyBundle {
             try fileManager.prepareForWriting(to: fileUrl)
             try file.contents.write(to: fileUrl)
         }
-        return try Self(bundleUrl: bundleUrl)
+        let bundle = try Self(bundleUrl: bundleUrl)
+        if case let issues = try bundle.validate(), !issues.isEmpty {
+            try? fileManager.removeItem(at: bundle.bundleUrl)
+            throw CreateBundleError.failedValidation(reason: issues.map { "- \($0.description)" }.joined(separator: "\n"))
+        }
+        return bundle
     }
 }
 
