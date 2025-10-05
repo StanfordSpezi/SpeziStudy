@@ -21,9 +21,6 @@ extension StudyBundle {
         /// A `String` passed to e.g. ``StudyBundle/FileInput/init(fileRef:localization:contents:)-(_,_,String)`` didn't have a valid UTF-8 representation.
         case nonUTF8Input
         
-        /// The ``FileInput``s passed to ``StudyBundle/writeToDisk(at:definition:files:)`` contained multiple entries (with conflicting locales) for the specified file reference.
-        case conflictigLocalizations(StudyBundle.FileReference)
-        
         /// The Study Bundle failed to pass the validation checks.
         case failedValidation(reason: String)
     }
