@@ -46,8 +46,10 @@ extension StudyBundle {
         }
         
         var description: String {
-            func desc(_ value: Any) -> String {
+            func desc(_ value: Any?) -> String {
                 switch value {
+                case nil:
+                    "(nil)"
                 case let value as FHIRPrimitive<FHIRString>:
                     (value.value?.string).map { "'\($0)'" } ?? "(nil)"
                 default:
