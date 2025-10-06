@@ -53,7 +53,7 @@ jobs:
         config: [Debug, Release]
         platform:
           - name: iOS
-            destination: 'platform=iOS Simulator,name=iPhone 17 Pro'
+            destination: 'platform=iOS Simulator,name=iPhone 17 Pro Max'
       fail-fast: false
     with:
       runsonlabels: '["macOS", "self-hosted"]'
