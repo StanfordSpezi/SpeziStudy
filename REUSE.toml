@@ -1,0 +1,9 @@
+version = 1
+
+[[annotations]]
+path = [
+    "Tests/SpeziStudyTests/Resources/**.json",
+    "Tests/UITests/TestApp/Resources/**.json"
+]
+SPDX-FileCopyrightText = "2025 Stanford University and the project authors (see CONTRIBUTORS.md)"
+SPDX-License-Identifier = "MIT"

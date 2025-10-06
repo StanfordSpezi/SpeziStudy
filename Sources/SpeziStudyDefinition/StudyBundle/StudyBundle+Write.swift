@@ -12,7 +12,7 @@ import SpeziLocalization
 
 extension StudyBundle {
     /// An error that can occur when creating a Study Bundle.
-    public enum CreateBundleError: Error {
+    enum CreateBundleError: Error {
         /// The ``StudyDefinition`` for which a ``StudyBundle`` should be created contains a ``FileReference``
         /// pointing to a file which was not supplied to the ``StudyBundle/writeToDisk(at:definition:files:)`` function.
         /// - parameter fileRef: The file ref in question.
@@ -22,7 +22,7 @@ extension StudyBundle {
         case nonUTF8Input
         
         /// The Study Bundle failed to pass the validation checks.
-        case failedValidation(reason: String)
+        case failedValidation([BundleValidationIssue])
     }
     
     
@@ -40,10 +40,10 @@ extension StudyBundle {
         }
         
         /// Creates a new `FileInput`, from UTF8-encoded text.
-        public init(fileRef: FileReference, localization: LocalizationKey, contents: String) throws(CreateBundleError) {
+        public init(fileRef: FileReference, localization: LocalizationKey, contents: String) throws {
             self.localizedFileRef = .init(fileRef: fileRef, localization: localization)
             guard let contents = contents.data(using: .utf8) else {
-                throw .nonUTF8Input
+                throw CreateBundleError.nonUTF8Input
             }
             self.contents = contents
         }
@@ -83,7 +83,7 @@ extension StudyBundle {
         let bundle = try Self(bundleUrl: bundleUrl)
         if case let issues = try bundle.validate(), !issues.isEmpty {
             try? fileManager.removeItem(at: bundle.bundleUrl)
-            throw CreateBundleError.failedValidation(reason: issues.map { "- \($0.description)" }.joined(separator: "\n"))
+            throw CreateBundleError.failedValidation(issues)
         }
         return bundle
     }
