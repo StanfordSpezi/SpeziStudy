@@ -98,8 +98,8 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
         case .failedValidation(let issues):
             let fileRef = StudyBundle.FileReference(category: .informationalArticle, filename: "a1", fileExtension: "md")
             #expect(issues == [
-                .article(.documentMetadataMissingId(.init(fileRef: fileRef, localization: .enUS))),
-                .article(.documentMetadataMissingId(.init(fileRef: fileRef, localization: .esUS)))
+                .article(.documentMetadataMissingId(fileRef: .init(fileRef: fileRef, localization: .enUS))),
+                .article(.documentMetadataMissingId(fileRef: .init(fileRef: fileRef, localization: .esUS)))
             ])
         default:
             throw error
