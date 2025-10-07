@@ -13,14 +13,8 @@ import SpeziLocalization
 extension StudyBundle {
     /// An error that can occur when creating a Study Bundle.
     enum CreateBundleError: Error {
-        /// The ``StudyDefinition`` for which a ``StudyBundle`` should be created contains a ``FileReference``
-        /// pointing to a file which was not supplied to the ``StudyBundle/writeToDisk(at:definition:files:)`` function.
-        /// - parameter fileRef: The file ref in question.
-        case missingFile(fileRef: FileReference)
-        
         /// A `String` passed to e.g. ``StudyBundle/FileInput/init(fileRef:localization:contents:)-(_,_,String)`` didn't have a valid UTF-8 representation.
         case nonUTF8Input
-        
         /// The Study Bundle failed to pass the validation checks.
         case failedValidation([BundleValidationIssue])
     }
@@ -86,26 +80,5 @@ extension StudyBundle {
             throw CreateBundleError.failedValidation(issues)
         }
         return bundle
-    }
-}
-
-
-extension StudyDefinition {
-    var allFileRefs: Set<StudyBundle.FileReference> {
-        var fileRefs = Set<StudyBundle.FileReference>()
-        if let consentFile = metadata.consentFileRef {
-            fileRefs.insert(consentFile)
-        }
-        for component in self.components {
-            switch component {
-            case .informational(let component):
-                fileRefs.insert(component.fileRef)
-            case .questionnaire(let component):
-                fileRefs.insert(component.fileRef)
-            case .healthDataCollection, .timedWalkingTest, .customActiveTask:
-                break
-            }
-        }
-        return fileRefs
     }
 }

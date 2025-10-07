@@ -17,7 +17,7 @@ import Testing
 
 
 @Suite
-struct StudyBundleValidationTests {
+struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
     @Test
     func validInput() throws {
         let testStudy = StudyDefinition(
@@ -123,6 +123,31 @@ struct StudyBundleValidationTests {
                     localizedFileRef: .init(fileRef: fileRef, localization: .esUS),
                     baseId: "A5958A33-D93E-49D5-A0C6-3708CA97D431",
                     localizedFileRefId: "1EED6D54-1462-4DAC-9ED9-D39AE9CE01DB"
+                ))
+            ])
+        default:
+            throw error
+        }
+    }
+    
+    // test that we expect the questionnaire's language field to be equal to the language in the filename's localization component.
+    @Test
+    func questionnaireLocalizationLanguageMismatch() throws {
+        let error = try #require(throws: StudyBundle.CreateBundleError.self) {
+            try makeTestStudy(articles: [], questionnaires: [
+                .init(fileRef: .init(category: .questionnaire, filename: "Invalid3", fileExtension: "json"), localizations: [
+                    .init(key: .enUS, url: try #require(Bundle.module.url(forResource: "Invalid3+en-US", withExtension: "json"))),
+                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "Invalid3+en-UK", withExtension: "json")))
+                ])
+            ])
+        }
+        switch error {
+        case .failedValidation(let issues):
+            let fileRef = StudyBundle.FileReference(category: .questionnaire, filename: "Invalid3", fileExtension: "json")
+            #expect(Set(issues) == [
+                .questionnaire(.languageDiffersFromFilenameLocalization(
+                    fileRef: .init(fileRef: fileRef, localization: .enGB),
+                    questionnaireLanguage: "en-US"
                 ))
             ])
         default:
@@ -246,20 +271,26 @@ struct StudyBundleValidationTests {
                 .informational(.init(
                     id: UUID(),
                     fileRef: .init(category: .informationalArticle, filename: "Article", fileExtension: "md")
-                )),
-                .questionnaire(.init(
-                    id: UUID(),
-                    fileRef: .init(category: .questionnaire, filename: "Questionnaire", fileExtension: "json")
                 ))
             ],
             componentSchedules: []
         )
-        let tmpUrl = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
-        defer {
-            try? FileManager.default.removeItem(at: tmpUrl)
-        }
-        try #require(throws: (any Error).self) {
-            try StudyBundle.writeToDisk(at: tmpUrl, definition: definition, files: [])
+        do {
+            let tmpUrl = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
+            defer {
+                try? FileManager.default.removeItem(at: tmpUrl)
+            }
+            let error = try #require(throws: (StudyBundle.CreateBundleError).self) {
+                try StudyBundle.writeToDisk(at: tmpUrl, definition: definition, files: [])
+            }
+            switch error {
+            case .failedValidation(let issues):
+                #expect(Set(issues) == [
+                    .general(.noFilesMatchingFileRef(.init(category: .informationalArticle, filename: "Article", fileExtension: "md")))
+                ])
+            default:
+                throw error
+            }
         }
     }
 }

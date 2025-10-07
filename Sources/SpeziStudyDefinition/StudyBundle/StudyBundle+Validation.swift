@@ -43,6 +43,11 @@ extension StudyBundle {
                 baseValue: Value?,
                 localizedValue: Value?
             )
+            /// The language in the questionnaire's metadata does not match the language in the filename's localization component.
+            case languageDiffersFromFilenameLocalization(
+                fileRef: LocalizedFileReference,
+                questionnaireLanguage: String
+            )
             
             @_disfavoredOverload
             static func mismatchingFieldValues( // swiftlint:disable:this function_parameter_count type_contents_order
@@ -90,8 +95,6 @@ extension StudyBundle {
                 switch value {
                 case nil:
                     "(nil)"
-                case let value as FHIRPrimitive<FHIRString>:
-                    (value.value?.string).map { "'\($0)'" } ?? "(nil)"
                 case .some(let value):
                     String(describing: value)
                 }
@@ -124,6 +127,12 @@ extension StudyBundle {
                     - fieldName: \(fieldName)
                     - base questionnaire value: \(desc(baseValue))
                     - localized questionnaire value: \(desc(localizedValue))
+                """
+            case let .questionnaire(.languageDiffersFromFilenameLocalization(fileRef, questionnaireLanguage)):
+                """
+                Questionnaire: language in metadata does not match filename localization component
+                    - questionnaire: \(fileRef.filenameIncludingLocalization)
+                    - metadata language: \(questionnaireLanguage)
                 """
             }
         }
@@ -164,10 +173,10 @@ extension StudyBundle {
         var issues: [BundleValidationIssue] = []
         for fileRef in questionnaireFileRefs {
             /// all files for this fileRef's category
-            let urls = try fileManager.contentsOfDirectory(
+            let urls = (try? fileManager.contentsOfDirectory(
                 at: Self.folderUrl(for: fileRef.category, relativeTo: bundleUrl),
                 includingPropertiesForKeys: nil
-            )
+            )) ?? []
             let candidates = LocalizedFileResolution.selectCandidatesIgnoringLocalization(
                 matching: LocalizedFileResource(fileRef),
                 from: urls
@@ -181,6 +190,14 @@ extension StudyBundle {
                         .init(fileRef: fileRef, localization: questionnaireFileRef.localization),
                         itemIdx: nil,
                         fieldName: "id"
+                    )))
+                }
+                if let questionnaireKey = (questionnaire.language?.value?.string).flatMap({ LocalizationKey($0) }),
+                   case let fileRefKey = questionnaireFileRef.localization,
+                   questionnaireKey != fileRefKey {
+                    issues.append(.questionnaire(.languageDiffersFromFilenameLocalization(
+                        fileRef: .init(fileRef: fileRef, localization: questionnaireFileRef.localization),
+                        questionnaireLanguage: questionnaireKey.description
                     )))
                 }
                 if questionnaire.title?.value == nil {
@@ -212,8 +229,8 @@ extension StudyBundle {
                     checkHasValue(\.text?.value, "text")
                 }
             }
-            let base = questionnaires.first { $0.0.language == "en-US" }
-                ?? questionnaires.first { $0.0.language == "en" }
+            let base = questionnaires.first { $0.0.language == "en-US" || $0.fileRef.localization == .enUS }
+                ?? questionnaires.first { $0.0.language == "en" || $0.fileRef.localization.language.isEquivalent(to: .init(identifier: "en")) }
                 ?? questionnaires.first! // swiftlint:disable:this force_unwrapping
             checkSingleQuestionnaire(base.questionnaire, fileRef: base.fileRef)
             for other in questionnaires.filter({ $0.fileRef != base.fileRef }) {
@@ -278,10 +295,10 @@ extension StudyBundle {
         var issues: [BundleValidationIssue] = []
         for articleFileRef in articleFileRefs {
             /// all files for this fileRef's category
-            let urls = try fileManager.contentsOfDirectory(
+            let urls = (try? fileManager.contentsOfDirectory(
                 at: Self.folderUrl(for: articleFileRef.category, relativeTo: bundleUrl),
                 includingPropertiesForKeys: nil
-            )
+            )) ?? []
             let candidates = LocalizedFileResolution.selectCandidatesIgnoringLocalization(
                 matching: LocalizedFileResource(articleFileRef),
                 from: urls
