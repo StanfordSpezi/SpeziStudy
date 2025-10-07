@@ -24,7 +24,7 @@ extension StudyBundle {
         }
         
         enum ArticleIssue: Hashable, Sendable {
-            case documentMetadataMissingId(LocalizedFileReference)
+            case documentMetadataMissingId(fileRef: LocalizedFileReference)
             case documentMetadataIdMismatchToBase(
                 baseLocalization: LocalizedFileReference,
                 localizedFileRef: LocalizedFileReference,
@@ -181,8 +181,8 @@ extension StudyBundle {
                 matching: LocalizedFileResource(fileRef),
                 from: urls
             )
-            let questionnaires: [(questionnaire: Questionnaire, fileRef: LocalizedFileResource.Resolved)] = try candidates.map {
-                (try JSONDecoder().decode(Questionnaire.self, from: try Data(contentsOf: $0.url)), $0)
+            let questionnaires = try candidates.map {
+                (questionnaire: try JSONDecoder().decode(Questionnaire.self, from: try Data(contentsOf: $0.url)), fileRef: $0)
             }
             func checkSingleQuestionnaire(_ questionnaire: Questionnaire, fileRef questionnaireFileRef: LocalizedFileResource.Resolved) {
                 if questionnaire.id?.value == nil {
@@ -231,7 +231,7 @@ extension StudyBundle {
             }
             let base = questionnaires.first { $0.0.language == "en-US" || $0.fileRef.localization == .enUS }
                 ?? questionnaires.first { $0.0.language == "en" || $0.fileRef.localization.language.isEquivalent(to: .init(identifier: "en")) }
-                ?? questionnaires.first! // swiftlint:disable:this force_unwrapping
+                ?? questionnaires.first! // swiftlint:disable:this force_unwrapping - SAFETY: we have checked above that this is non-empty
             checkSingleQuestionnaire(base.questionnaire, fileRef: base.fileRef)
             for other in questionnaires.filter({ $0.fileRef != base.fileRef }) {
                 checkSingleQuestionnaire(other.questionnaire, fileRef: other.fileRef)
@@ -282,7 +282,7 @@ extension StudyBundle {
     }
     
     
-    private func validateArticles() throws -> [BundleValidationIssue] {
+    private func validateArticles() throws -> [BundleValidationIssue] { // swiftlint:disable:this function_body_length
         let articleFileRefs = studyDefinition.components.compactMap {
             switch $0 {
             case .informational(let component):
@@ -308,22 +308,30 @@ extension StudyBundle {
                 continue
             }
             let documents = try candidates.map {
-                (try MarkdownDocument(processingContentsOf: $0.url), $0)
+                (document: try MarkdownDocument(processingContentsOf: $0.url), fileRef: $0)
             }
-            let (baseDocument, baseDocumentFileRef) = documents.first { $0.1.localization == .enUS }
-                ?? documents.first { $0.1.localization.language.isEquivalent(to: .init(identifier: "en")) }
-                ?? documents.first! // swiftlint:disable:this force_unwrapping
+            let baseDocument = documents.first { $0.fileRef.localization == .enUS }
+                ?? documents.first { $0.fileRef.localization.language.isEquivalent(to: .init(identifier: "en")) }
+                ?? documents.first! // swiftlint:disable:this force_unwrapping - SAFETY: we have checked above that this is non-empty
             for (document, fileRef) in documents {
-                guard let id = document.metadata["id"] else {
-                    issues.append(.article(.documentMetadataMissingId(.init(fileRef: articleFileRef, localization: fileRef.localization))))
+                guard let docId = document.metadata["id"] else {
+                    issues.append(.article(.documentMetadataMissingId(
+                        fileRef: .init(fileRef: articleFileRef, localization: fileRef.localization)
+                    )))
                     continue
                 }
-                guard id == baseDocument.metadata["id"] else {
+                guard let baseId = baseDocument.document.metadata["id"] else {
+                    issues.append(.article(.documentMetadataMissingId(
+                        fileRef: .init(fileRef: articleFileRef, localization: baseDocument.fileRef.localization)
+                    )))
+                    continue
+                }
+                guard docId == baseId else {
                     issues.append(.article(.documentMetadataIdMismatchToBase(
-                        baseLocalization: .init(fileRef: articleFileRef, localization: baseDocumentFileRef.localization),
+                        baseLocalization: .init(fileRef: articleFileRef, localization: baseDocument.fileRef.localization),
                         localizedFileRef: .init(fileRef: articleFileRef, localization: fileRef.localization),
-                        baseId: baseDocument.metadata["id"] ?? "nil", // never nil; implicitly checked above
-                        localizedFileRefId: id
+                        baseId: baseId,
+                        localizedFileRefId: docId
                     )))
                     continue
                 }
