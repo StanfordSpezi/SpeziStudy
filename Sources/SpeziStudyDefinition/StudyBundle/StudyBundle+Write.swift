@@ -12,7 +12,8 @@ import SpeziLocalization
 
 extension StudyBundle {
     /// An error that can occur when creating a Study Bundle.
-    enum CreateBundleError: Error {
+    @_spi(APISupport)
+    public enum CreateBundleError: Error {
         /// A `String` passed to e.g. ``StudyBundle/FileInput/init(fileRef:localization:contents:)-(_,_,String)`` didn't have a valid UTF-8 representation.
         case nonUTF8Input
         /// The Study Bundle failed to pass the validation checks.

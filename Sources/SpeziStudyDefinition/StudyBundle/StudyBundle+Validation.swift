@@ -13,17 +13,18 @@ import SpeziLocalization
 
 
 extension StudyBundle {
-    enum BundleValidationIssue: CustomStringConvertible, Hashable, Sendable {
+    @_spi(APISupport)
+    public enum BundleValidationIssue: CustomStringConvertible, Hashable, Sendable {
         case general(GeneralIssue)
         case article(ArticleIssue)
         case questionnaire(QuestionnaireIssue)
         
-        enum GeneralIssue: Hashable, Sendable {
+        public enum GeneralIssue: Hashable, Sendable {
             /// The study bundle doesn't contain any files that would match the file reference found in the study definition.
             case noFilesMatchingFileRef(StudyBundle.FileReference)
         }
         
-        enum ArticleIssue: Hashable, Sendable {
+        public enum ArticleIssue: Hashable, Sendable {
             case documentMetadataMissingId(fileRef: LocalizedFileReference)
             case documentMetadataIdMismatchToBase(
                 baseLocalization: LocalizedFileReference,
@@ -33,7 +34,7 @@ extension StudyBundle {
             )
         }
         
-        enum QuestionnaireIssue: Hashable, Sendable {
+        public enum QuestionnaireIssue: Hashable, Sendable {
             case missingField(LocalizedFileReference, itemIdx: Int?, fieldName: String)
             case mismatchingFieldValues( // swiftlint:disable:this enum_case_associated_values_count
                 baseFileRef: LocalizedFileReference,
@@ -68,7 +69,7 @@ extension StudyBundle {
                 )
             }
             
-            struct Value: Hashable, Sendable { // swiftlint:disable:this nesting
+            public struct Value: Hashable, Sendable { // swiftlint:disable:this nesting
                 private let type: Any.Type
                 let value: any Hashable & Sendable
                 
@@ -80,21 +81,25 @@ extension StudyBundle {
                         return nil
                     }
                 }
-                static func == (lhs: Self, rhs: Self) -> Bool {
+                public static func == (lhs: Self, rhs: Self) -> Bool {
                     lhs.value.isEqual(rhs.value) && lhs.type == rhs.type
                 }
-                func hash(into hasher: inout Hasher) {
+                public func hash(into hasher: inout Hasher) {
                     hasher.combine(ObjectIdentifier(type))
                     value.hash(into: &hasher)
                 }
             }
         }
         
-        var description: String {
+        public var description: String {
             func desc(_ value: Any?) -> String {
                 switch value {
                 case nil:
                     "(nil)"
+                case .some(let value as QuestionnaireIssue.Value):
+                    desc(value.value)
+                case .some(let value as FHIRPrimitive<FHIRString>):
+                    value.value?.string ?? "(nil)"
                 case .some(let value):
                     String(describing: value)
                 }
@@ -107,10 +112,10 @@ extension StudyBundle {
             case let .article(.documentMetadataIdMismatchToBase(baseLocalization, fileRef, baseId, localizedFileRefId)):
                 """
                 Localized Article id does not match base localization's id
-                    - base localization: \(baseLocalization.filenameIncludingLocalization)
-                    - localized article: \(fileRef.filenameIncludingLocalization)
-                    - base id: \(baseId)
-                    - localized article id: \(localizedFileRefId)
+                  - base localization: \(baseLocalization.filenameIncludingLocalization)
+                  - localized article: \(fileRef.filenameIncludingLocalization)
+                  - base id: \(baseId)
+                  - localized article id: \(localizedFileRefId)
                 """
             case let .questionnaire(.missingField(fileRef, itemIdx, fieldName)):
                 if let itemIdx {
@@ -121,18 +126,18 @@ extension StudyBundle {
             case let .questionnaire(.mismatchingFieldValues(baseFileRef, localizedFileRef, itemIdx, fieldName, baseValue, localizedValue)):
                 """
                 Localized Questionnaire: item field value does not match base localization
-                    - base questionnaire: \(baseFileRef.filenameIncludingLocalization)
-                    - localized questionnaire: \(localizedFileRef.filenameIncludingLocalization)
-                    - item idx: \(itemIdx.map(String.init) ?? "n/a")
-                    - fieldName: \(fieldName)
-                    - base questionnaire value: \(desc(baseValue))
-                    - localized questionnaire value: \(desc(localizedValue))
+                  - base questionnaire: \(baseFileRef.filenameIncludingLocalization)
+                  - localized questionnaire: \(localizedFileRef.filenameIncludingLocalization)
+                  - item idx: \(itemIdx.map(String.init) ?? "n/a")
+                  - fieldName: \(fieldName)
+                  - base questionnaire value: \(desc(baseValue))
+                  - localized questionnaire value: \(desc(localizedValue))
                 """
             case let .questionnaire(.languageDiffersFromFilenameLocalization(fileRef, questionnaireLanguage)):
                 """
                 Questionnaire: language in metadata does not match filename localization component
-                    - questionnaire: \(fileRef.filenameIncludingLocalization)
-                    - metadata language: \(questionnaireLanguage)
+                  - questionnaire: \(fileRef.filenameIncludingLocalization)
+                  - metadata language: \(questionnaireLanguage)
                 """
             }
         }
