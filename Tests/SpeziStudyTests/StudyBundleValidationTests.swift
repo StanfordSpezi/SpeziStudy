@@ -131,6 +131,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
         }
     }
     
+    
     // test that we expect the questionnaire's language field to be equal to the language in the filename's localization component.
     @Test
     func questionnaireLocalizationLanguageMismatch() throws {
@@ -149,6 +150,34 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
                 .questionnaire(.languageDiffersFromFilenameLocalization(
                     fileRef: .init(fileRef: fileRef, localization: .enGB),
                     questionnaireLanguage: "en-US"
+                ))
+            ])
+        default:
+            throw error
+        }
+    }
+    
+    
+    // test that we expect the questionnaire's language field to be parsable into a `LocalizationKey`.
+    @Test
+    func questionnaireInvalidLocalization() throws {
+        let error = try #require(throws: StudyBundle.CreateBundleError.self) {
+            try makeTestStudy(articles: [], questionnaires: [
+                .init(fileRef: .init(category: .questionnaire, filename: "Invalid4", fileExtension: "json"), localizations: [
+                    .init(key: .esUS, url: try #require(Bundle.module.url(forResource: "Invalid4+es-US", withExtension: "json")))
+                ])
+            ])
+        }
+        switch error {
+        case .failedValidation(let issues):
+            let fileRef = StudyBundle.FileReference(category: .questionnaire, filename: "Invalid4", fileExtension: "json")
+            #expect(Set(issues) == [
+                .questionnaire(.invalidField(
+                    fileRef: .init(fileRef: fileRef, localization: .esUS),
+                    itemIdx: nil,
+                    fieldName: "language",
+                    fieldValue: .init("es"),
+                    failureReason: "failed to parse into a `LocalizationKey`"
                 ))
             ])
         default:
@@ -176,16 +205,16 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
                     localizedFileRef: .init(fileRef: fileRef, localization: .enGB),
                     itemIdx: nil,
                     fieldName: "id",
-                    baseValue: "0C0D66EB-DF6E-43CA-B8E6-8653DB5D1610",
-                    localizedValue: "C8F9D485-3A88-4416-92EE-839CC1974AFC"
+                    baseValue: .init("0C0D66EB-DF6E-43CA-B8E6-8653DB5D1610"),
+                    localizedValue: .init("C8F9D485-3A88-4416-92EE-839CC1974AFC")
                 )),
                 .questionnaire(.mismatchingFieldValues(
                     baseFileRef: .init(fileRef: fileRef, localization: .enUS),
                     localizedFileRef: .init(fileRef: fileRef, localization: .enGB),
                     itemIdx: 2,
                     fieldName: "type",
-                    baseValue: QuestionnaireItemType.date,
-                    localizedValue: QuestionnaireItemType.integer
+                    baseValue: .init(QuestionnaireItemType.date),
+                    localizedValue: .init(QuestionnaireItemType.integer)
                 ))
             ])
         default:
@@ -208,17 +237,29 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
         case .failedValidation(let issues):
             let fileRef = StudyBundle.FileReference(category: .questionnaire, filename: "Invalid2", fileExtension: "json")
             #expect(Set(issues) == [
-                .questionnaire(.missingField(.init(fileRef: fileRef, localization: .enGB), itemIdx: nil, fieldName: "id")),
+                .questionnaire(.missingField(
+                    fileRef: .init(fileRef: fileRef, localization: .enGB),
+                    itemIdx: nil,
+                    fieldName: "id"
+                )),
                 .questionnaire(.mismatchingFieldValues(
                     baseFileRef: .init(fileRef: fileRef, localization: .enUS),
                     localizedFileRef: .init(fileRef: fileRef, localization: .enGB),
                     itemIdx: nil,
                     fieldName: "id",
-                    baseValue: "0C0D66EB-DF6E-43CA-B8E6-8653DB5D1610",
-                    localizedValue: String?.none
+                    baseValue: .init("0C0D66EB-DF6E-43CA-B8E6-8653DB5D1610"),
+                    localizedValue: nil
                 )),
-                .questionnaire(.missingField(.init(fileRef: fileRef, localization: .enUS), itemIdx: nil, fieldName: "title")),
-                .questionnaire(.missingField(.init(fileRef: fileRef, localization: .enUS), itemIdx: 1, fieldName: "text"))
+                .questionnaire(.missingField(
+                    fileRef: .init(fileRef: fileRef, localization: .enUS),
+                    itemIdx: nil,
+                    fieldName: "title"
+                )),
+                .questionnaire(.missingField(
+                    fileRef: .init(fileRef: fileRef, localization: .enUS),
+                    itemIdx: 1,
+                    fieldName: "text"
+                ))
             ])
         default:
             throw error
@@ -240,14 +281,18 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
         case .failedValidation(let issues):
             let fileRef = StudyBundle.FileReference(category: .questionnaire, filename: "Empty", fileExtension: "json")
             #expect(Set(issues) == [
-                .questionnaire(.missingField(.init(fileRef: fileRef, localization: .enUS), itemIdx: nil, fieldName: "item")),
+                .questionnaire(.missingField(
+                    fileRef: .init(fileRef: fileRef, localization: .enUS),
+                    itemIdx: nil,
+                    fieldName: "item"
+                )),
                 .questionnaire(.mismatchingFieldValues(
                     baseFileRef: .init(fileRef: fileRef, localization: .enUS),
                     localizedFileRef: .init(fileRef: fileRef, localization: .enGB),
                     itemIdx: nil,
                     fieldName: "item.length",
-                    baseValue: 0,
-                    localizedValue: 1
+                    baseValue: .init(0),
+                    localizedValue: .init(1)
                 ))
             ])
         default:

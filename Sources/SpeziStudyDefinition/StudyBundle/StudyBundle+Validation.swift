@@ -35,7 +35,37 @@ extension StudyBundle {
         }
         
         public enum QuestionnaireIssue: Hashable, Sendable {
-            case missingField(LocalizedFileReference, itemIdx: Int?, fieldName: String)
+            /// The questionnaire as a whole, or one of its items, it missing a field.
+            ///
+            /// - parameter fileRef: The questionnaire in question.
+            /// - parameter itemIdx: The index of the item this issue relates to. `nil` if a questionnaire-level field is missing.
+            /// - parameter fieldName: The name of the missing field.
+            case missingField(fileRef: LocalizedFileReference, itemIdx: Int?, fieldName: String)
+            
+            /// The questionnaire as a whole, or one of its items, contains a field with an invalid value.
+            ///
+            /// - parameter fileRef: The questionnaire in question.
+            /// - parameter itemIdx: The index of the item this issue relates to. `nil` if a questionnaire-level field is invalid.
+            /// - parameter fieldName: The name of the field im question.
+            /// - parameter fieldValue: The value of the field in question.
+            /// - parameter failureReason: An explanation of why exactly this field's value is invalid.
+            case invalidField( // swiftlint:disable:this enum_case_associated_values_count
+                fileRef: LocalizedFileReference,
+                itemIdx: Int?,
+                fieldName: String,
+                fieldValue: Value?,
+                failureReason: String
+            )
+            
+            /// A field in a localized version of a questionnaire has a value that doesn't match the base localization.
+            ///
+            /// - parameter baseFileRef: The base localization of the questionnaire.
+            ///     This is the version we use as the "ground truth", i.e., the version all other localizations' should match. Typically the `en-US` localization.
+            /// - parameter localizedFileRef: The localization this issue relates to.
+            /// - parameter itemIdx: The index of the item this issue relates to. `nil` if a questionnaire-level field is incorrect.
+            /// - parameter fieldName: The name of the missing field.
+            /// - parameter baseValue: The value of the field as present in the base localization. This is the "expected" value that should also be present in the `localizedFileRef`.
+            /// - parameter localizedValue: The actual value of the field in the `localizedFileRef`.
             case mismatchingFieldValues( // swiftlint:disable:this enum_case_associated_values_count
                 baseFileRef: LocalizedFileReference,
                 localizedFileRef: LocalizedFileReference,
@@ -49,25 +79,6 @@ extension StudyBundle {
                 fileRef: LocalizedFileReference,
                 questionnaireLanguage: String
             )
-            
-            @_disfavoredOverload
-            static func mismatchingFieldValues( // swiftlint:disable:this function_parameter_count type_contents_order
-                baseFileRef: LocalizedFileReference,
-                localizedFileRef: LocalizedFileReference,
-                itemIdx: Int?,
-                fieldName: String,
-                baseValue: (some Hashable & Sendable)?,
-                localizedValue: (some Hashable & Sendable)?
-            ) -> Self {
-                .mismatchingFieldValues(
-                    baseFileRef: baseFileRef,
-                    localizedFileRef: localizedFileRef,
-                    itemIdx: itemIdx,
-                    fieldName: fieldName,
-                    baseValue: Value(baseValue),
-                    localizedValue: Value(localizedValue)
-                )
-            }
             
             public struct Value: Hashable, Sendable { // swiftlint:disable:this nesting
                 private let type: Any.Type
@@ -122,6 +133,12 @@ extension StudyBundle {
                     "Questionnaire '\(fileRef.filenameIncludingLocalization)': item \(itemIdx) is missing value for field '\(fieldName)'"
                 } else {
                     "Questionnaire '\(fileRef.filenameIncludingLocalization)': missing value for field '\(fieldName)'"
+                }
+            case let .questionnaire(.invalidField(fileRef, itemIdx, fieldName, fieldValue, failureReason)):
+                if let itemIdx {
+                    "Questionnaire '\(fileRef.filenameIncludingLocalization)': item \(itemIdx) has invalid value for field '\(fieldName)': \(desc(fieldValue)). \(failureReason)"
+                } else {
+                    "Questionnaire '\(fileRef.filenameIncludingLocalization)': invalid value for field '\(fieldName)': \(desc(fieldValue)). \(failureReason)"
                 }
             case let .questionnaire(.mismatchingFieldValues(baseFileRef, localizedFileRef, itemIdx, fieldName, baseValue, localizedValue)):
                 """
@@ -189,32 +206,53 @@ extension StudyBundle {
             let questionnaires = try candidates.map {
                 (questionnaire: try JSONDecoder().decode(Questionnaire.self, from: try Data(contentsOf: $0.url)), fileRef: $0)
             }
-            func checkSingleQuestionnaire(_ questionnaire: Questionnaire, fileRef questionnaireFileRef: LocalizedFileResource.Resolved) {
+            func checkSingleQuestionnaire( // swiftlint:disable:this function_body_length
+                _ questionnaire: Questionnaire,
+                fileRef questionnaireFileRef: LocalizedFileResource.Resolved
+            ) {
                 if questionnaire.id?.value == nil {
                     issues.append(.questionnaire(.missingField(
-                        .init(fileRef: fileRef, localization: questionnaireFileRef.localization),
+                        fileRef: .init(fileRef: fileRef, localization: questionnaireFileRef.localization),
                         itemIdx: nil,
                         fieldName: "id"
                     )))
                 }
-                if let questionnaireKey = (questionnaire.language?.value?.string).flatMap({ LocalizationKey($0) }),
-                   case let fileRefKey = questionnaireFileRef.localization,
-                   questionnaireKey != fileRefKey {
-                    issues.append(.questionnaire(.languageDiffersFromFilenameLocalization(
+                if let questionnaireLangRaw = questionnaire.language?.value?.string, !questionnaireLangRaw.isEmpty {
+                    if let questionnaireKey = LocalizationKey(questionnaireLangRaw) {
+                        let fileRefKey = questionnaireFileRef.localization
+                        if questionnaireKey != fileRefKey {
+                            issues.append(.questionnaire(.languageDiffersFromFilenameLocalization(
+                                fileRef: .init(fileRef: fileRef, localization: questionnaireFileRef.localization),
+                                questionnaireLanguage: questionnaireKey.description
+                            )))
+                        }
+                    } else {
+                        // the questionnaire does have a `language` value, but we were unable to parse it into a `LocalizationKey`.
+                        issues.append(.questionnaire(.invalidField(
+                            fileRef: .init(fileRef: fileRef, localization: questionnaireFileRef.localization),
+                            itemIdx: nil,
+                            fieldName: "language",
+                            fieldValue: .init(questionnaireLangRaw),
+                            failureReason: "failed to parse into a `LocalizationKey`"
+                        )))
+                    }
+                } else {
+                    issues.append(.questionnaire(.missingField(
                         fileRef: .init(fileRef: fileRef, localization: questionnaireFileRef.localization),
-                        questionnaireLanguage: questionnaireKey.description
+                        itemIdx: nil,
+                        fieldName: "language"
                     )))
                 }
                 if questionnaire.title?.value == nil {
                     issues.append(.questionnaire(.missingField(
-                        .init(fileRef: fileRef, localization: questionnaireFileRef.localization),
+                        fileRef: .init(fileRef: fileRef, localization: questionnaireFileRef.localization),
                         itemIdx: nil,
                         fieldName: "title"
                     )))
                 }
                 guard let items = questionnaire.item else {
                     issues.append(.questionnaire(.missingField(
-                        .init(fileRef: fileRef, localization: questionnaireFileRef.localization),
+                        fileRef: .init(fileRef: fileRef, localization: questionnaireFileRef.localization),
                         itemIdx: nil,
                         fieldName: "item"
                     )))
@@ -224,7 +262,7 @@ extension StudyBundle {
                     func checkHasValue(_ keyPath: KeyPath<QuestionnaireItem, (some Any)?>, _ name: String) {
                         if item[keyPath: keyPath] == nil {
                             issues.append(.questionnaire(.missingField(
-                                .init(fileRef: fileRef, localization: questionnaireFileRef.localization),
+                                fileRef: .init(fileRef: fileRef, localization: questionnaireFileRef.localization),
                                 itemIdx: idx,
                                 fieldName: name
                             )))
@@ -246,8 +284,8 @@ extension StudyBundle {
                         localizedFileRef: .init(fileRef: fileRef, localization: other.fileRef.localization),
                         itemIdx: nil,
                         fieldName: "id",
-                        baseValue: base.questionnaire.id?.value?.string,
-                        localizedValue: other.questionnaire.id?.value?.string
+                        baseValue: .init(base.questionnaire.id?.value?.string),
+                        localizedValue: .init(other.questionnaire.id?.value?.string)
                     )))
                 }
                 let baseItems = base.questionnaire.item ?? []
@@ -258,8 +296,8 @@ extension StudyBundle {
                         localizedFileRef: .init(fileRef: fileRef, localization: other.fileRef.localization),
                         itemIdx: nil,
                         fieldName: "item.length",
-                        baseValue: baseItems.count,
-                        localizedValue: otherItems.count
+                        baseValue: .init(baseItems.count),
+                        localizedValue: .init(otherItems.count)
                     )))
                     continue
                 }
@@ -273,8 +311,8 @@ extension StudyBundle {
                                 localizedFileRef: .init(fileRef: fileRef, localization: other.fileRef.localization),
                                 itemIdx: idx,
                                 fieldName: name,
-                                baseValue: baseValue,
-                                localizedValue: itemValue
+                                baseValue: .init(baseValue),
+                                localizedValue: .init(itemValue)
                             )))
                         }
                     }
