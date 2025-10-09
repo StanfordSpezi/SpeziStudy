@@ -13,6 +13,7 @@ import class ModelsR4.Questionnaire
 import SpeziFoundation
 import SpeziHealthKit
 import SpeziHealthKitBulkExport
+@_spi(APISupport)
 @testable import SpeziStudyDefinition
 import Testing
 

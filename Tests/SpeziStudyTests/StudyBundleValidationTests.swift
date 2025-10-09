@@ -12,6 +12,7 @@ import Foundation
 import ModelsR4
 import SpeziFoundation
 import SpeziLocalization
+@_spi(APISupport)
 @testable import SpeziStudyDefinition
 import Testing
 
