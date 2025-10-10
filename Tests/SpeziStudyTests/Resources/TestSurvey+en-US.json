@@ -1,8 +1,9 @@
 {
-  "title": "Valid",
+  "title": "TestSurvey",
   "resourceType": "Questionnaire",
   "language": "en-US",
   "status": "draft",
+  "id": "66D6F5E6-242A-43CA-996C-D8907CFA9F16",
   "meta": {
     "profile": [
       "http://spezi.health/fhir/StructureDefinition/sdf-Questionnaire"
@@ -26,7 +27,7 @@
         "coding": [
           {
             "system": "urn:oid:2.16.578.1.12.4.1.1.8655",
-            "display": "Valid"
+            "display": "TestSurvey"
           }
         ]
       }
@@ -38,26 +39,7 @@
   "subjectType": [
     "Patient"
   ],
-  "id": "0C0D66EB-DF6E-43CA-B8E6-8653DB5D1610",
   "item": [
-    {
-      "linkId": "8491465f-6ae7-483a-9a91-a027a1ac41bb",
-      "type": "display",
-      "text": "Instruction Component (US)",
-      "required": false
-    },
-    {
-      "linkId": "a2bd0f8e-3a0c-49ca-df27-814c87e99054",
-      "type": "boolean",
-      "text": "Boolean Question (US)",
-      "required": false
-    },
-    {
-      "linkId": "2813e49e-452f-4039-86f0-becb90c82d30",
-      "type": "date",
-      "text": "Date Question (US)",
-      "required": false
-    },
     {
       "linkId": "815926e8-ef8e-47a3-c03d-4008167845c8",
       "type": "choice",
@@ -86,6 +68,32 @@
             "code": "c",
             "system": "urn:uuid:4cf7ebf9-1fe3-40d1-96fb-a84f3105b3ac",
             "display": "C"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "e2b62cd7-8e32-4976-ad0c-dd3f1c1cb423",
+      "type": "quantity",
+      "text": "What's your Weight?",
+      "required": false,
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-unit",
+          "valueCoding": {
+            "system": "http://unitsofmeasure.org",
+            "code": "kg",
+            "display": "kilogram"
+          }
+        }
+      ],
+      "enableWhen": [
+        {
+          "question": "815926e8-ef8e-47a3-c03d-4008167845c8",
+          "operator": "=",
+          "answerCoding": {
+            "system": "urn:uuid:4cf7ebf9-1fe3-40d1-96fb-a84f3105b3ac",
+            "code": "a"
           }
         }
       ]

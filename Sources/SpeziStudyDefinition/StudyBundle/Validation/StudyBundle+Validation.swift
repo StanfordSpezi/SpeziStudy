@@ -61,39 +61,49 @@ extension StudyBundle {
             case let .article(.documentMetadataIdMismatchToBase(baseLocalization, fileRef, baseId, localizedFileRefId)):
                 """
                 Localized Article id does not match base localization's id
-                  - base localization: \(baseLocalization.filenameIncludingLocalization)
-                  - localized article: \(fileRef.filenameIncludingLocalization)
-                  - base id:              \(baseId)
-                  - localized article id: \(localizedFileRefId)
+                    - base localization: \(baseLocalization.filenameIncludingLocalization)
+                    - localized article: \(fileRef.filenameIncludingLocalization)
+                    - base id:              \(baseId)
+                    - localized article id: \(localizedFileRefId)
                 """
             case let .questionnaire(.missingField(fileRef, path)):
                 """
                 Questionnaire: missing field value
-                  - file: \(fileRef.filenameIncludingLocalization)
-                  - path: \(path)
+                    - file: \(fileRef.filenameIncludingLocalization)
+                    - path: \(path)
                 """
             case let .questionnaire(.invalidField(fileRef, path, fieldValue, failureReason)):
                 """
                 Questionnaire: invalid field value
-                  - file: \(fileRef.filenameIncludingLocalization)
-                  - path: \(path)
-                  - value: \(desc(fieldValue))
-                  - issue: \(failureReason)
+                    - file: \(fileRef.filenameIncludingLocalization)
+                    - path: \(path)
+                    - value: \(desc(fieldValue))
+                    - issue: \(failureReason)
+                """
+            case let .questionnaire(.conflictingFieldValues(fileRef, fstPath, fstValue, sndPath, sndValue, comment)):
+                """
+                Conflicting field values withon questionnaire:
+                    - questionnaire:      \(fileRef.filenameIncludingLocalization)
+                    - 1st value path: \(fstPath)
+                    - 1st value:      \(desc(fstValue))
+                    - 2nd value path: \(sndPath)
+                    - 2nd value:      \(desc(sndValue))
+                    - comment:        \(comment ?? "")
                 """
             case let .questionnaire(.mismatchingFieldValues(baseFileRef, localizedFileRef, path, baseValue, localizedValue)):
                 """
-                Localized Questionnaire: item field value does not match base localization
-                  - base questionnaire:      \(baseFileRef.filenameIncludingLocalization)
-                  - localized questionnaire: \(localizedFileRef.filenameIncludingLocalization)
-                  - path: \(path)
-                  - base questionnaire value:      \(desc(baseValue))
-                  - localized questionnaire value: \(desc(localizedValue))
+                Localized Questionnaire: field value does not match base localization
+                    - base questionnaire:      \(baseFileRef.filenameIncludingLocalization)
+                    - localized questionnaire: \(localizedFileRef.filenameIncludingLocalization)
+                    - path: \(path)
+                    - base questionnaire value:      \(desc(baseValue))
+                    - localized questionnaire value: \(desc(localizedValue))
                 """
             case let .questionnaire(.languageDiffersFromFilenameLocalization(fileRef, questionnaireLanguage)):
                 """
                 Questionnaire: language in metadata does not match filename localization component
-                  - questionnaire: \(fileRef.filenameIncludingLocalization)
-                  - metadata language: \(questionnaireLanguage)
+                    - questionnaire: \(fileRef.filenameIncludingLocalization)
+                    - metadata language: \(questionnaireLanguage)
                 """
             }
         }

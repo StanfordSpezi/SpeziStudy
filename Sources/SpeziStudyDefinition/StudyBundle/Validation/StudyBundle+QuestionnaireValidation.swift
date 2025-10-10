@@ -23,8 +23,7 @@ extension StudyBundle.BundleValidationIssue {
         /// - parameter fieldName: The name of the missing field.
         case missingField(
             fileRef: StudyBundle.LocalizedFileReference,
-            path: Path,
-//            explanation: String = ""
+            path: Path
         )
         
         /// The questionnaire as a whole, or one of its items, contains a field with an invalid value.
@@ -39,6 +38,22 @@ extension StudyBundle.BundleValidationIssue {
             path: Path,
             fieldValue: Value?,
             failureReason: String
+        )
+        
+        /// A two fields within a single localization of a questionnaire have conflicting values.
+        ///
+        /// - parameter fileRef: The questionnaire with the issue.
+        /// - parameter fstPath: The ``Path`` of the first value in this conflict.
+        /// - parameter fstValue: The first value in this conflict.
+        /// - parameter sndPath: The ``Path`` of the second value in this conflict.
+        /// - parameter sndValue: The second value in this conflict.
+        case conflictingFieldValues( // swiftlint:disable:this enum_case_associated_values_count
+            fileRef: StudyBundle.LocalizedFileReference,
+            fstPath: Path,
+            fstValue: Value?,
+            sndPath: Path,
+            sndValue: Value?,
+            comment: String?
         )
         
         /// A field in a localized version of a questionnaire has a value that doesn't match the base localization.
@@ -57,56 +72,66 @@ extension StudyBundle.BundleValidationIssue {
             baseValue: Value?,
             localizedValue: Value?
         )
+        
         /// The language in the questionnaire's metadata does not match the language in the filename's localization component.
         case languageDiffersFromFilenameLocalization(
             fileRef: StudyBundle.LocalizedFileReference,
             questionnaireLanguage: String
         )
         
+        @dynamicMemberLookup
         public struct Path: Hashable, CustomStringConvertible, ExpressibleByArrayLiteral, Sendable {
-            public enum Element: Hashable, Sendable { // swiftlint:disable:this nesting
-                /// The element is referring to the `QuestionnaireItem` at the specific index
-                case item(idx: Int)
+            public enum Component: Hashable, Sendable { // swiftlint:disable:this nesting
                 /// The element is referring to the field with the specified name.
                 case field(name: String)
+                /// The element is referring to the `QuestionnaireItem` at the specific index
+                case `subscript`(idx: Int)
             }
             
-            static var root: Self { .init(EmptyCollection()) }
+            static var root: Self { .init([]) }
             
-            private let elements: [Element]
+            let components: [Component]
             
             public var description: String {
-                if elements.isEmpty {
+                if components.isEmpty {
                     "root"
                 } else {
-                    elements
-                        .lazy
-                        .map { element in
-                            switch element {
-                            case .item(let idx):
-                                "items[\(idx)]"
-                            case .field(let name):
-                                name
+                    components.reduce(into: "") { path, component in
+                        switch component {
+                        case .field(let name):
+                            if !path.isEmpty {
+                                path.append(".")
                             }
+                            path.append(name)
+                        case .subscript(let idx):
+                            path.append("[\(idx)]")
                         }
-                        .joined(separator: ".")
+                    }
                 }
             }
             
-            init(_ seq: some Sequence<Element>) {
-                elements = Array(seq)
+            init(_ seq: some Sequence<Component>) {
+                components = Array(seq)
+            }
+            public init(arrayLiteral components: Component...) {
+                self.components = components
             }
             
-            public init(arrayLiteral elements: Element...) {
-                self.init(elements)
+            subscript(dynamicMember name: String) -> Self {
+                Self(components + CollectionOfOne(.field(name: name)))
             }
             
-            func appending(_ element: Element) -> Self {
-                .init(elements + CollectionOfOne(element))
+            static subscript(dynamicMember name: String) -> Self {
+                .root[dynamicMember: name]
+            }
+            /// Creates a new ``Path`` by appending an `Int`-based indexing subscript component.
+            subscript(idx: Int) -> Self {
+                Self(components + CollectionOfOne(.subscript(idx: idx)))
             }
             
-            func appending(_ other: Path) -> Self {
-                .init(elements + other.elements)
+            /// Creates a new ``Path`` by appending a field access component.
+            subscript(name: String) -> Self {
+                Self(components + CollectionOfOne(.field(name: name)))
             }
         }
         
@@ -118,21 +143,51 @@ extension StudyBundle.BundleValidationIssue {
                 self.init(value: value)
             }
             
+            init?<P: FHIRPrimitiveProtocol>(_ value: P?) where P.PrimitiveType: Hashable & Sendable {
+                self.init(value?.value)
+            }
+            
             /// - precondition: `O` must be `Hashable`
             private init?<O: AnyOptional>(value: O) {
                 if let value = value.unwrappedOptional {
                     if let value = value as? any AnyOptional {
                         self.init(value: value)
                     } else {
-                        // SAFETY: the force-cast here is ok, bc we only call this initializer from the other one, which has a `Hashable & Sendable` requirement.
-                        self.init(value: value as! any Hashable) // swiftlint:disable:this force_unwrapping
+                        // SAFETY: the force-cast here is ok, bc we only call this initializer from the other one,
+                        // which has a `Hashable & Sendable` requirement, and we only descend into types which propagate their Hashable conformance.
+                        self.init(value: value as! any Hashable) // swiftlint:disable:this force_cast
                     }
                 } else {
                     return nil
                 }
             }
             
-            private init(value: any Hashable) {
+            private init?(value: any Hashable) {
+                switch value {
+                case let value as FHIRString:
+                    self.init(value: value.string)
+                case let value as FHIRInteger:
+                    self.init(value: value.integer)
+                case let value as FHIRDecimal:
+                    self.init(value: value.decimal)
+                case let value as FHIRPositiveInteger:
+                    self.init(value: value.integer)
+                case let value as FHIRUnsignedInteger:
+                    self.init(value: value.integer)
+                case let value as FHIRDate:
+                    if let date = try? value.asNSDate() {
+                        self.init(value: date)
+                    } else {
+                        return nil
+                    }
+                case let value as FHIRURI:
+                    self.init(value: value.url)
+                default:
+                    self.init(fullyUnwrapped: value)
+                }
+            }
+            
+            private init(fullyUnwrapped value: any Hashable) {
                 self.type = Swift.type(of: value)
                 self.value = value
             }
@@ -244,15 +299,17 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                         && other.code == option.code
                         && other.title != option.title
                 }
-                for other in conflicting {
+                for other in conflicting where !reported.contains(other) {
                     // found 2 valueCoding SCMC options (with same localization & system & code) but different titles.
-                    issues.append(.mismatchingFieldValues(
-                        baseFileRef: option.fileRef,
-                        localizedFileRef: other.fileRef,
-                        path: other.path,
-                        baseValue: .init(option.title),
-                        localizedValue: .init(other.title)
+                    issues.append(.conflictingFieldValues(
+                        fileRef: option.fileRef,
+                        fstPath: option.path.display,
+                        fstValue: .init(option.title),
+                        sndPath: other.path.display,
+                        sndValue: .init(other.title),
+                        comment: "Both options have code '\(option.code)' in system '\(option.system)', but they have different titles."
                     ))
+                    reported.insert(option)
                     reported.insert(other)
                 }
             }
@@ -304,7 +361,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                     at: .init(fileRef: fileRef, localization: other.fileRef.localization),
                     against: base.questionnaire,
                     at: .init(fileRef: fileRef, localization: base.fileRef.localization),
-                    pathSoFar: []
+                    path: []
                 )
             }
         }
@@ -348,24 +405,26 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
             issues.append(.missingField(fileRef: fileRef, path: [.field(name: "item")]))
             return
         } else {
-            checkItems(of: questionnaire, at: fileRef, pathSoFar: [])
+            checkItems(of: questionnaire, at: fileRef, path: [])
         }
     }
     
     
     /// Validates the items of a single questionnaire, checking that all required items we'd expect are present.
+    ///
+    /// - parameter path: `Path` of the `itemContainer`
     private mutating func checkItems(
         of itemsContainer: some QuestionnaireItemsContainer,
         at fileRef: LocalizedFileReference,
-        pathSoFar: Path
+        path: Path
     ) {
         for (itemIdx, item) in (itemsContainer.item ?? []).enumerated() {
-            let pathSoFar = pathSoFar.appending(.item(idx: itemIdx))
+            let path = path.item[itemIdx]
             func checkHasValue(_ keyPath: KeyPath<QuestionnaireItem, (some Any)?>, _ name: String) {
                 if item[keyPath: keyPath] == nil {
                     issues.append(.missingField(
                         fileRef: fileRef,
-                        path: pathSoFar.appending(.field(name: name))
+                        path: path[name]
                     ))
                 }
             }
@@ -379,18 +438,18 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                     // the item has type "choice", but does not contain any options the user could choose from.
                     issues.append(.missingField(
                         fileRef: fileRef,
-                        path: pathSoFar.appending(.field(name: "answerOption"))
+                        path: path.answerOption
                     ))
                     break
                 }
                 for (optionIdx, option) in options.enumerated() {
-                    let pathSoFar = pathSoFar.appending([.field(name: "answerOption"), .item(idx: optionIdx)])
-                    processChoiceOption(option, at: pathSoFar, for: item, at: fileRef)
+                    let path = path.answerOption[optionIdx]
+                    processChoiceOption(option, at: path, for: item, at: fileRef)
                 }
             default:
                 break
             }
-            checkItems(of: item, at: fileRef, pathSoFar: pathSoFar)
+            checkItems(of: item, at: fileRef, path: path)
         }
     }
     
@@ -398,13 +457,15 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
     /// Recursively validates the items of two questionnaires against each other.
     ///
     /// This function mainly just compares that the two questionnaires contain equal items, w.r.t. some non-localized fields.
-    /// It does not check for existence of required, possibly localized items; use ``checkItems(of:pathSoFar:)`` for that.
+    /// It does not check for existence of required, possibly localized items; use ``checkItems(of:at:path:)`` for that.
+    ///
+    /// - parameter path: The `Path` of the item containers.
     private mutating func checkItems( // swiftlint:disable:this function_body_length cyclomatic_complexity
         of other: (some QuestionnaireItemsContainer)?,
         at otherFileRef: LocalizedFileReference,
         against base: (some QuestionnaireItemsContainer)?,
         at baseFileRef: LocalizedFileReference,
-        pathSoFar: Path
+        path: Path
     ) {
         let baseItems = base?.item ?? []
         let otherItems = other?.item ?? []
@@ -412,14 +473,14 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
             issues.append(.mismatchingFieldValues(
                 baseFileRef: baseFileRef,
                 localizedFileRef: otherFileRef,
-                path: pathSoFar.appending([.field(name: "item"), .field(name: "length")]),
+                path: path.item.length,
                 baseValue: .init(baseItems.count),
                 localizedValue: .init(otherItems.count)
             ))
             return
         }
         for (itemIdx, (baseItem, otherItem)) in zip(baseItems, otherItems).enumerated() {
-            let pathSoFar = pathSoFar.appending(.item(idx: itemIdx))
+            let path = path.item[itemIdx]
             /// checks if the two items have an equal value at the specified key path
             /// - parameter keyPath: `KeyPath` of the value to compare.
             /// - parameter name: name of the property being compared
@@ -430,21 +491,21 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
             func checkEqual(
                 _ keyPath: KeyPath<QuestionnaireItem, (some Hashable & Sendable)>,
                 _ name: String,
-                path: Path = pathSoFar
+                path: Path = path
             ) -> Bool {
                 let baseValue = baseItem[keyPath: keyPath]
                 let itemValue = otherItem[keyPath: keyPath]
-                if baseValue != itemValue {
+                if baseValue == itemValue {
+                    return true
+                } else {
                     issues.append(.mismatchingFieldValues(
                         baseFileRef: baseFileRef,
                         localizedFileRef: otherFileRef,
-                        path: path.appending(.field(name: name)),
+                        path: path[name],
                         baseValue: .init(baseValue),
                         localizedValue: .init(itemValue)
                     ))
                     return false
-                } else {
-                    return true
                 }
             }
             checkEqual(\.linkId.value, "linkId")
@@ -461,19 +522,19 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                     issues.append(.mismatchingFieldValues(
                         baseFileRef: baseFileRef,
                         localizedFileRef: otherFileRef,
-                        path: pathSoFar.appending([.field(name: "answerOption"), .field(name: "length")]),
+                        path: path.answerOption.length,
                         baseValue: .init(baseItemOptions.count),
                         localizedValue: .init(otherItemOptions.count)
                     ))
                     break
                 }
                 for (optionIdx, (baseOption, otherOption)) in zip(baseItemOptions, otherItemOptions).enumerated() {
-                    let pathSoFar = pathSoFar.appending([.field(name: "answerOption"), .item(idx: optionIdx)])
+                    let path = path.answerOption[optionIdx]
                     switch (baseOption.value, otherOption.value) {
-                    case let (.coding(baseCoding), .coding(otherCoding)):
-                        let pathSoFar = pathSoFar.appending(.field(name: "valueCoding"))
-                        checkEqual(\.answerOption?[optionIdx].value.coding?.system?.value?.url, "system", path: pathSoFar)
-                        checkEqual(\.answerOption?[optionIdx].value.coding?.id?.value?.string, "id", path: pathSoFar)
+                    case let (.coding, .coding):
+                        let path = path.valueCoding
+                        checkEqual(\.answerOption?[optionIdx].value.coding?.system?.value?.url, "system", path: path)
+                        checkEqual(\.answerOption?[optionIdx].value.coding?.id?.value?.string, "id", path: path)
                     default:
                         break
                     }
@@ -495,7 +556,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                         issues.append(.mismatchingFieldValues(
                             baseFileRef: baseFileRef,
                             localizedFileRef: otherFileRef,
-                            path: pathSoFar.appending([.field(name: "extension"), .field(name: "unit"), .field(name: name)]),
+                            path: path.extension.unit[name],
                             baseValue: .init(baseVal),
                             localizedValue: .init(otherVal)
                         ))
@@ -515,55 +576,56 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
             case ([], []):
                 break
             case let (baseConditions, otherConditions):
-                guard checkEqual(\.enableWhen?.count, "length", path: pathSoFar.appending(.field(name: "enableWhen"))) else {
+                guard checkEqual(\.enableWhen?.count, "length", path: path.enableWhen) else {
                     break
                 }
                 for (condIdx, (baseCond, otherCond)) in zip(baseConditions, otherConditions).enumerated() {
-                    let pathSoFar = pathSoFar.appending([.field(name: "enableWhen"), .item(idx: condIdx)])
-                    checkEqual(\.enableWhen![condIdx].question.value, "question", path: pathSoFar)
-                    checkEqual(\.enableWhen![condIdx].operator.value, "operator", path: pathSoFar)
-                    func imp<T: Hashable & Sendable>(_ answerFieldName: String, baseVal: T?, otherVal: T?) {
+                    let path = path.enableWhen[condIdx]
+                    checkEqual(\.enableWhen![condIdx].question.value, "question", path: path)
+                    checkEqual(\.enableWhen![condIdx].operator.value, "operator", path: path)
+                    func imp<T: Hashable & Sendable>(baseVal: T?, otherVal: T?, path: Path) {
                         if baseVal != otherVal {
                             issues.append(.mismatchingFieldValues(
                                 baseFileRef: baseFileRef,
                                 localizedFileRef: otherFileRef,
-                                path: pathSoFar.appending([.field(name: "answer"), .field(name: answerFieldName)]),
+                                path: path,
                                 baseValue: .init(baseVal),
                                 localizedValue: .init(otherVal)
                             ))
                         }
                     }
+                    let answerPath = path.answer
                     switch (baseCond.answer, otherCond.answer) {
                     case let (.boolean(lhsVal), .boolean(rhsVal)):
-                        imp("boolean", baseVal: lhsVal.value, otherVal: rhsVal.value)
+                        imp(baseVal: lhsVal.value, otherVal: rhsVal.value, path: answerPath.boolean)
                     case let (.coding(lhsVal), .coding(rhsVal)):
-                        imp("coding.system", baseVal: lhsVal.system?.value, otherVal: rhsVal.system?.value)
-                        imp("coding.id", baseVal: lhsVal.id?.value, otherVal: rhsVal.id?.value)
+                        imp(baseVal: lhsVal.system?.value, otherVal: rhsVal.system?.value, path: answerPath.coding.system)
+                        imp(baseVal: lhsVal.code?.value, otherVal: rhsVal.code?.value, path: answerPath.coding.code)
                     case let (.date(lhsVal), .date(rhsVal)):
-                        imp("date", baseVal: lhsVal.value, otherVal: rhsVal.value)
+                        imp(baseVal: lhsVal.value, otherVal: rhsVal.value, path: answerPath.date)
                     case let (.dateTime(lhsVal), .dateTime(rhsVal)):
-                        imp("dateTime", baseVal: lhsVal.value, otherVal: rhsVal.value)
+                        imp(baseVal: lhsVal.value, otherVal: rhsVal.value, path: answerPath.dateTime)
                     case let (.decimal(lhsVal), .decimal(rhsVal)):
-                        imp("decimal", baseVal: lhsVal.value, otherVal: rhsVal.value)
+                        imp(baseVal: lhsVal.value, otherVal: rhsVal.value, path: answerPath.decimal)
                     case let (.integer(lhsVal), .integer(rhsVal)):
-                        imp("integer", baseVal: lhsVal.value, otherVal: rhsVal.value)
+                        imp(baseVal: lhsVal.value, otherVal: rhsVal.value, path: answerPath.integer)
                     case let (.quantity(lhsVal), .quantity(rhsVal)):
-                        imp("quantity.system", baseVal: lhsVal.system?.value, otherVal: rhsVal.system?.value)
-                        imp("quantity.code", baseVal: lhsVal.code?.value, otherVal: rhsVal.code?.value)
-                        imp("quantity.unit", baseVal: lhsVal.unit?.value, otherVal: rhsVal.unit?.value)
-                        imp("quantity.value", baseVal: lhsVal.value?.value, otherVal: rhsVal.value?.value)
+                        imp(baseVal: lhsVal.system?.value, otherVal: rhsVal.system?.value, path: answerPath.quantity.system)
+                        imp(baseVal: lhsVal.code?.value, otherVal: rhsVal.code?.value, path: answerPath.quantity.code)
+                        imp(baseVal: lhsVal.unit?.value, otherVal: rhsVal.unit?.value, path: answerPath.quantity.unit)
+                        imp(baseVal: lhsVal.value?.value, otherVal: rhsVal.value?.value, path: answerPath.quantity.value)
                     case let (.reference(lhsVal), .reference(rhsVal)):
-                        imp("reference.type", baseVal: lhsVal.type?.value, otherVal: rhsVal.type?.value)
-                        imp("reference.reference", baseVal: lhsVal.reference?.value, otherVal: rhsVal.reference?.value)
+                        imp(baseVal: lhsVal.type?.value, otherVal: rhsVal.type?.value, path: answerPath.reference.type)
+                        imp(baseVal: lhsVal.reference?.value, otherVal: rhsVal.reference?.value, path: answerPath.reference.reference)
                     case let (.string(lhsVal), .string(rhsVal)):
-                        imp("strig", baseVal: lhsVal.value, otherVal: rhsVal.value)
+                        imp(baseVal: lhsVal.value, otherVal: rhsVal.value, path: answerPath.string)
                     case let (.time(lhsVal), .time(rhsVal)):
-                        imp("time", baseVal: lhsVal.value, otherVal: rhsVal.value)
+                        imp(baseVal: lhsVal.value, otherVal: rhsVal.value, path: answerPath.time)
                     default:
                         issues.append(.mismatchingFieldValues(
                             baseFileRef: baseFileRef,
                             localizedFileRef: otherFileRef,
-                            path: pathSoFar.appending(.field(name: "answer")),
+                            path: path.answer,
                             baseValue: nil,
                             localizedValue: nil
                         ))
@@ -577,7 +639,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                 at: otherFileRef,
                 against: baseItem,
                 at: baseFileRef,
-                pathSoFar: pathSoFar
+                path: path
             )
         }
     }
@@ -592,13 +654,13 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
         switch option.value {
         case .coding(let coding):
             // Note that we intentionally ignore the `id` field here, and instead use the combination of system and code to establish identity.
-            let path = path.appending(.field(name: "valueCoding"))
+            let path = path.valueCoding
             let system = coding.system?.value?.url
             let code = coding.code?.value?.string
             let title = coding.display?.value?.string
             for (value, name) in [(system, "system"), (code, "code"), (title, "title") ] as [((any Equatable)?, String)] {
                 if value == nil { // swiftlint:disable:this for_where
-                    issues.append(.missingField(fileRef: fileRef, path: path.appending(.field(name: name))))
+                    issues.append(.missingField(fileRef: fileRef, path: path[name]))
                 }
             }
             if let system, let code, let title {
@@ -609,7 +671,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
         case .date, .integer, .time, .string, .reference:
             issues.append(.invalidField(
                 fileRef: fileRef,
-                path: path.appending(.field(name: "value")),
+                path: path.value,
                 fieldValue: .init(option.value.kindType),
                 failureReason: "Unsupported answer option kind '\(option.value.kindType)'; only 'valueCoding' is currently supported."
             ))
@@ -680,4 +742,8 @@ extension Equatable {
             false
         }
     }
+}
+
+
+extension StudyBundle.BundleValidationIssue.QuestionnaireIssue.Path {
 }

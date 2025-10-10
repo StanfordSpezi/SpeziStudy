@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: MIT
 //
 
-// swiftlint:disable function_body_length
+// swiftlint:disable function_body_length file_length file_types_order
 
 import Foundation
 import ModelsR4
@@ -19,6 +19,9 @@ import Testing
 
 @Suite
 struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
+    private typealias Path = StudyBundle.BundleValidationIssue.QuestionnaireIssue.Path
+    private typealias Value = StudyBundle.BundleValidationIssue.QuestionnaireIssue.Value
+    
     @Test
     func validInput() throws {
         let testStudy = StudyDefinition(
@@ -186,22 +189,6 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
     
     
     @Test
-    func value() {
-        typealias Value = StudyBundle.BundleValidationIssue.QuestionnaireIssue.Value
-        
-        let expected = Value(52)
-        #expect(Value(52) == expected)
-        #expect(Value(Optional(52)) == expected)
-        #expect(Value(Optional(Optional(52))) == expected)
-        #expect(Value(Optional(Optional(Optional(52)))) == expected)
-        #expect(Value(Optional(Optional(Optional(Optional(52))))) == expected)
-        #expect(Value(Optional(Optional(Optional(Optional(Optional(52)))))) == expected)
-        #expect(Value(Optional(Optional(Optional(Optional(Optional(Optional(52))))))) == expected)
-        #expect(Value(Optional(Optional(Optional(Optional(Optional(Optional(Optional(52)))))))) == expected)
-    }
-    
-    
-    @Test
     func invalidQuestionnaireLocalizations() throws {
         let error = try #require(throws: StudyBundle.CreateBundleError.self) {
             try makeTestStudy(articles: [], questionnaires: [
@@ -218,14 +205,14 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
                 .questionnaire(.mismatchingFieldValues(
                     baseFileRef: .init(fileRef: fileRef, localization: .enUS),
                     localizedFileRef: .init(fileRef: fileRef, localization: .enGB),
-                    path: [.field(name: "id")],
+                    path: .root.id,
                     baseValue: .init("0C0D66EB-DF6E-43CA-B8E6-8653DB5D1610"),
                     localizedValue: .init("C8F9D485-3A88-4416-92EE-839CC1974AFC")
                 )),
                 .questionnaire(.mismatchingFieldValues(
                     baseFileRef: .init(fileRef: fileRef, localization: .enUS),
                     localizedFileRef: .init(fileRef: fileRef, localization: .enGB),
-                    path: [.item(idx: 2), .field(name: "type")],
+                    path: .root.item[2].type,
                     baseValue: .init(QuestionnaireItemType.date),
                     localizedValue: .init(QuestionnaireItemType.integer)
                 ))
@@ -267,7 +254,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
                 )),
                 .questionnaire(.missingField(
                     fileRef: .init(fileRef: fileRef, localization: .enUS),
-                    path: [.item(idx: 1), .field(name: "text")]
+                    path: .root.item[1].text
                 ))
             ])
         default:
@@ -345,6 +332,153 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
                 throw error
             }
         }
+    }
+    
+    
+    @Test
+    func conflictingChoiceOptions() throws {
+        let error = try #require(throws: StudyBundle.CreateBundleError.self) {
+            try makeTestStudy(articles: [], questionnaires: [
+                .init(fileRef: .init(category: .questionnaire, filename: "ChoiceOptionConflict", fileExtension: "json"), localizations: [
+                    .init(key: .enUS, url: try #require(Bundle.module.url(forResource: "ChoiceOptionConflict+en-US", withExtension: "json")))
+                ])
+            ])
+        }
+        switch error {
+        case .failedValidation(let issues):
+            let fileRef = StudyBundle.FileReference(category: .questionnaire, filename: "ChoiceOptionConflict", fileExtension: "json")
+            expectEqualIgnoringOrder(Set(issues), [
+                .questionnaire(.conflictingFieldValues(
+                    fileRef: .init(fileRef: fileRef, localization: .enUS),
+                    fstPath: Path.item[0].answerOption[1].valueCoding.display,
+                    fstValue: .init("B"),
+                    sndPath: Path.item[2].answerOption[1].valueCoding.display,
+                    sndValue: .init("C"),
+                    comment: "Both options have code 'b' in system 'urn:uuid:4cf7ebf9-1fe3-40d1-96fb-a84f3105b3ac', but they have different titles."
+                )),
+                .questionnaire(.conflictingFieldValues(
+                    fileRef: .init(fileRef: fileRef, localization: .enUS),
+                    fstPath: Path.item[0].answerOption[2].valueCoding.display,
+                    fstValue: .init("C"),
+                    sndPath: Path.item[1].answerOption[1].valueCoding.display,
+                    sndValue: .init("B"),
+                    comment: "Both options have code 'c' in system 'urn:uuid:4cf7ebf9-1fe3-40d1-96fb-a84f3105b3ac', but they have different titles."
+                ))
+            ])
+        default:
+            throw error
+        }
+    }
+    
+    
+    @Test
+    func duplicateChoiceOptions() throws {
+        let error = try #require(throws: StudyBundle.CreateBundleError.self) {
+            try makeTestStudy(articles: [], questionnaires: [
+                .init(fileRef: .init(category: .questionnaire, filename: "ChoiceOptionDuplicate", fileExtension: "json"), localizations: [
+                    .init(key: .enUS, url: try #require(Bundle.module.url(forResource: "ChoiceOptionDuplicate+en-US", withExtension: "json")))
+                ])
+            ])
+        }
+        switch error {
+        case .failedValidation(let issues):
+            let fileRef = StudyBundle.FileReference(category: .questionnaire, filename: "ChoiceOptionDuplicate", fileExtension: "json")
+            expectEqualIgnoringOrder(Set(issues), [
+                .questionnaire(.conflictingFieldValues(
+                    fileRef: .init(fileRef: fileRef, localization: .enUS),
+                    fstPath: Path.item[0].answerOption[0].valueCoding.display,
+                    fstValue: .init("A"),
+                    sndPath: Path.item[0].answerOption[1].valueCoding.display,
+                    sndValue: .init("B"),
+                    comment: "Both options have code 'a' in system 'urn:uuid:4cf7ebf9-1fe3-40d1-96fb-a84f3105b3ac', but they have different titles."
+                ))
+            ])
+        default:
+            throw error
+        }
+    }
+    
+    
+    @Test
+    func mismatchingEnableWhenConditions() throws {
+        let error = try #require(throws: StudyBundle.CreateBundleError.self) {
+            try makeTestStudy(articles: [], questionnaires: [
+                .init(fileRef: .init(category: .questionnaire, filename: "TestSurvey", fileExtension: "json"), localizations: [
+                    .init(key: .enUS, url: try #require(Bundle.module.url(forResource: "TestSurvey+en-US", withExtension: "json"))),
+                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "TestSurvey+en-UK", withExtension: "json")))
+                ])
+            ])
+        }
+        switch error {
+        case .failedValidation(let issues):
+            let fileRef = StudyBundle.FileReference(category: .questionnaire, filename: "TestSurvey", fileExtension: "json")
+            expectEqualIgnoringOrder(Set(issues), [
+                .questionnaire(.mismatchingFieldValues(
+                    baseFileRef: .init(fileRef: fileRef, localization: .enUS),
+                    localizedFileRef: .init(fileRef: fileRef, localization: .enGB),
+                    path: .root.item[1].enableWhen[0].answer.coding.code,
+                    baseValue: .init("a"),
+                    localizedValue: .init("b")
+                )),
+                .questionnaire(.mismatchingFieldValues(
+                    baseFileRef: .init(fileRef: fileRef, localization: .enUS),
+                    localizedFileRef: .init(fileRef: fileRef, localization: .enGB),
+                    path: Path.item[0].answerOption.length,
+                    baseValue: .init(3),
+                    localizedValue: .init(4)
+                ))
+            ])
+        default:
+            throw error
+        }
+    }
+}
+
+
+@Suite
+struct StudyBundleValidationUtilsTests {
+    @Test
+    func path() {
+        typealias Path = StudyBundle.BundleValidationIssue.QuestionnaireIssue.Path
+        #expect(Path.root.item[1].enableWhen[1].answer.coding.code == [
+            .field(name: "item"),
+            .subscript(idx: 1),
+            .field(name: "enableWhen"),
+            .subscript(idx: 1),
+            .field(name: "answer"),
+            .field(name: "coding"),
+            .field(name: "code")
+        ])
+        // swiftlint:disable:next identical_operands
+        #expect(Path.root.item[1].enableWhen[0].answer.coding.code == Path.root.item[1].enableWhen[0].answer.coding.code)
+        #expect(Path.root.a.b.c[1] == Path.a.b.c[1])
+    }
+    
+    @Test
+    func valueInitFromOptional() {
+        typealias Value = StudyBundle.BundleValidationIssue.QuestionnaireIssue.Value
+        let expected = Value(52)
+        #expect(Value(52) == expected)
+        #expect(Value(Optional(52)) == expected)
+        #expect(Value(Optional(Optional(52))) == expected)
+        #expect(Value(Optional(Optional(Optional(52)))) == expected)
+        #expect(Value(Optional(Optional(Optional(Optional(52))))) == expected)
+        #expect(Value(Optional(Optional(Optional(Optional(Optional(52)))))) == expected)
+        #expect(Value(Optional(Optional(Optional(Optional(Optional(Optional(52))))))) == expected)
+        #expect(Value(Optional(Optional(Optional(Optional(Optional(Optional(Optional(52)))))))) == expected)
+    }
+    
+    @Test
+    func valueInitFromFHIRPrimitive() {
+        typealias Value = StudyBundle.BundleValidationIssue.QuestionnaireIssue.Value
+        #expect(Value(FHIRString("abc")) == Value("abc"))
+        #expect(Value(Optional(FHIRString("abc"))) == Value("abc"))
+        #expect(Value(FHIRString("abc")) == Value(Optional("abc")))
+        #expect(Value(Optional(FHIRString("abc"))) == Value(Optional("abc")))
+        #expect(Value(FHIRPrimitive(FHIRString("abc"))) == Value("abc"))
+        #expect(Value(Optional(FHIRPrimitive(FHIRString("abc")))) == Value("abc"))
+        #expect(Value(FHIRPrimitive(FHIRString("abc"))) == Value(Optional("abc")))
+        #expect(Value(Optional(FHIRPrimitive(FHIRString("abc")))) == Value(Optional("abc")))
     }
 }
 
