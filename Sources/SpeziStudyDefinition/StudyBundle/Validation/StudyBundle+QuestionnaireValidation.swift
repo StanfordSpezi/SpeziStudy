@@ -88,6 +88,7 @@ extension StudyBundle.BundleValidationIssue {
                 case `subscript`(idx: Int)
             }
             
+            // https://github.com/swiftlang/swift/issues/84808
             static var root: Self { .init([]) }
             
             let components: [Component]
@@ -114,27 +115,32 @@ extension StudyBundle.BundleValidationIssue {
                 components = Array(seq)
             }
             public init(arrayLiteral components: Component...) {
-                self.components = components
+                self.init(components)
             }
             
-            subscript(dynamicMember name: String) -> Self {
-                Self(components + CollectionOfOne(.field(name: name)))
-            }
-            
+            /// Creates a new ``Path`` that accesses the root-level field `name`.
             static subscript(dynamicMember name: String) -> Self {
                 .root[dynamicMember: name]
+            }
+            /// Creates a new ``Path`` by appending a field access component.
+            subscript(dynamicMember name: String) -> Self {
+                Self(components + CollectionOfOne(.field(name: name)))
             }
             /// Creates a new ``Path`` by appending an `Int`-based indexing subscript component.
             subscript(idx: Int) -> Self {
                 Self(components + CollectionOfOne(.subscript(idx: idx)))
             }
-            
             /// Creates a new ``Path`` by appending a field access component.
             subscript(name: String) -> Self {
                 Self(components + CollectionOfOne(.field(name: name)))
             }
         }
         
+        /// A Hashable wrapper around some value we found in a questionnaire and want to report/dispay to the user.
+        ///
+        /// - Note: This type is `Sendable`. We canot express this via the type system (`Sendable` is a marker protocol, so we can't dynamically check for conformance at runtime),
+        ///     but all non-private initializers require their input be `Sendable`, and we only descend into types where we can safely assume that if the type as a whole is `Sendable`,
+        ///     any contained values will be as well (i.e., `Optional` and `FHIRPrimitive`).
         public struct Value: Hashable, @unchecked Sendable {
             private let type: Any.Type
             let value: any Hashable
@@ -143,7 +149,7 @@ extension StudyBundle.BundleValidationIssue {
                 self.init(value: value)
             }
             
-            init?<P: FHIRPrimitiveProtocol>(_ value: P?) where P.PrimitiveType: Hashable & Sendable {
+            init?(_ value: FHIRPrimitive<some Hashable & Sendable>?) {
                 self.init(value?.value)
             }
             
@@ -284,6 +290,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
     
     
     private mutating func performPostProcessing() {
+        // create issues for duplicate/conflicting single/multiple choice options
         do {
             struct WithoutTitle: Hashable {
                 let localization: LocalizationKey
@@ -531,7 +538,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                 for (optionIdx, (baseOption, otherOption)) in zip(baseItemOptions, otherItemOptions).enumerated() {
                     let path = path.answerOption[optionIdx]
                     switch (baseOption.value, otherOption.value) {
-                    case let (.coding, .coding):
+                    case (.coding, .coding):
                         let path = path.valueCoding
                         checkEqual(\.answerOption?[optionIdx].value.coding?.system?.value?.url, "system", path: path)
                         checkEqual(\.answerOption?[optionIdx].value.coding?.id?.value?.string, "id", path: path)
