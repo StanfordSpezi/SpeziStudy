@@ -6,10 +6,12 @@
 // SPDX-License-Identifier: MIT
 //
 
+// swiftlint:disable file_length file_types_order
+
 import Foundation
 import ModelsR4
+import SpeziFoundation
 import SpeziLocalization
-@_spi(APISupport) import SpeziStudyDefinition
 
 
 extension StudyBundle.BundleValidationIssue {
@@ -21,8 +23,8 @@ extension StudyBundle.BundleValidationIssue {
         /// - parameter fieldName: The name of the missing field.
         case missingField(
             fileRef: StudyBundle.LocalizedFileReference,
-            path: Path
-            // TODO add a failureReason/Explanation here?
+            path: Path,
+//            explanation: String = ""
         )
         
         /// The questionnaire as a whole, or one of its items, contains a field with an invalid value.
@@ -32,7 +34,7 @@ extension StudyBundle.BundleValidationIssue {
         /// - parameter fieldName: The name of the field im question.
         /// - parameter fieldValue: The value of the field in question.
         /// - parameter failureReason: An explanation of why exactly this field's value is invalid.
-        case invalidField( // swiftlint:disable:this enum_case_associated_values_count
+        case invalidField(
             fileRef: StudyBundle.LocalizedFileReference,
             path: Path,
             fieldValue: Value?,
@@ -62,12 +64,14 @@ extension StudyBundle.BundleValidationIssue {
         )
         
         public struct Path: Hashable, CustomStringConvertible, ExpressibleByArrayLiteral, Sendable {
-            public enum Element: Hashable, Sendable {
+            public enum Element: Hashable, Sendable { // swiftlint:disable:this nesting
                 /// The element is referring to the `QuestionnaireItem` at the specific index
                 case item(idx: Int)
                 /// The element is referring to the field with the specified name.
                 case field(name: String)
             }
+            
+            static var root: Self { .init(EmptyCollection()) }
             
             private let elements: [Element]
             
@@ -97,8 +101,6 @@ extension StudyBundle.BundleValidationIssue {
                 self.init(elements)
             }
             
-            static var root: Self { .init(EmptyCollection()) }
-            
             func appending(_ element: Element) -> Self {
                 .init(elements + CollectionOfOne(element))
             }
@@ -108,18 +110,33 @@ extension StudyBundle.BundleValidationIssue {
             }
         }
         
-        public struct Value: Hashable, Sendable { // swiftlint:disable:this nesting
+        public struct Value: Hashable, @unchecked Sendable {
             private let type: Any.Type
-            let value: any Hashable & Sendable
+            let value: any Hashable
             
-            init?(_ value: (some Hashable & Sendable)?) {
-                if let value {
-                    self.type = Swift.type(of: value)
-                    self.value = value
+            init?(_ value: (any Hashable & Sendable)?) {
+                self.init(value: value)
+            }
+            
+            /// - precondition: `O` must be `Hashable`
+            private init?<O: AnyOptional>(value: O) {
+                if let value = value.unwrappedOptional {
+                    if let value = value as? any AnyOptional {
+                        self.init(value: value)
+                    } else {
+                        // SAFETY: the force-cast here is ok, bc we only call this initializer from the other one, which has a `Hashable & Sendable` requirement.
+                        self.init(value: value as! any Hashable) // swiftlint:disable:this force_unwrapping
+                    }
                 } else {
                     return nil
                 }
             }
+            
+            private init(value: any Hashable) {
+                self.type = Swift.type(of: value)
+                self.value = value
+            }
+            
             public static func == (lhs: Self, rhs: Self) -> Bool {
                 lhs.value.isEqual(rhs.value) && lhs.type == rhs.type
             }
@@ -133,10 +150,37 @@ extension StudyBundle.BundleValidationIssue {
 
 
 extension StudyBundle {
-    func validateQuestionnaires() throws -> [BundleValidationIssue.QuestionnaireIssue] { // swiftlint:disable:this function_body_length
-        let questionnaireFileRefs = { () -> Set<StudyBundle.FileReference> in
+    func validateQuestionnaires() throws -> [BundleValidationIssue.QuestionnaireIssue] {
+        try QuestionnaireValidator(studyBundle: self).run()
+    }
+}
+
+
+private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this type_body_length
+    typealias Issue = StudyBundle.BundleValidationIssue.QuestionnaireIssue
+    typealias FileReference = StudyBundle.FileReference
+    typealias LocalizedFileReference = StudyBundle.LocalizedFileReference
+    typealias Path = Issue.Path
+    
+    private struct SeenChoiceOption: Hashable {
+        let fileRef: LocalizedFileReference
+        let path: Path
+        let system: URL
+        let code: String
+        let title: String
+    }
+    
+    private let studyBundle: StudyBundle
+    private let fileRefs: [FileReference]
+    private var issues: [Issue] = []
+    private var allChoiceOptions: [SeenChoiceOption] = []
+    
+    
+    init(studyBundle: StudyBundle) {
+        self.studyBundle = studyBundle
+        let fileRefs = { () -> Set<FileReference> in
             // we look at all questionnaires that are explicitly referenced from study components ...
-            var fileRefs: Set<FileReference> = self.studyDefinition.components.compactMapIntoSet {
+            var fileRefs: Set<FileReference> = studyBundle.studyDefinition.components.compactMapIntoSet {
                 switch $0 {
                 case .questionnaire(let component):
                     component.fileRef
@@ -145,7 +189,10 @@ extension StudyBundle {
                 }
             }
             // ... and also at all those that are not, but still are included with the study bundle.
-            let questionnairesUrl = Self.folderUrl(for: .questionnaire, relativeTo: self.bundleUrl).resolvingSymlinksInPath().absoluteURL
+            let questionnairesUrl = StudyBundle
+                .folderUrl(for: .questionnaire, relativeTo: studyBundle.bundleUrl)
+                .resolvingSymlinksInPath()
+                .absoluteURL
             guard let enumerator = FileManager.default.enumerator(at: questionnairesUrl, includingPropertiesForKeys: nil) else {
                 return fileRefs
             }
@@ -170,12 +217,55 @@ extension StudyBundle {
             }
             return fileRefs
         }()
+        self.fileRefs = fileRefs.sorted(using: [KeyPathComparator(\.category.rawValue), KeyPathComparator(\.filename)])
+    }
+    
+    
+    consuming func run() throws -> [Issue] {
+        try validateQuestionnaires()
+        performPostProcessing()
+        return issues
+    }
+    
+    
+    private mutating func performPostProcessing() {
+        do {
+            struct WithoutTitle: Hashable {
+                let localization: LocalizationKey
+                let system: URL
+                let code: String
+            }
+            var reported = Set<SeenChoiceOption>()
+            for option in allChoiceOptions {
+                let conflicting = allChoiceOptions.filter { other in
+                    !reported.contains(other)
+                        && other.fileRef.localization == option.fileRef.localization
+                        && other.system == option.system
+                        && other.code == option.code
+                        && other.title != option.title
+                }
+                for other in conflicting {
+                    // found 2 valueCoding SCMC options (with same localization & system & code) but different titles.
+                    issues.append(.mismatchingFieldValues(
+                        baseFileRef: option.fileRef,
+                        localizedFileRef: other.fileRef,
+                        path: other.path,
+                        baseValue: .init(option.title),
+                        localizedValue: .init(other.title)
+                    ))
+                    reported.insert(other)
+                }
+            }
+        }
+    }
+    
+    
+    private mutating func validateQuestionnaires() throws {
         let fileManager = FileManager.default
-        var issues: [BundleValidationIssue.QuestionnaireIssue] = []
-        for fileRef in questionnaireFileRefs.sorted(using: [KeyPathComparator(\.category.rawValue), KeyPathComparator(\.filename)]) {
+        for fileRef in fileRefs {
             /// all files for this fileRef's category
             let urls = (try? fileManager.contentsOfDirectory(
-                at: Self.folderUrl(for: fileRef.category, relativeTo: bundleUrl),
+                at: StudyBundle.folderUrl(for: fileRef.category, relativeTo: studyBundle.bundleUrl),
                 includingPropertiesForKeys: nil
             )) ?? []
             let candidates = LocalizedFileResolution.selectCandidatesIgnoringLocalization(
@@ -192,15 +282,13 @@ extension StudyBundle {
             
             check(
                 base.questionnaire,
-                at: .init(fileRef: fileRef, localization: base.fileRef.localization),
-                issues: &issues
+                at: .init(fileRef: fileRef, localization: base.fileRef.localization)
             )
             
             for other in questionnaires.filter({ $0.fileRef != base.fileRef }) {
                 check(
                     other.questionnaire,
-                    at: .init(fileRef: fileRef, localization: other.fileRef.localization),
-                    issues: &issues
+                    at: .init(fileRef: fileRef, localization: other.fileRef.localization)
                 )
                 if base.questionnaire.id?.value?.string != other.questionnaire.id?.value?.string {
                     issues.append(.mismatchingFieldValues(
@@ -216,20 +304,17 @@ extension StudyBundle {
                     at: .init(fileRef: fileRef, localization: other.fileRef.localization),
                     against: base.questionnaire,
                     at: .init(fileRef: fileRef, localization: base.fileRef.localization),
-                    pathSoFar: [],
-                    issues: &issues
+                    pathSoFar: []
                 )
             }
         }
-        return issues
     }
     
     
     /// Validates a single (localized) variant of a questionnaire, checking that all expected fields and values exist, and are valid.
-    private func check( // swiftlint:disable:this function_body_length
+    private mutating func check(
         _ questionnaire: Questionnaire,
-        at fileRef: LocalizedFileReference,
-        issues: inout [BundleValidationIssue.QuestionnaireIssue]
+        at fileRef: LocalizedFileReference
     ) {
         if questionnaire.id?.value == nil {
             issues.append(.missingField(fileRef: fileRef, path: [.field(name: "id")]))
@@ -263,22 +348,21 @@ extension StudyBundle {
             issues.append(.missingField(fileRef: fileRef, path: [.field(name: "item")]))
             return
         } else {
-            checkItems(of: questionnaire, at: fileRef, pathSoFar: [], issues: &issues)
+            checkItems(of: questionnaire, at: fileRef, pathSoFar: [])
         }
     }
     
     
     /// Validates the items of a single questionnaire, checking that all required items we'd expect are present.
-    private func checkItems(
+    private mutating func checkItems(
         of itemsContainer: some QuestionnaireItemsContainer,
         at fileRef: LocalizedFileReference,
-        pathSoFar: BundleValidationIssue.QuestionnaireIssue.Path,
-        issues: inout [BundleValidationIssue.QuestionnaireIssue]
+        pathSoFar: Path
     ) {
         for (itemIdx, item) in (itemsContainer.item ?? []).enumerated() {
             let pathSoFar = pathSoFar.appending(.item(idx: itemIdx))
-            func checkHasValue(_ keyPath: KeyPath<QuestionnaireItem, (some Any)?>, _ name: String, skipIf shouldSkip: Bool = false) {
-                if item[keyPath: keyPath] == nil && !shouldSkip {
+            func checkHasValue(_ keyPath: KeyPath<QuestionnaireItem, (some Any)?>, _ name: String) {
+                if item[keyPath: keyPath] == nil {
                     issues.append(.missingField(
                         fileRef: fileRef,
                         path: pathSoFar.appending(.field(name: name))
@@ -286,10 +370,12 @@ extension StudyBundle {
                 }
             }
             checkHasValue(\.linkId.value, "linkId")
-            checkHasValue(\.text?.value, "text", skipIf: item.type == .group)
+            if item.type != .group {
+                checkHasValue(\.text?.value, "text")
+            }
             switch item.type.value {
             case .choice:
-                guard let options = item.answerOption, let firstOption = options.first else {
+                guard let options = item.answerOption else {
                     // the item has type "choice", but does not contain any options the user could choose from.
                     issues.append(.missingField(
                         fileRef: fileRef,
@@ -299,39 +385,12 @@ extension StudyBundle {
                 }
                 for (optionIdx, option) in options.enumerated() {
                     let pathSoFar = pathSoFar.appending([.field(name: "answerOption"), .item(idx: optionIdx)])
-                    switch option.value {
-                    case .coding(let coding):
-                        let pathSoFar = pathSoFar.appending(.field(name: "valueCoding"))
-                        if let system = coding.system?.value?.url {
-//                                if system != firstOption.value.coding?.system?.value?.url {
-//                                    issues.append(.invalidField(
-//                                        fileRef: fileRef,
-//                                        path: pathSoFar.appending(.field(name: "system")),
-//                                        fieldValue: .init(system),
-//                                        failureReason: "AnswerOption 'system' value differs from other "
-//                                    ))
-//                                }
-                        } else {
-                            issues.append(.missingField(fileRef: fileRef, path: pathSoFar.appending(.field(name: "system"))))
-                        }
-                        if let id = coding.id?.value?.string {
-//                                acc.ids.insert(id)
-                        } else {
-                            issues.append(.missingField(fileRef: fileRef, path: pathSoFar.appending(.field(name: "id"))))
-                        }
-                    case .date, .integer, .string, .time, .reference:
-                        issues.append(.invalidField(
-                            fileRef: fileRef,
-                            path: pathSoFar,
-                            fieldValue: nil,
-                            failureReason: "Expected 'valueCoding' answer option; got smth else."
-                        ))
-                    }
+                    processChoiceOption(option, at: pathSoFar, for: item, at: fileRef)
                 }
             default:
                 break
             }
-            checkItems(of: item, at: fileRef, pathSoFar: pathSoFar, issues: &issues)
+            checkItems(of: item, at: fileRef, pathSoFar: pathSoFar)
         }
     }
     
@@ -340,13 +399,12 @@ extension StudyBundle {
     ///
     /// This function mainly just compares that the two questionnaires contain equal items, w.r.t. some non-localized fields.
     /// It does not check for existence of required, possibly localized items; use ``checkItems(of:pathSoFar:)`` for that.
-    private func checkItems(
+    private mutating func checkItems( // swiftlint:disable:this function_body_length cyclomatic_complexity
         of other: (some QuestionnaireItemsContainer)?,
         at otherFileRef: LocalizedFileReference,
         against base: (some QuestionnaireItemsContainer)?,
         at baseFileRef: LocalizedFileReference,
-        pathSoFar: BundleValidationIssue.QuestionnaireIssue.Path,
-        issues: inout [BundleValidationIssue.QuestionnaireIssue]
+        pathSoFar: Path
     ) {
         let baseItems = base?.item ?? []
         let otherItems = other?.item ?? []
@@ -372,7 +430,7 @@ extension StudyBundle {
             func checkEqual(
                 _ keyPath: KeyPath<QuestionnaireItem, (some Hashable & Sendable)>,
                 _ name: String,
-                path: BundleValidationIssue.QuestionnaireIssue.Path = pathSoFar
+                path: Path = pathSoFar
             ) -> Bool {
                 let baseValue = baseItem[keyPath: keyPath]
                 let itemValue = otherItem[keyPath: keyPath]
@@ -394,8 +452,6 @@ extension StudyBundle {
             checkEqual(\.required?.value, "required")
             checkEqual(\.repeats?.value, "repeats")
             checkEqual(\.readOnly?.value, "readOnly")
-//            checkEqual(\.initial?., "readOnly")
-//            checkEqual(\.enabledWhen?., "readOnly")
             switch baseItem.type.value {
             case .choice:
                 // we don't need to check for non-emptiness here; that already happened in the other function.
@@ -429,7 +485,7 @@ extension StudyBundle {
                 let otherExt = otherItem.extensions(for: extensionUrl)
                 guard baseExt.count == 1, let baseDef = baseExt.first?.value?.coding,
                       otherExt.count == 1, let otherDef = otherExt.first?.value?.coding else {
-                    // TODO record issue!
+                    // Q: record issue?
                     break
                 }
                 func imp(_ keyPath: KeyPath<Coding, some Hashable & Sendable>, _ name: String) {
@@ -460,21 +516,12 @@ extension StudyBundle {
                 break
             case let (baseConditions, otherConditions):
                 guard checkEqual(\.enableWhen?.count, "length", path: pathSoFar.appending(.field(name: "enableWhen"))) else {
-//                guard baseConditions.count == otherConditions.count else {
-//                    issues.append(.mismatchingFieldValues(
-//                        baseFileRef: baseFileRef,
-//                        localizedFileRef: otherFileRef,
-//                        path: pathSoFar.appending([.field(name: "enableWhen"), .field(name: "length")]),
-//                        baseValue: .init(baseConditions.count),
-//                        localizedValue: .init(otherConditions.count)
-//                    ))
                     break
                 }
                 for (condIdx, (baseCond, otherCond)) in zip(baseConditions, otherConditions).enumerated() {
                     let pathSoFar = pathSoFar.appending([.field(name: "enableWhen"), .item(idx: condIdx)])
                     checkEqual(\.enableWhen![condIdx].question.value, "question", path: pathSoFar)
                     checkEqual(\.enableWhen![condIdx].operator.value, "operator", path: pathSoFar)
-//                    checkEqual(\.enableWhen![condIdx].answer, "answer")
                     func imp<T: Hashable & Sendable>(_ answerFieldName: String, baseVal: T?, otherVal: T?) {
                         if baseVal != otherVal {
                             issues.append(.mismatchingFieldValues(
@@ -521,9 +568,6 @@ extension StudyBundle {
                             localizedValue: nil
                         ))
                     }
-//                    baseCond.question
-//                    baseCond.operator
-//                    baseCond.answer
                 }
             }
             
@@ -533,9 +577,42 @@ extension StudyBundle {
                 at: otherFileRef,
                 against: baseItem,
                 at: baseFileRef,
-                pathSoFar: pathSoFar,
-                issues: &issues
+                pathSoFar: pathSoFar
             )
+        }
+    }
+    
+    
+    private mutating func processChoiceOption(
+        _ option: QuestionnaireItemAnswerOption,
+        at path: Path,
+        for item: QuestionnaireItem,
+        at fileRef: LocalizedFileReference
+    ) {
+        switch option.value {
+        case .coding(let coding):
+            // Note that we intentionally ignore the `id` field here, and instead use the combination of system and code to establish identity.
+            let path = path.appending(.field(name: "valueCoding"))
+            let system = coding.system?.value?.url
+            let code = coding.code?.value?.string
+            let title = coding.display?.value?.string
+            for (value, name) in [(system, "system"), (code, "code"), (title, "title") ] as [((any Equatable)?, String)] {
+                if value == nil { // swiftlint:disable:this for_where
+                    issues.append(.missingField(fileRef: fileRef, path: path.appending(.field(name: name))))
+                }
+            }
+            if let system, let code, let title {
+                // Note that we don't check for duplicates and create issues directly in here; instead this is a one-time
+                // postprocessing step to avoid finding and reporting the same duplicate multiple times.
+                allChoiceOptions.append(.init(fileRef: fileRef, path: path, system: system, code: code, title: title))
+            }
+        case .date, .integer, .time, .string, .reference:
+            issues.append(.invalidField(
+                fileRef: fileRef,
+                path: path.appending(.field(name: "value")),
+                fieldValue: .init(option.value.kindType),
+                failureReason: "Unsupported answer option kind '\(option.value.kindType)'; only 'valueCoding' is currently supported."
+            ))
         }
     }
 }
@@ -556,7 +633,25 @@ extension QuestionnaireItemAnswerOption.ValueX {
             nil
         }
     }
+    
+    fileprivate var kindType: String {
+        switch self {
+        case .coding:
+            "coding"
+        case .date:
+            "date"
+        case .integer:
+            "integer"
+        case .reference:
+            "reference"
+        case .string:
+            "string"
+        case .time:
+            "time"
+        }
+    }
 }
+
 
 extension Extension.ValueX {
     fileprivate var coding: Coding? {
@@ -569,11 +664,13 @@ extension Extension.ValueX {
     }
 }
 
+
 private protocol QuestionnaireItemsContainer {
-    var item: [QuestionnaireItem]? { get }
+    var item: [QuestionnaireItem]? { get } // swiftlint:disable:this discouraged_optional_collection
 }
 extension Questionnaire: QuestionnaireItemsContainer {}
 extension QuestionnaireItem: QuestionnaireItemsContainer {}
+
 
 extension Equatable {
     fileprivate func isEqual(_ other: Any) -> Bool {
@@ -584,4 +681,3 @@ extension Equatable {
         }
     }
 }
-
