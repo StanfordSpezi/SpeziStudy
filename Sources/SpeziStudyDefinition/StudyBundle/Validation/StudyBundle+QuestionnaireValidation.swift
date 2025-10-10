@@ -82,9 +82,9 @@ extension StudyBundle.BundleValidationIssue {
         @dynamicMemberLookup
         public struct Path: Hashable, CustomStringConvertible, ExpressibleByArrayLiteral, Sendable {
             public enum Component: Hashable, Sendable { // swiftlint:disable:this nesting
-                /// The element is referring to the field with the specified name.
+                /// A path component that represents accessing a named field.
                 case field(name: String)
-                /// The element is referring to the `QuestionnaireItem` at the specific index
+                /// A path component that represents indexing into a list.
                 case `subscript`(idx: Int)
             }
             
