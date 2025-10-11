@@ -177,7 +177,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             #expect(Set(issues) == [
                 .questionnaire(.invalidField(
                     fileRef: .init(fileRef: fileRef, localization: .esUS),
-                    path: [.field(name: "language")],
+                    path: .root.language,
                     fieldValue: .init("es"),
                     failureReason: "failed to parse into a `LocalizationKey`"
                 ))
@@ -239,18 +239,18 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             #expect(Set(issues) == [
                 .questionnaire(.missingField(
                     fileRef: .init(fileRef: fileRef, localization: .enGB),
-                    path: [.field(name: "id")]
+                    path: .root.id
                 )),
                 .questionnaire(.mismatchingFieldValues(
                     baseFileRef: .init(fileRef: fileRef, localization: .enUS),
                     localizedFileRef: .init(fileRef: fileRef, localization: .enGB),
-                    path: [.field(name: "id")],
+                    path: .root.id,
                     baseValue: .init("0C0D66EB-DF6E-43CA-B8E6-8653DB5D1610"),
                     localizedValue: nil
                 )),
                 .questionnaire(.missingField(
                     fileRef: .init(fileRef: fileRef, localization: .enUS),
-                    path: [.field(name: "title")]
+                    path: .root.title
                 )),
                 .questionnaire(.missingField(
                     fileRef: .init(fileRef: fileRef, localization: .enUS),
@@ -279,12 +279,12 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             #expect(Set(issues) == [
                 .questionnaire(.missingField(
                     fileRef: .init(fileRef: fileRef, localization: .enUS),
-                    path: [.field(name: "item")],
+                    path: .root.item,
                 )),
                 .questionnaire(.mismatchingFieldValues(
                     baseFileRef: .init(fileRef: fileRef, localization: .enUS),
                     localizedFileRef: .init(fileRef: fileRef, localization: .enGB),
-                    path: [.field(name: "item"), .field(name: "length")],
+                    path: .root.item.length,
                     baseValue: .init(0),
                     localizedValue: .init(1)
                 ))
@@ -440,7 +440,7 @@ struct StudyBundleValidationUtilsTests {
     @Test
     func path() {
         typealias Path = StudyBundle.BundleValidationIssue.QuestionnaireIssue.Path
-        #expect(Path.root.item[1].enableWhen[1].answer.coding.code == [
+        #expect(Path.root.item[1].enableWhen[1].answer.coding.code == Path([
             .field(name: "item"),
             .subscript(idx: 1),
             .field(name: "enableWhen"),
@@ -448,7 +448,7 @@ struct StudyBundleValidationUtilsTests {
             .field(name: "answer"),
             .field(name: "coding"),
             .field(name: "code")
-        ])
+        ]))
         // swiftlint:disable:next identical_operands
         #expect(Path.root.item[1].enableWhen[0].answer.coding.code == Path.root.item[1].enableWhen[0].answer.coding.code)
         #expect(Path.root.a.b.c[1] == Path.a.b.c[1])

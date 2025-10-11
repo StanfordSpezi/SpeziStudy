@@ -79,8 +79,13 @@ extension StudyBundle.BundleValidationIssue {
             questionnaireLanguage: String
         )
         
+        /// A path into a FHIR questionnaire (not a FHIRPath!).
+        ///
+        /// Intended exclusively for validation error reporting purposes.
+        /// Paths do not need to necessarily match the acual structure of the questionnaire;
+        /// they are allowed to represent simplified, human-understandable versions of a questionnaire element's position within the overall structure.
         @dynamicMemberLookup
-        public struct Path: Hashable, CustomStringConvertible, ExpressibleByArrayLiteral, Sendable {
+        public struct Path: Hashable, CustomStringConvertible, Sendable {
             public enum Component: Hashable, Sendable { // swiftlint:disable:this nesting
                 /// A path component that represents accessing a named field.
                 case field(name: String)
@@ -91,7 +96,7 @@ extension StudyBundle.BundleValidationIssue {
             // https://github.com/swiftlang/swift/issues/84808
             static var root: Self { .init([]) }
             
-            let components: [Component]
+            private let components: [Component]
             
             public var description: String {
                 if components.isEmpty {
@@ -114,13 +119,10 @@ extension StudyBundle.BundleValidationIssue {
             init(_ seq: some Sequence<Component>) {
                 components = Array(seq)
             }
-            public init(arrayLiteral components: Component...) {
-                self.init(components)
-            }
             
             /// Creates a new ``Path`` that accesses the root-level field `name`.
             static subscript(dynamicMember name: String) -> Self {
-                .root[dynamicMember: name]
+                .root[name]
             }
             /// Creates a new ``Path`` by appending a field access component.
             subscript(dynamicMember name: String) -> Self {
@@ -358,7 +360,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                     issues.append(.mismatchingFieldValues(
                         baseFileRef: .init(fileRef: fileRef, localization: base.fileRef.localization),
                         localizedFileRef: .init(fileRef: fileRef, localization: other.fileRef.localization),
-                        path: [.field(name: "id")],
+                        path: Path.id,
                         baseValue: .init(base.questionnaire.id?.value?.string),
                         localizedValue: .init(other.questionnaire.id?.value?.string)
                     ))
@@ -368,7 +370,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                     at: .init(fileRef: fileRef, localization: other.fileRef.localization),
                     against: base.questionnaire,
                     at: .init(fileRef: fileRef, localization: base.fileRef.localization),
-                    path: []
+                    path: .root
                 )
             }
         }
@@ -381,7 +383,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
         at fileRef: LocalizedFileReference
     ) {
         if questionnaire.id?.value == nil {
-            issues.append(.missingField(fileRef: fileRef, path: [.field(name: "id")]))
+            issues.append(.missingField(fileRef: fileRef, path: .root.id))
         }
         if let questionnaireLangRaw = questionnaire.language?.value?.string, !questionnaireLangRaw.isEmpty {
             if let questionnaireKey = LocalizationKey(questionnaireLangRaw) {
@@ -396,23 +398,23 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                 // the questionnaire does have a `language` value, but we were unable to parse it into a `LocalizationKey`.
                 issues.append(.invalidField(
                     fileRef: fileRef,
-                    path: [.field(name: "language")],
+                    path: .root.language,
                     fieldValue: .init(questionnaireLangRaw),
                     failureReason: "failed to parse into a `LocalizationKey`"
                 ))
             }
         } else {
-            issues.append(.missingField(fileRef: fileRef, path: [.field(name: "language")]))
+            issues.append(.missingField(fileRef: fileRef, path: .root.language))
         }
         if questionnaire.title?.value == nil {
-            issues.append(.missingField(fileRef: fileRef, path: [.field(name: "title")]))
+            issues.append(.missingField(fileRef: fileRef, path: .root.title))
         }
         
         if (questionnaire.item ?? []).isEmpty {
-            issues.append(.missingField(fileRef: fileRef, path: [.field(name: "item")]))
+            issues.append(.missingField(fileRef: fileRef, path: .root.item))
             return
         } else {
-            checkItems(of: questionnaire, at: fileRef, path: [])
+            checkItems(of: questionnaire, at: fileRef, path: .root)
         }
     }
     
@@ -749,8 +751,4 @@ extension Equatable {
             false
         }
     }
-}
-
-
-extension StudyBundle.BundleValidationIssue.QuestionnaireIssue.Path {
 }
