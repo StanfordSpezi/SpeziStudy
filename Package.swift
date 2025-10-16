@@ -73,7 +73,7 @@ let package = Package(
                 .product(name: "SpeziTesting", package: "Spezi"),
                 .product(name: "ModelsR4", package: "FHIRModels")
             ],
-            resources: [.process("Resources")],
+            resources: [.process("Resources/questionnaires"), .copy("Resources/assets")],
             swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
             plugins: [] + swiftLintPlugin()
         )

@@ -55,7 +55,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             at: tmpUrl,
             definition: testStudy,
             files: [
-                StudyBundle.FileInput(
+                StudyBundle.FileResourceInput(
                     fileRef: .init(category: .informationalArticle, filename: "a1", fileExtension: "md"),
                     localization: .init(language: .english, region: .unitedStates),
                     contents: """
@@ -65,7 +65,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
                         ---
                         """
                 ),
-                StudyBundle.FileInput(
+                StudyBundle.FileResourceInput(
                     fileRef: .init(category: .informationalArticle, filename: "a1", fileExtension: "md"),
                     localization: .init(language: .spanish, region: .unitedStates),
                     contents: """
@@ -75,12 +75,12 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
                         ---
                         """
                 ),
-                StudyBundle.FileInput(
+                StudyBundle.FileResourceInput(
                     fileRef: .init(category: .questionnaire, filename: "Valid", fileExtension: "json"),
                     localization: .enUS,
                     contentsOf: try #require(Bundle.module.url(forResource: "Valid+en-US", withExtension: "json"))
                 ),
-                StudyBundle.FileInput(
+                StudyBundle.FileResourceInput(
                     fileRef: .init(category: .questionnaire, filename: "Valid", fileExtension: "json"),
                     localization: .enGB,
                     contentsOf: try #require(Bundle.module.url(forResource: "Valid+en-UK", withExtension: "json"))
@@ -532,8 +532,8 @@ extension StudyBundleValidationTests {
         defer {
             try? FileManager.default.removeItem(at: tmpUrl)
         }
-        func makeArticle1(localization: LocalizationKey, metadata: [(String, String)]) throws -> StudyBundle.FileInput {
-            try StudyBundle.FileInput(
+        func makeArticle1(localization: LocalizationKey, metadata: [(String, String)]) throws -> StudyBundle.FileResourceInput {
+            try StudyBundle.FileResourceInput(
                 fileRef: .init(category: .informationalArticle, filename: "a1", fileExtension: "md"),
                 localization: localization,
                 contents: { () -> String in
@@ -548,12 +548,12 @@ extension StudyBundleValidationTests {
             files: try Array {
                 for article in articles {
                     for localization in article.localizations {
-                        try StudyBundle.FileInput(fileRef: article.fileRef, localization: localization.key, contents: localization.contents)
+                        try StudyBundle.FileResourceInput(fileRef: article.fileRef, localization: localization.key, contents: localization.contents)
                     }
                 }
                 for questionnaire in questionnaires {
                     for localization in questionnaire.localizations {
-                        try StudyBundle.FileInput(fileRef: questionnaire.fileRef, localization: localization.key, contentsOf: localization.url)
+                        StudyBundle.FileResourceInput(fileRef: questionnaire.fileRef, localization: localization.key, contentsOf: localization.url)
                     }
                 }
             }
