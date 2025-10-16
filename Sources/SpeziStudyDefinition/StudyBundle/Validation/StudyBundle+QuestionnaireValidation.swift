@@ -862,21 +862,38 @@ extension QuestionnaireValidator {
                     guard !allowed.isEmpty else {
                         preconditionFailure("\(ExpectedExtensionValueType.self).allowed requires at least one input!")
                     }
-                    // TODO inhibit issue reporting for the non-matching cases, if one case matches!!!
                     let results = allowed.map {
                         checkExtValues(baseExtValue: baseExtValue, otherExtValue: otherExtValue, expected: $0)
                     }
-                    if results.count == 1 {
+                    guard results.count > 1 else {
+                        // we know that it's not empty; checked above.
                         return results[0]
-                    } else if results.isEmpty {
                     }
                     if results.allSatisfy({ .skipped ~= $0 }) {
                         return .skipped
                     } else if results.contains(where: { .ok ~= $0 }) {
                         return .ok
                     } else {
+                        let results = results.filter { !(.skipped ~= $0) }
                         // challenge: need to pick the "correct" (ie closest) match!
-                        return results.first ?? .ok
+                        let rank = { (result: CheckExtValuesResult) -> Double in // higher is better
+                            switch result {
+                            case .ok:
+                                1
+                            case .skipped:
+                                0 // unreachable
+                            case .issues(let issues):
+                                issues.allSatisfy { issue in
+                                    switch issue {
+                                    case .invalidField(fileRef: _, path: path.value.type, fieldValue: _, let failureReason):
+                                        failureReason.starts(with: "Expected ")
+                                    default:
+                                        false
+                                    }
+                                } ? 0.5 : 0.75
+                            }
+                        }
+                        return results.min(by: { rank($0) > rank($1) }) ?? .ok
                     }
                 case let (.integer, .integer(baseExtValue), .integer(otherExtValue)), let (.any, .integer(baseExtValue), .integer(otherExtValue)):
                     if baseExtValue == otherExtValue {
@@ -924,7 +941,8 @@ extension QuestionnaireValidator {
                             makeWrongValueTypeIssue(otherFileRef, otherExtValue, expected: "decimal")
                         }
                     })
-                case let (.quantity, .quantity(baseExtValue), .quantity(otherExtValue)), let (.any, .quantity(baseExtValue), .quantity(otherExtValue)):
+                case let (.quantity, .quantity(baseExtValue), .quantity(otherExtValue)),
+                    let (.any, .quantity(baseExtValue), .quantity(otherExtValue)):
                     func imp(_ keyPath: KeyPath<Quantity, some Hashable & Sendable>, _ name: String) -> Issue? {
                         let baseVal = baseExtValue[keyPath: keyPath]
                         let otherVal = otherExtValue[keyPath: keyPath]
