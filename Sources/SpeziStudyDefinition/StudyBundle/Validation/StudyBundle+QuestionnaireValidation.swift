@@ -23,7 +23,8 @@ extension StudyBundle.BundleValidationIssue {
         /// - parameter fieldName: The name of the missing field.
         case missingField(
             fileRef: StudyBundle.LocalizedFileReference,
-            path: Path
+            path: Path,
+            comment: String? = nil
         )
         
         /// The questionnaire as a whole, or one of its items, contains a field with an invalid value.
@@ -53,7 +54,7 @@ extension StudyBundle.BundleValidationIssue {
             fstValue: Value?,
             sndPath: Path,
             sndValue: Value?,
-            comment: String?
+            comment: String? = nil
         )
         
         /// A field in a localized version of a questionnaire has a value that doesn't match the base localization.
@@ -89,8 +90,22 @@ extension StudyBundle.BundleValidationIssue {
             public enum Component: Hashable, Sendable { // swiftlint:disable:this nesting
                 /// A path component that represents accessing a named field.
                 case field(name: String)
-                /// A path component that represents indexing into a list.
-                case `subscript`(idx: Int)
+                /// A path component that represents a subscript-style access.
+                case `subscript`(Subscript)
+                
+                public enum Subscript: Hashable, Sendable { // swiftlint:disable:this nesting
+                    /// An integer-based indexing subscript into a field
+                    case index(Int)
+                    /// A string-based subscript into a field
+                    case string(String)
+                }
+                
+                static func `subscript`(idx: Int) -> Self {
+                    .subscript(.index(idx))
+                }
+                static func `subscript`(value: String) -> Self {
+                    .subscript(.string(value))
+                }
             }
             
             // https://github.com/swiftlang/swift/issues/84808
@@ -109,8 +124,10 @@ extension StudyBundle.BundleValidationIssue {
                                 path.append(".")
                             }
                             path.append(name)
-                        case .subscript(let idx):
+                        case .subscript(.index(let idx)):
                             path.append("[\(idx)]")
+                        case .subscript(.string(let value)):
+                            path.append("[\"\(value)\"]")
                         }
                     }
                 }
@@ -120,21 +137,27 @@ extension StudyBundle.BundleValidationIssue {
                 components = Array(seq)
             }
             
+            func appending(_ name: String) -> Self {
+                Self(components + CollectionOfOne(.field(name: name)))
+            }
+            
             /// Creates a new ``Path`` that accesses the root-level field `name`.
             static subscript(dynamicMember name: String) -> Self {
-                .root[name]
+                .root.appending(name)
             }
+            
             /// Creates a new ``Path`` by appending a field access component.
             subscript(dynamicMember name: String) -> Self {
                 Self(components + CollectionOfOne(.field(name: name)))
             }
+            
             /// Creates a new ``Path`` by appending an `Int`-based indexing subscript component.
             subscript(idx: Int) -> Self {
                 Self(components + CollectionOfOne(.subscript(idx: idx)))
             }
-            /// Creates a new ``Path`` by appending a field access component.
+            /// Creates a new ``Path`` by appending a `String`-based indexing subscript component.
             subscript(name: String) -> Self {
-                Self(components + CollectionOfOne(.field(name: name)))
+                Self(components + CollectionOfOne(.subscript(value: name)))
             }
         }
         
@@ -144,7 +167,7 @@ extension StudyBundle.BundleValidationIssue {
         ///     but all non-private initializers require their input be `Sendable`, and we only descend into types where we can safely assume that if the type as a whole is `Sendable`,
         ///     any contained values will be as well (i.e., `Optional` and `FHIRPrimitive`).
         public struct Value: Hashable, @unchecked Sendable {
-            private let type: Any.Type
+            let type: Any.Type
             let value: any Hashable
             
             init?(_ value: (any Hashable & Sendable)?) {
@@ -170,7 +193,7 @@ extension StudyBundle.BundleValidationIssue {
                 }
             }
             
-            private init?(value: any Hashable) {
+            private init?(value: any Hashable) { // swiftlint:disable:this cyclomatic_complexity
                 switch value {
                 case let value as FHIRString:
                     self.init(value: value.string)
@@ -190,6 +213,10 @@ extension StudyBundle.BundleValidationIssue {
                     }
                 case let value as FHIRURI:
                     self.init(value: value.url)
+                case let value as Int64:
+                    self.init(fullyUnwrapped: value)
+                case let value as any BinaryInteger:
+                    self.init(value: Int64(value))
                 default:
                     self.init(fullyUnwrapped: value)
                 }
@@ -433,7 +460,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                 if item[keyPath: keyPath] == nil {
                     issues.append(.missingField(
                         fileRef: fileRef,
-                        path: path[name]
+                        path: path.appending(name)
                     ))
                 }
             }
@@ -490,6 +517,14 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
         }
         for (itemIdx, (baseItem, otherItem)) in zip(baseItems, otherItems).enumerated() {
             let path = path.item[itemIdx]
+            guard let baseItemQuestionType = baseItem.type.value else {
+                issues.append(.missingField(fileRef: baseFileRef, path: path.type))
+                return
+            }
+            guard let otherItemQuestionType = otherItem.type.value else {
+                issues.append(.missingField(fileRef: otherFileRef, path: path.type))
+                return
+            }
             /// checks if the two items have an equal value at the specified key path
             /// - parameter keyPath: `KeyPath` of the value to compare.
             /// - parameter name: name of the property being compared
@@ -510,7 +545,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                     issues.append(.mismatchingFieldValues(
                         baseFileRef: baseFileRef,
                         localizedFileRef: otherFileRef,
-                        path: path[name],
+                        path: path.appending(name),
                         baseValue: .init(baseValue),
                         localizedValue: .init(itemValue)
                     ))
@@ -522,7 +557,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
             checkEqual(\.required?.value, "required")
             checkEqual(\.repeats?.value, "repeats")
             checkEqual(\.readOnly?.value, "readOnly")
-            switch baseItem.type.value {
+            switch baseItemQuestionType {
             case .choice:
                 // we don't need to check for non-emptiness here; that already happened in the other function.
                 let baseItemOptions = baseItem.answerOption ?? []
@@ -549,30 +584,29 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                     }
                 }
             case .quantity:
-                // https://hl7.org/fhir/R4/codesystem-item-type.html#item-type-quantity
-                let extensionUrl = "http://hl7.org/fhir/StructureDefinition/questionnaire-unit"
-                let baseExt = baseItem.extensions(for: extensionUrl)
-                let otherExt = otherItem.extensions(for: extensionUrl)
-                guard baseExt.count == 1, let baseDef = baseExt.first?.value?.coding,
-                      otherExt.count == 1, let otherDef = otherExt.first?.value?.coding else {
-                    // Q: record issue?
-                    break
+                checkExtensions(
+                    with: "http://hl7.org/fhir/StructureDefinition/questionnaire-unit",
+                    of: otherItem,
+                    at: otherFileRef,
+                    against: baseItem,
+                    at: baseFileRef,
+                    path: path,
+                    require: true,
+                    expectedType: .coding
+                )
+            case .integer, .decimal:
+                for name in ["minValue", "maxValue"] {
+                    checkExtensions(
+                        with: "http://hl7.org/fhir/StructureDefinition/\(name)",
+                        of: otherItem,
+                        at: otherFileRef,
+                        against: baseItem,
+                        at: baseFileRef,
+                        path: path,
+                        require: false,
+                        expectedType: baseItemQuestionType == .integer ? .integer : .decimal
+                    )
                 }
-                func imp(_ keyPath: KeyPath<Coding, some Hashable & Sendable>, _ name: String) {
-                    let baseVal = baseDef[keyPath: keyPath]
-                    let otherVal = otherDef[keyPath: keyPath]
-                    if baseVal != otherVal {
-                        issues.append(.mismatchingFieldValues(
-                            baseFileRef: baseFileRef,
-                            localizedFileRef: otherFileRef,
-                            path: path.extension.unit[name],
-                            baseValue: .init(baseVal),
-                            localizedValue: .init(otherVal)
-                        ))
-                    }
-                }
-                imp(\.system?.value?.url, "system")
-                imp(\.code?.value?.string, "code")
             default:
                 break
             }
@@ -669,7 +703,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
             let title = coding.display?.value?.string
             for (value, name) in [(system, "system"), (code, "code"), (title, "title") ] as [((any Equatable)?, String)] {
                 if value == nil { // swiftlint:disable:this for_where
-                    issues.append(.missingField(fileRef: fileRef, path: path[name]))
+                    issues.append(.missingField(fileRef: fileRef, path: path.appending(name)))
                 }
             }
             if let system, let code, let title {
@@ -684,6 +718,211 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                 fieldValue: .init(option.value.kindType),
                 failureReason: "Unsupported answer option kind '\(option.value.kindType)'; only 'valueCoding' is currently supported."
             ))
+        }
+    }
+}
+
+
+extension QuestionnaireValidator {
+    private enum ExpectedExtensionValueType: Hashable {
+        case coding // maybe add an option to select which fields we should look at?
+        case integer
+        case decimal
+        case any
+    }
+    
+    /// Checks `extension` entries across two `Element`s
+    ///
+    /// - parameter url: The extension's url
+    /// - parameter otherElement: The element to compare against `baseElement`
+    /// - parameter otherFileRef: The specific file in which `otherElement` is located.
+    /// - parameter baseElement: The base-localized element.
+    /// - parameter baseFileRef: The specific file in which `baseElement` is located.
+    /// - parameter path: The ``StudyBundle/BundleValidationIssue/QuestionnaireIssue/Path`` of `otherElement` and `baseElement`, in their respective questionnaires.
+    /// - parameter require: Whether we require an extension entry with this url to exist.
+    ///     If this parameter is `false`, and neither item has a matching entry, the check will not report an error.
+    /// - parameter expectedType: The expected type of the extension entry.
+    private mutating func checkExtensions( // swiftlint:disable:this function_body_length cyclomatic_complexity function_parameter_count
+        with url: String,
+        of otherElement: Element,
+        at otherFileRef: LocalizedFileReference,
+        against baseElement: Element,
+        at baseFileRef: LocalizedFileReference,
+        path: Path,
+        require: Bool,
+        expectedType: ExpectedExtensionValueType
+    ) {
+        let baseExts = baseElement.extensions(for: url)
+        let otherExts = otherElement.extensions(for: url)
+        if !require, baseExts.isEmpty, otherExts.isEmpty {
+            // neither element has a matching entry, and that is ok.
+            return
+        }
+        let path = path.extensions[url]
+        switch (baseExts.count, otherExts.count) {
+        case (0, 0):
+            assert(require) // checked above
+            for fileRef in [baseFileRef, otherFileRef] {
+                issues.append(.missingField(
+                    fileRef: fileRef,
+                    path: path
+                ))
+            }
+        case (1, 0): // exists in base, but not in other
+            issues.append(.missingField(
+                fileRef: otherFileRef,
+                path: path
+            ))
+            return
+        case (0, 1): // exists in other, but not in base
+            issues.append(.invalidField(
+                fileRef: otherFileRef,
+                path: path,
+                fieldValue: nil,
+                failureReason: "Extension entry for '\(url)' that does not exist in base localization"
+            ))
+        case (1, 1):
+            let baseExt = baseExts[0]
+            let otherExt = otherExts[0]
+//            switch (baseExt.value, otherExt.value) {
+//            case (nil, nil):
+//                // both extensions are complex.
+//            }
+            guard let baseExtValue = baseExt.value else {
+                issues.append(.missingField(
+                    fileRef: baseFileRef,
+                    path: path.value,
+                    comment: "Complex extensions are currently not supported"
+                ))
+                return
+            }
+            guard let otherExtValue = otherExt.value else {
+                issues.append(.missingField(
+                    fileRef: otherFileRef,
+                    path: path.value,
+                    comment: "Complex extensions are currently not supported"
+                ))
+                return
+            }
+            enum CheckExtValuesResult: Hashable {
+                case skipped
+                case ok
+                case issues([Issue])
+            }
+            func checkExtValues( // swiftlint:disable:this function_body_length cyclomatic_complexity
+                baseExtValue: Extension.ValueX,
+                otherExtValue: Extension.ValueX,
+                expected: ExpectedExtensionValueType
+            ) -> CheckExtValuesResult {
+                func makeWrongValueTypeIssue(_ fileRef: LocalizedFileReference, _ val: Extension.ValueX, expected: String) -> Issue {
+                    .invalidField(fileRef: fileRef, path: path.value.type, fieldValue: .init(val.kindName), failureReason: "Expected \(expected)")
+                }
+                switch (expected, baseExtValue, otherExtValue) {
+                case let (.integer, .integer(baseExtValue), .integer(otherExtValue)), let (.any, .integer(baseExtValue), .integer(otherExtValue)):
+                    if baseExtValue == otherExtValue {
+                        return .ok
+                    } else {
+                        return .issues([
+                            .mismatchingFieldValues(
+                                baseFileRef: baseFileRef,
+                                localizedFileRef: otherFileRef,
+                                path: path.valueInteger,
+                                baseValue: .init(baseExtValue),
+                                localizedValue: .init(otherExtValue)
+                            )
+                        ])
+                    }
+                case (.integer, _, _):
+                    return .issues(Array {
+                        if !baseExtValue.isInteger {
+                            makeWrongValueTypeIssue(baseFileRef, baseExtValue, expected: "integer")
+                        }
+                        if !otherExtValue.isInteger {
+                            makeWrongValueTypeIssue(otherFileRef, otherExtValue, expected: "integer")
+                        }
+                    })
+                case let (.decimal, .decimal(baseExtValue), .decimal(otherExtValue)), let (.any, .decimal(baseExtValue), .decimal(otherExtValue)):
+                    if baseExtValue == otherExtValue {
+                        return .ok
+                    } else {
+                        return .issues([
+                            .mismatchingFieldValues(
+                                baseFileRef: baseFileRef,
+                                localizedFileRef: otherFileRef,
+                                path: path.valueDecimal,
+                                baseValue: .init(baseExtValue),
+                                localizedValue: .init(otherExtValue)
+                            )
+                        ])
+                    }
+                case (.decimal, _, _):
+                    return .issues(Array {
+                        if !baseExtValue.isDecimal {
+                            makeWrongValueTypeIssue(baseFileRef, baseExtValue, expected: "decimal")
+                        }
+                        if !otherExtValue.isDecimal {
+                            makeWrongValueTypeIssue(otherFileRef, otherExtValue, expected: "decimal")
+                        }
+                    })
+                case let (.coding, .coding(baseExtValue), .coding(otherExtValue)), let (.any, .coding(baseExtValue), .coding(otherExtValue)):
+                    func imp(_ keyPath: KeyPath<Coding, some Hashable & Sendable>, _ name: String) -> Issue? {
+                        let baseVal = baseExtValue[keyPath: keyPath]
+                        let otherVal = otherExtValue[keyPath: keyPath]
+                        return if baseVal != otherVal {
+                            .mismatchingFieldValues(
+                                baseFileRef: baseFileRef,
+                                localizedFileRef: otherFileRef,
+                                path: path.valueCoding.appending(name),
+                                baseValue: .init(baseVal),
+                                localizedValue: .init(otherVal)
+                            )
+                        } else {
+                            nil
+                        }
+                    }
+                    let issues: [Issue] = Array {
+                        if let issue = imp(\.system?.value?.url, "system") {
+                            issue
+                        }
+                        if let issue = imp(\.code?.value?.string, "code") {
+                            issue
+                        }
+                    }
+                    return issues.isEmpty ? .ok : .issues(issues)
+                case (.coding, _, _):
+                    return .issues(Array {
+                        if !baseExtValue.isCoding {
+                            makeWrongValueTypeIssue(baseFileRef, baseExtValue, expected: "coding")
+                        }
+                        if !otherExtValue.isCoding {
+                            makeWrongValueTypeIssue(otherFileRef, otherExtValue, expected: "coding")
+                        }
+                    })
+                case (.any, _, _):
+                    guard baseExtValue.kindName == otherExtValue.kindName else {
+                        return .issues([
+                            .mismatchingFieldValues(
+                                baseFileRef: baseFileRef,
+                                localizedFileRef: otherFileRef,
+                                path: path.value.kind,
+                                baseValue: .init(baseExtValue.kindName),
+                                localizedValue: .init(otherExtValue.kindName)
+                            )
+                        ])
+                    }
+                    // skipping as unsupported
+                    return .skipped
+                }
+            }
+            switch checkExtValues(baseExtValue: baseExtValue, otherExtValue: otherExtValue, expected: expectedType) {
+            case .ok, .skipped:
+                break
+            case .issues(let issues):
+                self.issues.append(contentsOf: issues)
+            }
+        default:
+            // we currently only support extensions that will appear a single time at most.
+            fatalError("unsupported")
         }
     }
 }
@@ -750,5 +989,12 @@ extension Equatable {
         } else {
             false
         }
+    }
+}
+
+
+extension Equatable {
+    func isAnyOf(_ seq: some Sequence<Self>) -> Bool {
+        seq.contains(self)
     }
 }

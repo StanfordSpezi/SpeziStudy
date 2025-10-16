@@ -432,6 +432,51 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             throw error
         }
     }
+    
+    
+    @Test
+    func mismatchingNumberInputBounds() throws {
+        let error = try #require(throws: StudyBundle.CreateBundleError.self) {
+            try makeTestStudy(articles: [], questionnaires: [
+                .init(fileRef: .init(category: .questionnaire, filename: "Invalid5", fileExtension: "json"), localizations: [
+                    .init(key: .enUS, url: try #require(Bundle.module.url(forResource: "Invalid5+en-US", withExtension: "json"))),
+                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "Invalid5+en-UK", withExtension: "json")))
+                ])
+            ])
+        }
+        switch error {
+        case .failedValidation(let issues):
+            let fileRef = StudyBundle.FileReference(category: .questionnaire, filename: "Invalid5", fileExtension: "json")
+            expectEqualIgnoringOrder(Set(issues), [
+                .questionnaire(.missingField(
+                    fileRef: .init(fileRef: fileRef, localization: .enGB),
+                    path: .root.item[1].extensions["http://hl7.org/fhir/StructureDefinition/minValue"],
+                    comment: nil
+                )),
+                .questionnaire(.missingField(
+                    fileRef: .init(fileRef: fileRef, localization: .enGB),
+                    path: .root.item[1].extensions["http://hl7.org/fhir/StructureDefinition/maxValue"],
+                    comment: nil
+                )),
+                .questionnaire(.mismatchingFieldValues(
+                    baseFileRef: .init(fileRef: fileRef, localization: .enUS),
+                    localizedFileRef: .init(fileRef: fileRef, localization: .enGB),
+                    path: .root.item[0].extensions["http://hl7.org/fhir/StructureDefinition/minValue"].valueInteger,
+                    baseValue: Value(7),
+                    localizedValue: Value(5)
+                )),
+                .questionnaire(.mismatchingFieldValues(
+                    baseFileRef: .init(fileRef: fileRef, localization: .enUS),
+                    localizedFileRef: .init(fileRef: fileRef, localization: .enGB),
+                    path: .root.item[0].extensions["http://hl7.org/fhir/StructureDefinition/maxValue"].valueInteger,
+                    baseValue: Value(12),
+                    localizedValue: Value(15)
+                ))
+            ])
+        default:
+            throw error
+        }
+    }
 }
 
 
@@ -479,6 +524,16 @@ struct StudyBundleValidationUtilsTests {
         #expect(Value(Optional(FHIRPrimitive(FHIRString("abc")))) == Value("abc"))
         #expect(Value(FHIRPrimitive(FHIRString("abc"))) == Value(Optional("abc")))
         #expect(Value(Optional(FHIRPrimitive(FHIRString("abc")))) == Value(Optional("abc")))
+    }
+    
+    @Test
+    func valueInitFHIRInteger() {
+        typealias Value = StudyBundle.BundleValidationIssue.QuestionnaireIssue.Value
+        #expect(Value(FHIRPrimitive(FHIRInteger(12))) == Value(12))
+        #expect(Value(FHIRPrimitive(FHIRInteger(12))) == Value(12 as Int32))
+        #expect(Value(FHIRPrimitive(FHIRInteger(12))) == Value(12 as UInt32))
+        #expect(Value(FHIRPrimitive(FHIRInteger(12))) == Value(12 as Int64))
+        #expect(Value(FHIRPrimitive(FHIRInteger(12))) == Value(12 as UInt64))
     }
 }
 
