@@ -28,6 +28,15 @@ extension Extension.ValueX {
         }
     }
     
+    var isQuantity: Bool {
+        switch self {
+        case .quantity:
+            true
+        default:
+            false
+        }
+    }
+    
     var isCoding: Bool {
         switch self {
         case .coding:

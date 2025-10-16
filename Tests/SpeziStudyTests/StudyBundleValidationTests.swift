@@ -451,12 +451,12 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
                 .questionnaire(.missingField(
                     fileRef: .init(fileRef: fileRef, localization: .enGB),
                     path: .root.item[1].extensions["http://hl7.org/fhir/StructureDefinition/minValue"],
-                    comment: nil
+                    comment: "Value in base: integer(1)"
                 )),
                 .questionnaire(.missingField(
                     fileRef: .init(fileRef: fileRef, localization: .enGB),
                     path: .root.item[1].extensions["http://hl7.org/fhir/StructureDefinition/maxValue"],
-                    comment: nil
+                    comment: "Value in base: integer(10)"
                 )),
                 .questionnaire(.mismatchingFieldValues(
                     baseFileRef: .init(fileRef: fileRef, localization: .enUS),

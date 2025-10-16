@@ -594,6 +594,18 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                     require: true,
                     expectedType: .coding
                 )
+                for name in ["minValue", "maxValue"] {
+                    checkExtensions(
+                        with: "http://hl7.org/fhir/StructureDefinition/\(name)",
+                        of: otherItem,
+                        at: otherFileRef,
+                        against: baseItem,
+                        at: baseFileRef,
+                        path: path,
+                        require: false,
+                        expectedType: .anyOf([.quantity, .decimal, .integer])
+                    )
+                }
             case .integer, .decimal:
                 for name in ["minValue", "maxValue"] {
                     checkExtensions(
@@ -604,7 +616,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                         at: baseFileRef,
                         path: path,
                         require: false,
-                        expectedType: baseItemQuestionType == .integer ? .integer : .decimal
+                        expectedType: .anyOf([.integer, .decimal])
                     )
                 }
             default:
@@ -728,7 +740,9 @@ extension QuestionnaireValidator {
         case coding // maybe add an option to select which fields we should look at?
         case integer
         case decimal
+        case quantity
         case any
+        case anyOf(Set<ExpectedExtensionValueType>)
     }
     
     /// Checks `extension` entries across two `Element`s
@@ -765,13 +779,39 @@ extension QuestionnaireValidator {
             for fileRef in [baseFileRef, otherFileRef] {
                 issues.append(.missingField(
                     fileRef: fileRef,
-                    path: path
+                    path: path,
+                    comment: "X"
                 ))
             }
         case (1, 0): // exists in base, but not in other
             issues.append(.missingField(
                 fileRef: otherFileRef,
-                path: path
+                path: path,
+                comment: { () -> String? in
+                    let baseExt = baseExts[0]
+                    return switch baseExt.value {
+                    case .integer(let integer):
+                        if let value = integer.value?.integer {
+                            "Value in base: integer(\(value))"
+                        } else {
+                            nil
+                        }
+                    case .decimal(let decimal):
+                        if let value = decimal.value?.decimal {
+                            "Value in base: decimal(\(value))"
+                        } else {
+                            nil
+                        }
+                    case .quantity(let quantity):
+                        if let value = quantity.value?.value?.decimal, let unit = quantity.unit?.value?.string {
+                            "Value in base: quantity(\(value) \(unit))"
+                        } else {
+                            nil
+                        }
+                    default:
+                        nil
+                    }
+                }()
             ))
             return
         case (0, 1): // exists in other, but not in base
@@ -818,6 +858,26 @@ extension QuestionnaireValidator {
                     .invalidField(fileRef: fileRef, path: path.value.type, fieldValue: .init(val.kindName), failureReason: "Expected \(expected)")
                 }
                 switch (expected, baseExtValue, otherExtValue) {
+                case let (.anyOf(allowed), _, _):
+                    guard !allowed.isEmpty else {
+                        preconditionFailure("\(ExpectedExtensionValueType.self).allowed requires at least one input!")
+                    }
+                    // TODO inhibit issue reporting for the non-matching cases, if one case matches!!!
+                    let results = allowed.map {
+                        checkExtValues(baseExtValue: baseExtValue, otherExtValue: otherExtValue, expected: $0)
+                    }
+                    if results.count == 1 {
+                        return results[0]
+                    } else if results.isEmpty {
+                    }
+                    if results.allSatisfy({ .skipped ~= $0 }) {
+                        return .skipped
+                    } else if results.contains(where: { .ok ~= $0 }) {
+                        return .ok
+                    } else {
+                        // challenge: need to pick the "correct" (ie closest) match!
+                        return results.first ?? .ok
+                    }
                 case let (.integer, .integer(baseExtValue), .integer(otherExtValue)), let (.any, .integer(baseExtValue), .integer(otherExtValue)):
                     if baseExtValue == otherExtValue {
                         return .ok
@@ -862,6 +922,46 @@ extension QuestionnaireValidator {
                         }
                         if !otherExtValue.isDecimal {
                             makeWrongValueTypeIssue(otherFileRef, otherExtValue, expected: "decimal")
+                        }
+                    })
+                case let (.quantity, .quantity(baseExtValue), .quantity(otherExtValue)), let (.any, .quantity(baseExtValue), .quantity(otherExtValue)):
+                    func imp(_ keyPath: KeyPath<Quantity, some Hashable & Sendable>, _ name: String) -> Issue? {
+                        let baseVal = baseExtValue[keyPath: keyPath]
+                        let otherVal = otherExtValue[keyPath: keyPath]
+                        return if baseVal != otherVal {
+                            .mismatchingFieldValues(
+                                baseFileRef: baseFileRef,
+                                localizedFileRef: otherFileRef,
+                                path: path.valueCoding.appending(name),
+                                baseValue: .init(baseVal),
+                                localizedValue: .init(otherVal)
+                            )
+                        } else {
+                            nil
+                        }
+                    }
+                    let issues: [Issue] = Array {
+                        if let issue = imp(\.system?.value?.url, "system") {
+                            issue
+                        }
+                        if let issue = imp(\.code?.value?.string, "code") {
+                            issue
+                        }
+                        if let issue = imp(\.unit?.value?.string, "unit") {
+                            issue
+                        }
+                        if let issue = imp(\.value?.value?.decimal, "value") {
+                            issue
+                        }
+                    }
+                    return issues.isEmpty ? .ok : .issues(issues)
+                case (.quantity, _, _):
+                    return .issues(Array {
+                        if !baseExtValue.isQuantity {
+                            makeWrongValueTypeIssue(baseFileRef, baseExtValue, expected: "quantity")
+                        }
+                        if !otherExtValue.isQuantity {
+                            makeWrongValueTypeIssue(otherFileRef, otherExtValue, expected: "quantity")
                         }
                     })
                 case let (.coding, .coding(baseExtValue), .coding(otherExtValue)), let (.any, .coding(baseExtValue), .coding(otherExtValue)):
