@@ -37,7 +37,7 @@ extension StudyBundle.BundleValidationIssue {
         case invalidField(
             fileRef: StudyBundle.LocalizedFileReference,
             path: Path,
-            fieldValue: Value?,
+            fieldValue: Value,
             failureReason: String
         )
         
@@ -51,9 +51,9 @@ extension StudyBundle.BundleValidationIssue {
         case conflictingFieldValues( // swiftlint:disable:this enum_case_associated_values_count
             fileRef: StudyBundle.LocalizedFileReference,
             fstPath: Path,
-            fstValue: Value?,
+            fstValue: Value,
             sndPath: Path,
-            sndValue: Value?,
+            sndValue: Value,
             comment: String? = nil
         )
         
@@ -70,8 +70,8 @@ extension StudyBundle.BundleValidationIssue {
             baseFileRef: StudyBundle.LocalizedFileReference,
             localizedFileRef: StudyBundle.LocalizedFileReference,
             path: Path,
-            baseValue: Value?,
-            localizedValue: Value?
+            baseValue: Value,
+            localizedValue: Value
         )
         
         /// The language in the questionnaire's metadata does not match the language in the filename's localization component.
@@ -163,23 +163,43 @@ extension StudyBundle.BundleValidationIssue {
         
         /// A Hashable wrapper around some value we found in a questionnaire and want to report/dispay to the user.
         ///
-        /// - Note: This type is `Sendable`. We canot express this via the type system (`Sendable` is a marker protocol, so we can't dynamically check for conformance at runtime),
+        /// `Value` performs the following value-preserving simplifications on its input:
+        /// - `Optional` inputs are un-nested if they have more than one level of optionality:
+        ///     - `String?.none`, `String??.none`, `String???.none`, etc are all treated the same and will result in ``Value/none``.
+        ///     - this also applies to non-nil `Optional` values: `String.some("x")`, `String?.some("abc")`, `String??.some("abc")`, etc will all result in equivalent `Value` instances
+        /// - all `FHIRPrimitive` values are stored as their underlying value
+        ///     - e.g., a `FHIRPrimitive<FHIRString>` or `FHIRString` will be stored as a `String`, a `FHIRPrimitive<DateTime>` or`FHIRDateTime` as a `Date`, and so on.
+        ///     - if the underlying value is `nil`, the resulting `Value` is also `nil`. (i.e., the init will fail.)
+        /// - all numeric values (e.g., `Int`, `Double`, `Float`, etc) are stored as `Decimal`s
+        /// The reason for these processing steps is to simplify comparing `Value`s against each other, without needing to know the exact type of the FHIR value from which an instance was created.
+        ///
+        /// - Note: This type is safely `Sendable`. We cannot express this via the type system (`Sendable` is a marker protocol, so we can't dynamically check for conformance at runtime),
         ///     but all non-private initializers require their input be `Sendable`, and we only descend into types where we can safely assume that if the type as a whole is `Sendable`,
         ///     any contained values will be as well (i.e., `Optional` and `FHIRPrimitive`).
-        public struct Value: Hashable, @unchecked Sendable {
-            let type: Any.Type
-            let value: any Hashable
+        public enum Value: Hashable, ExpressibleByNilLiteral, @unchecked Sendable {
+            /// An empty value
+            case none
+            /// A non-empty value
+            /// - parameter type: The type of `value`.
+            /// - parameter value: The actual value.
+            case some(type: any Hashable.Type, value: any Hashable)
             
-            init?(_ value: (any Hashable & Sendable)?) {
+            /// Creates a new `Value` instance.
+            init(_ value: (any Hashable & Sendable)?) {
                 self.init(value: value)
             }
             
-            init?(_ value: FHIRPrimitive<some Hashable & Sendable>?) {
+            /// Creates a new `Value` instance.
+            init(_ value: FHIRPrimitive<some Hashable & Sendable>?) {
                 self.init(value?.value)
             }
             
+            public init(nilLiteral: ()) {
+                self = .none
+            }
+            
             /// - precondition: `O` must be `Hashable`
-            private init?<O: AnyOptional>(value: O) {
+            private init<O: AnyOptional>(value: O) {
                 if let value = value.unwrappedOptional {
                     if let value = value as? any AnyOptional {
                         self.init(value: value)
@@ -189,11 +209,11 @@ extension StudyBundle.BundleValidationIssue {
                         self.init(value: value as! any Hashable) // swiftlint:disable:this force_cast
                     }
                 } else {
-                    return nil
+                    self = .none
                 }
             }
             
-            private init?(value: any Hashable) { // swiftlint:disable:this cyclomatic_complexity
+            private init(value: any Hashable) { // swiftlint:disable:this cyclomatic_complexity
                 switch value {
                 case let value as FHIRString:
                     self.init(value: value.string)
@@ -209,30 +229,48 @@ extension StudyBundle.BundleValidationIssue {
                     if let date = try? value.asNSDate() {
                         self.init(value: date)
                     } else {
-                        return nil
+                        self = .none
                     }
                 case let value as FHIRURI:
                     self.init(value: value.url)
-                case let value as Int64:
-                    self.init(fullyUnwrapped: value)
                 case let value as any BinaryInteger:
-                    self.init(value: Int64(value))
+                    if value is any SignedInteger {
+                        self.init(fullyUnwrapped: Decimal(Int(value)))
+                    } else {
+                        self.init(fullyUnwrapped: Decimal(UInt(value)))
+                    }
+                case let value as any BinaryFloatingPoint:
+                    self.init(fullyUnwrapped: Decimal(Double(value)))
+                case let value as NSNumber: // need to have this at the end bc any Int/Double/etc is implicitly converted...
+                    self.init(fullyUnwrapped: value.decimalValue)
                 default:
                     self.init(fullyUnwrapped: value)
                 }
             }
             
             private init(fullyUnwrapped value: any Hashable) {
-                self.type = Swift.type(of: value)
-                self.value = value
+                self = .some(type: type(of: value), value: value)
             }
             
             public static func == (lhs: Self, rhs: Self) -> Bool {
-                lhs.value.isEqual(rhs.value) && lhs.type == rhs.type
+                switch (lhs, rhs) {
+                case (.none, .none):
+                    true
+                case let (.some(lhsType, lhsValue), .some(rhsType, rhsValue)):
+                    lhsType == rhsType && lhsValue.isEqual(rhsValue)
+                case (.none, .some), (.some, .none):
+                    false
+                }
             }
+            
             public func hash(into hasher: inout Hasher) {
-                hasher.combine(ObjectIdentifier(type))
-                value.hash(into: &hasher)
+                switch self {
+                case .none:
+                    hasher.combine(0)
+                case let .some(type, value):
+                    hasher.combine(ObjectIdentifier(type))
+                    value.hash(into: &hasher)
+                }
             }
         }
     }
@@ -779,7 +817,7 @@ extension QuestionnaireValidator {
                 issues.append(.missingField(
                     fileRef: fileRef,
                     path: path,
-                    comment: "X"
+                    comment: "'\(url)' is a required extension in this context"
                 ))
             }
         case (1, 0): // exists in base, but not in other

@@ -44,7 +44,12 @@ extension StudyBundle {
                 case .some(let value as StudyBundle.LocalizedFileReference):
                     value.filenameIncludingLocalization
                 case .some(let value as QuestionnaireIssue.Value):
-                    desc(value.value)
+                    switch value {
+                    case .none:
+                        nil
+                    case let .some(_, value):
+                        desc(value)
+                    }
                 case .some(let value as FHIRPrimitive<FHIRString>):
                     if let value = value.value?.string {
                         "'\(value)'"

@@ -477,14 +477,54 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             throw error
         }
     }
+    
+    
+    @Test
+    func missingQuestionSpecificExtensions() throws {
+        let error = try #require(throws: StudyBundle.CreateBundleError.self) {
+            try makeTestStudy(articles: [], questionnaires: [
+                .init(fileRef: .init(category: .questionnaire, filename: "Invalid6", fileExtension: "json"), localizations: [
+                    .init(key: .enUS, url: try #require(Bundle.module.url(forResource: "Invalid6+en-US", withExtension: "json"))),
+                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "Invalid6+en-UK", withExtension: "json")))
+                ])
+            ])
+        }
+        switch error {
+        case .failedValidation(let issues):
+            let fileRef = StudyBundle.FileReference(category: .questionnaire, filename: "Invalid6", fileExtension: "json")
+            expectEqualIgnoringOrder(Set(issues), [
+                .questionnaire(.missingField(
+                    fileRef: .init(fileRef: fileRef, localization: .enUS),
+                    path: .root.item[1].extensions["http://hl7.org/fhir/StructureDefinition/questionnaire-unit"],
+                    comment: "'http://hl7.org/fhir/StructureDefinition/questionnaire-unit' is a required extension in this context"
+                )),
+                .questionnaire(.missingField(
+                    fileRef: .init(fileRef: fileRef, localization: .enGB),
+                    path: .root.item[1].extensions["http://hl7.org/fhir/StructureDefinition/questionnaire-unit"],
+                    comment: "'http://hl7.org/fhir/StructureDefinition/questionnaire-unit' is a required extension in this context"
+                )),
+                .questionnaire(.mismatchingFieldValues(
+                    baseFileRef: .init(fileRef: fileRef, localization: .enUS),
+                    localizedFileRef: .init(fileRef: fileRef, localization: .enGB),
+                    path: .root.item[2].extensions["http://hl7.org/fhir/StructureDefinition/questionnaire-unit"].valueCoding.code,
+                    baseValue: Value("lbs"),
+                    localizedValue: Value("kg")
+                ))
+            ])
+        default:
+            throw error
+        }
+    }
 }
 
 
 @Suite
 struct StudyBundleValidationUtilsTests {
+    private typealias Path = StudyBundle.BundleValidationIssue.QuestionnaireIssue.Path
+    private typealias Value = StudyBundle.BundleValidationIssue.QuestionnaireIssue.Value
+    
     @Test
     func path() {
-        typealias Path = StudyBundle.BundleValidationIssue.QuestionnaireIssue.Path
         #expect(Path.root.item[1].enableWhen[1].answer.coding.code == Path([
             .field(name: "item"),
             .subscript(idx: 1),
@@ -501,7 +541,6 @@ struct StudyBundleValidationUtilsTests {
     
     @Test
     func valueInitFromOptional() {
-        typealias Value = StudyBundle.BundleValidationIssue.QuestionnaireIssue.Value
         let expected = Value(52)
         #expect(Value(52) == expected)
         #expect(Value(Optional(52)) == expected)
@@ -515,7 +554,6 @@ struct StudyBundleValidationUtilsTests {
     
     @Test
     func valueInitFromFHIRPrimitive() {
-        typealias Value = StudyBundle.BundleValidationIssue.QuestionnaireIssue.Value
         #expect(Value(FHIRString("abc")) == Value("abc"))
         #expect(Value(Optional(FHIRString("abc"))) == Value("abc"))
         #expect(Value(FHIRString("abc")) == Value(Optional("abc")))
@@ -528,12 +566,17 @@ struct StudyBundleValidationUtilsTests {
     
     @Test
     func valueInitFHIRInteger() {
-        typealias Value = StudyBundle.BundleValidationIssue.QuestionnaireIssue.Value
         #expect(Value(FHIRPrimitive(FHIRInteger(12))) == Value(12))
         #expect(Value(FHIRPrimitive(FHIRInteger(12))) == Value(12 as Int32))
         #expect(Value(FHIRPrimitive(FHIRInteger(12))) == Value(12 as UInt32))
         #expect(Value(FHIRPrimitive(FHIRInteger(12))) == Value(12 as Int64))
         #expect(Value(FHIRPrimitive(FHIRInteger(12))) == Value(12 as UInt64))
+    }
+    
+    @Test
+    func valueInitFHIRDecimal() {
+        #expect(Value(FHIRPrimitive(FHIRDecimal(4.7))) == Value(4.7))
+        #expect(Value(FHIRPrimitive(FHIRDecimal(4))) == Value(4))
     }
 }
 
