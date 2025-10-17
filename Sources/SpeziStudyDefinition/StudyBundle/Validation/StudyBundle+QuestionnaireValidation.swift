@@ -823,10 +823,6 @@ extension QuestionnaireValidator {
         case (1, 1):
             let baseExt = baseExts[0]
             let otherExt = otherExts[0]
-//            switch (baseExt.value, otherExt.value) {
-//            case (nil, nil):
-//                // both extensions are complex.
-//            }
             guard let baseExtValue = baseExt.value else {
                 issues.append(.missingField(
                     fileRef: baseFileRef,
