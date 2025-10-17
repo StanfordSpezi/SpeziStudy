@@ -893,7 +893,7 @@ extension QuestionnaireValidator {
                                 } ? 0.5 : 0.75
                             }
                         }
-                        return results.min(by: { rank($0) > rank($1) }) ?? .ok
+                        return results.min { rank($0) > rank($1) } ?? .ok
                     }
                 case let (.integer, .integer(baseExtValue), .integer(otherExtValue)), let (.any, .integer(baseExtValue), .integer(otherExtValue)):
                     if baseExtValue == otherExtValue {
