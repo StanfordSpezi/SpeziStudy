@@ -251,6 +251,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
     typealias FileReference = StudyBundle.FileReference
     typealias LocalizedFileReference = StudyBundle.LocalizedFileReference
     typealias Path = Issue.Path
+    typealias Value = Issue.Value
     
     private struct SeenChoiceOption: Hashable {
         let fileRef: LocalizedFileReference
@@ -340,9 +341,9 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                     issues.append(.conflictingFieldValues(
                         fileRef: option.fileRef,
                         fstPath: option.path.display,
-                        fstValue: .init(option.title),
+                        fstValue: Value(option.title),
                         sndPath: other.path.display,
-                        sndValue: .init(other.title),
+                        sndValue: Value(other.title),
                         comment: "Both options have code '\(option.code)' in system '\(option.system)', but they have different titles."
                     ))
                     reported.insert(option)
@@ -388,8 +389,8 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                         baseFileRef: .init(fileRef: fileRef, localization: base.fileRef.localization),
                         localizedFileRef: .init(fileRef: fileRef, localization: other.fileRef.localization),
                         path: Path.id,
-                        baseValue: .init(base.questionnaire.id?.value?.string),
-                        localizedValue: .init(other.questionnaire.id?.value?.string)
+                        baseValue: Value(base.questionnaire.id?.value?.string),
+                        localizedValue: Value(other.questionnaire.id?.value?.string)
                     ))
                 }
                 checkItems(
@@ -426,7 +427,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                 issues.append(.invalidField(
                     fileRef: fileRef,
                     path: .root.language,
-                    fieldValue: .init(questionnaireLangRaw),
+                    fieldValue: Value(questionnaireLangRaw),
                     failureReason: "failed to parse into a `LocalizationKey`"
                 ))
             }
@@ -436,10 +437,8 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
         if questionnaire.title?.value == nil {
             issues.append(.missingField(fileRef: fileRef, path: .root.title))
         }
-        
         if (questionnaire.item ?? []).isEmpty {
             issues.append(.missingField(fileRef: fileRef, path: .root.item))
-            return
         } else {
             checkItems(of: questionnaire, at: fileRef, path: .root)
         }
@@ -510,8 +509,8 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                 baseFileRef: baseFileRef,
                 localizedFileRef: otherFileRef,
                 path: path.item.length,
-                baseValue: .init(baseItems.count),
-                localizedValue: .init(otherItems.count)
+                baseValue: Value(baseItems.count),
+                localizedValue: Value(otherItems.count)
             ))
             return
         }
@@ -521,7 +520,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                 issues.append(.missingField(fileRef: baseFileRef, path: path.type))
                 return
             }
-            guard let otherItemQuestionType = otherItem.type.value else {
+            guard otherItem.type.value != nil else {
                 issues.append(.missingField(fileRef: otherFileRef, path: path.type))
                 return
             }
@@ -546,8 +545,8 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                         baseFileRef: baseFileRef,
                         localizedFileRef: otherFileRef,
                         path: path.appending(name),
-                        baseValue: .init(baseValue),
-                        localizedValue: .init(itemValue)
+                        baseValue: Value(baseValue),
+                        localizedValue: Value(itemValue)
                     ))
                     return false
                 }
@@ -567,8 +566,8 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                         baseFileRef: baseFileRef,
                         localizedFileRef: otherFileRef,
                         path: path.answerOption.length,
-                        baseValue: .init(baseItemOptions.count),
-                        localizedValue: .init(otherItemOptions.count)
+                        baseValue: Value(baseItemOptions.count),
+                        localizedValue: Value(otherItemOptions.count)
                     ))
                     break
                 }
@@ -644,8 +643,8 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
                                 baseFileRef: baseFileRef,
                                 localizedFileRef: otherFileRef,
                                 path: path,
-                                baseValue: .init(baseVal),
-                                localizedValue: .init(otherVal)
+                                baseValue: Value(baseVal),
+                                localizedValue: Value(otherVal)
                             ))
                         }
                     }
@@ -727,7 +726,7 @@ private struct QuestionnaireValidator: ~Copyable { // swiftlint:disable:this typ
             issues.append(.invalidField(
                 fileRef: fileRef,
                 path: path.value,
-                fieldValue: .init(option.value.kindType),
+                fieldValue: Value(option.value.kindType),
                 failureReason: "Unsupported answer option kind '\(option.value.kindType)'; only 'valueCoding' is currently supported."
             ))
         }
@@ -855,7 +854,7 @@ extension QuestionnaireValidator {
                 expected: ExpectedExtensionValueType
             ) -> CheckExtValuesResult {
                 func makeWrongValueTypeIssue(_ fileRef: LocalizedFileReference, _ val: Extension.ValueX, expected: String) -> Issue {
-                    .invalidField(fileRef: fileRef, path: path.value.type, fieldValue: .init(val.kindName), failureReason: "Expected \(expected)")
+                    .invalidField(fileRef: fileRef, path: path.value.type, fieldValue: Value(val.kindName), failureReason: "Expected \(expected)")
                 }
                 switch (expected, baseExtValue, otherExtValue) {
                 case let (.anyOf(allowed), _, _):
@@ -904,8 +903,8 @@ extension QuestionnaireValidator {
                                 baseFileRef: baseFileRef,
                                 localizedFileRef: otherFileRef,
                                 path: path.valueInteger,
-                                baseValue: .init(baseExtValue),
-                                localizedValue: .init(otherExtValue)
+                                baseValue: Value(baseExtValue),
+                                localizedValue: Value(otherExtValue)
                             )
                         ])
                     }
@@ -927,8 +926,8 @@ extension QuestionnaireValidator {
                                 baseFileRef: baseFileRef,
                                 localizedFileRef: otherFileRef,
                                 path: path.valueDecimal,
-                                baseValue: .init(baseExtValue),
-                                localizedValue: .init(otherExtValue)
+                                baseValue: Value(baseExtValue),
+                                localizedValue: Value(otherExtValue)
                             )
                         ])
                     }
@@ -951,8 +950,8 @@ extension QuestionnaireValidator {
                                 baseFileRef: baseFileRef,
                                 localizedFileRef: otherFileRef,
                                 path: path.valueCoding.appending(name),
-                                baseValue: .init(baseVal),
-                                localizedValue: .init(otherVal)
+                                baseValue: Value(baseVal),
+                                localizedValue: Value(otherVal)
                             )
                         } else {
                             nil
@@ -991,8 +990,8 @@ extension QuestionnaireValidator {
                                 baseFileRef: baseFileRef,
                                 localizedFileRef: otherFileRef,
                                 path: path.valueCoding.appending(name),
-                                baseValue: .init(baseVal),
-                                localizedValue: .init(otherVal)
+                                baseValue: Value(baseVal),
+                                localizedValue: Value(otherVal)
                             )
                         } else {
                             nil
@@ -1023,8 +1022,8 @@ extension QuestionnaireValidator {
                                 baseFileRef: baseFileRef,
                                 localizedFileRef: otherFileRef,
                                 path: path.value.kind,
-                                baseValue: .init(baseExtValue.kindName),
-                                localizedValue: .init(otherExtValue.kindName)
+                                baseValue: Value(baseExtValue.kindName),
+                                localizedValue: Value(otherExtValue.kindName)
                             )
                         ])
                     }
