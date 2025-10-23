@@ -333,7 +333,6 @@ extension StudyManager {
               let component = studyBundle.studyDefinition.component(withId: componentSchedule.componentId) else {
             throw TaskCreationError.unableToFindComponent
         }
-        logger.notice("Asked to create Task for \(String(describing: component)) w/ schedule \(String(describing: componentSchedule))")
         let category: Task.Category?
         let action: ScheduledTaskAction?
         switch component {
