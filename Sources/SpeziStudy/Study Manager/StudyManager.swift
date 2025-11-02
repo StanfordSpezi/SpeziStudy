@@ -102,7 +102,7 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     ///
     /// - parameter preferredLocale: The study manager's preferred locale.
     /// - parameter persistence: How the study manager should persist its data, such as enrollments. Defaults to using an on-disk Swift Data store.
-    public nonisolated init(
+    nonisolated public init(
         preferredLocale: Locale = .autoupdatingCurrent,
         persistence: PersistenceConfiguration = .onDisk
     ) {
