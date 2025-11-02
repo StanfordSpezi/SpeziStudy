@@ -384,32 +384,6 @@ extension StudyManager {
         ).task
     }
     
-    
-    @MainActor
-    private func setupStudyBackgroundComponents(for enrollments: some Collection<StudyEnrollment>) async throws {
-        for enrollment in enrollments {
-            guard let studyBundle = enrollment.studyBundle else {
-                continue
-            }
-            func setupSampleCollection<Sample>(_ sampleType: some AnySampleType<Sample>) async {
-                let sampleType = SampleType(sampleType)
-                await healthKit.addHealthDataCollector(CollectSample(
-                    sampleType,
-                    start: .automatic,
-                    continueInBackground: true
-                ))
-            }
-            for component in studyBundle.studyDefinition.healthDataCollectionComponents {
-                for sampleType in component.sampleTypes {
-                    await setupSampleCollection(sampleType)
-                }
-            }
-        }
-        // we want to request HealthKit auth once, at the end, for everything we just registered.
-        try await healthKit.askForAuthorization()
-    }
-    
-    
     private func taskIdPrefix(for studyBundle: StudyBundle) -> String {
         taskIdPrefix(forStudyId: studyBundle.id)
     }
@@ -488,7 +462,7 @@ extension StudyManager {
     
     
     /// Unenroll from a study.
-    public func unenroll(from enrollment: StudyEnrollment) throws {
+    public func unenroll(from enrollment: StudyEnrollment) async throws {
         logger.notice("Unenrolling from study '\(enrollment.studyId)' (\(enrollment.studyBundle?.studyDefinition.metadata.title ?? "n/a"))")
         do {
             // Delete all Tasks associated with this study.
@@ -504,6 +478,7 @@ extension StudyManager {
             }
         }
         let studyBundleUrl = enrollment.studyBundleUrl
+        await tearDownStudyBackgroundComponents(for: CollectionOfOne(enrollment))
         modelContext.delete(enrollment)
         try? FileManager.default.removeItem(at: studyBundleUrl)
         try modelContext.save()
@@ -550,6 +525,59 @@ extension StudyManager {
         logger.notice("Found \(orphanedBundleUrls.count) orphaned study bundle(s). Will remove.")
         for url in orphanedBundleUrls {
             try fm.removeItem(at: url)
+        }
+    }
+}
+
+
+extension StudyManager {
+    @MainActor
+    private func setupStudyBackgroundComponents(for enrollments: some Collection<StudyEnrollment>) async throws {
+        try await startBackgroundHealthDataCollection(for: enrollments)
+    }
+    
+    @MainActor
+    private func tearDownStudyBackgroundComponents(for enrollments: some Collection<StudyEnrollment>) async {
+        await stopBackgroundHealthDataCollection(for: enrollments)
+    }
+    
+    
+    private func allCollectedSampleTypes(in enrollments: some Collection<StudyEnrollment>) -> [any AnySampleType] {
+        enrollments.reduce(into: []) { sampleTypes, enrollment in
+            guard let healthCollectionComponents = enrollment.studyBundle?.studyDefinition.healthDataCollectionComponents else {
+                return
+            }
+            for component in healthCollectionComponents {
+                sampleTypes.append(contentsOf: component.sampleTypes)
+            }
+        }
+    }
+    
+    @MainActor
+    private func startBackgroundHealthDataCollection(for enrollments: some Collection<StudyEnrollment>) async throws {
+        func setupSampleCollection<Sample>(_ sampleType: some AnySampleType<Sample>) async {
+            let sampleType = SampleType(sampleType)
+            await healthKit.addHealthDataCollector(CollectSample(
+                sampleType,
+                start: .automatic,
+                continueInBackground: true
+            ))
+        }
+        for sampleType in allCollectedSampleTypes(in: enrollments) {
+            await setupSampleCollection(sampleType)
+        }
+        // we want to request HealthKit auth once, at the end, for everything we just registered.
+        try await healthKit.askForAuthorization()
+    }
+    
+    @MainActor
+    private func stopBackgroundHealthDataCollection(for enrollments: some Collection<StudyEnrollment>) async {
+        func setupSampleCollection<Sample>(_ sampleType: some AnySampleType<Sample>) async {
+            let sampleType = SampleType(sampleType)
+            await healthKit.resetSampleCollection(for: sampleType)
+        }
+        for sampleType in allCollectedSampleTypes(in: enrollments) {
+            await setupSampleCollection(sampleType)
         }
     }
 }
