@@ -628,9 +628,6 @@ extension StudyManager {
                     continue
                 case let .once(.event(lifecycleEvent, offsetInDays, time)):
                     guard lifecycleEvent == event else {
-                        logger.error(
-                            "Skipping \(schedule.scheduleDefinition) bc the events don't match up (\(event.debugDescription) vs \(lifecycleEvent.debugDescription))"
-                        )
                         continue
                     }
                     guard let occurrenceDate = cal
