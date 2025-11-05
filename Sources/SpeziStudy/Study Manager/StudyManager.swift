@@ -555,7 +555,7 @@ extension StudyManager {
     
     @MainActor
     private func startBackgroundHealthDataCollection(for enrollments: some Collection<StudyEnrollment>) async throws {
-        func setupSampleCollection<Sample>(_ sampleType: some AnySampleType<Sample>) async {
+        func imp<Sample>(_ sampleType: some AnySampleType<Sample>) async {
             let sampleType = SampleType(sampleType)
             await healthKit.addHealthDataCollector(CollectSample(
                 sampleType,
@@ -564,7 +564,7 @@ extension StudyManager {
             ))
         }
         for sampleType in allCollectedSampleTypes(in: enrollments) {
-            await setupSampleCollection(sampleType)
+            await imp(sampleType)
         }
         // we want to request HealthKit auth once, at the end, for everything we just registered.
         try await healthKit.askForAuthorization()
@@ -572,12 +572,12 @@ extension StudyManager {
     
     @MainActor
     private func stopBackgroundHealthDataCollection(for enrollments: some Collection<StudyEnrollment>) async {
-        func setupSampleCollection<Sample>(_ sampleType: some AnySampleType<Sample>) async {
+        func imp<Sample>(_ sampleType: some AnySampleType<Sample>) async {
             let sampleType = SampleType(sampleType)
             await healthKit.resetSampleCollection(for: sampleType)
         }
         for sampleType in allCollectedSampleTypes(in: enrollments) {
-            await setupSampleCollection(sampleType)
+            await imp(sampleType)
         }
     }
 }
