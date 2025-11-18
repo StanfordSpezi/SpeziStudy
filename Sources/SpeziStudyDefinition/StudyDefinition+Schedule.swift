@@ -195,7 +195,13 @@ extension StudyDefinition.ComponentSchedule.ScheduleDefinition: CustomStringConv
     }()
     
     public var description: String {
-        let fmt2Digits = { String(format: "%.2d", $0 as Int) }
+        func fmtTime(hour: Int, minute: Int, second: Int, omitSecondsIfZero: Bool = true) -> String {
+            if omitSecondsIfZero && second == 0 {
+                String(format: "%.2d:%.2d", hour, minute)
+            } else {
+                String(format: "%.2d:%.2d:%.2d", hour, minute, second)
+            }
+        }
         switch self {
         case let .repeated(.daily(interval, hour, minute, second), offset):
             let intervalDesc = switch interval {
@@ -203,14 +209,14 @@ extension StudyDefinition.ComponentSchedule.ScheduleDefinition: CustomStringConv
             case 1: "daily"
             default: "every \(Self.ordinalsFormatter.string(from: .init(value: interval)) ?? "\(interval)th") day"
             }
-            return "\(intervalDesc) @ \(fmt2Digits(hour)):\(fmt2Digits(minute)):\(fmt2Digits(second))\(Self.offsetDesc(offset))"
+            return "\(intervalDesc) @ \(fmtTime(hour: hour, minute: minute, second: second))\(Self.offsetDesc(offset))"
         case let .repeated(.weekly(interval, weekday, hour, minute, second), offset):
             let intervalDesc = switch interval {
             case ...0: ""
             case 1: "weekly"
             default: "every \(Self.ordinalsFormatter.string(from: .init(value: interval)) ?? "\(interval)th") week"
             }
-            let timeDesc = "\(fmt2Digits(hour)):\(fmt2Digits(minute)):\(fmt2Digits(second))\(Self.offsetDesc(offset))"
+            let timeDesc = "\(fmtTime(hour: hour, minute: minute, second: second))\(Self.offsetDesc(offset))"
             return "\(intervalDesc) @ \(weekday?.rawValue ?? "(study enrollment weekday)") \(timeDesc)"
         case let .repeated(.monthly(interval, day, hour, minute, second), offset):
             let intervalDesc = switch interval {
@@ -218,7 +224,7 @@ extension StudyDefinition.ComponentSchedule.ScheduleDefinition: CustomStringConv
             case 1: "monthly"
             default: "every \(Self.ordinalsFormatter.string(from: .init(value: interval)) ?? "\(interval)th") month"
             }
-            let timeDesc = "\(fmt2Digits(hour)):\(fmt2Digits(minute)):\(fmt2Digits(second))\(Self.offsetDesc(offset))"
+            let timeDesc = "\(fmtTime(hour: hour, minute: minute, second: second))\(Self.offsetDesc(offset))"
             let dayDesc = day.map { "\(Self.ordinalsFormatter.string(from: .init(value: $0)) ?? "\($0)th") day" } ?? "(study enrollment day)"
             return "\(intervalDesc) @ \(dayDesc) \(timeDesc)"
         case let .once(.date(dateComponents)):
