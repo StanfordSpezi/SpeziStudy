@@ -12,21 +12,15 @@ import SpeziFoundation
 import SpeziLocalization
 
 
-public protocol ErrorMessageConvertible: CustomStringConvertible {
-    var errorMessage: ErrorMessage { get }
-}
-
-extension ErrorMessageConvertible {
-    public var description: String {
-        errorMessage.message
-    }
+protocol DiagnosticMessageConvertible {
+    var diagnostic: DiagnosticMessage { get }
 }
 
 
-public struct ErrorMessage: ExpressibleByStringLiteral, ExpressibleByStringInterpolation {
-    public let message: String
+struct DiagnosticMessage: ExpressibleByStringLiteral, ExpressibleByStringInterpolation {
+    let message: String
     
-    public init(stringLiteral value: String) {
+    init(stringLiteral value: String) {
         message = value
     }
     
@@ -52,7 +46,7 @@ public struct ErrorMessage: ExpressibleByStringLiteral, ExpressibleByStringInter
 }
 
 
-extension ErrorMessage {
+extension DiagnosticMessage {
     struct Item {
         let title: String
         let value: Any

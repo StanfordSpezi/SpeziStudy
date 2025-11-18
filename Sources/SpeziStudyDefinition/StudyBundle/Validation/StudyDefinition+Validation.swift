@@ -15,21 +15,25 @@ extension StudyDefinition {
         var issues = Set<ValidationIssue>()
     }
     
-    enum ValidationWarning: Hashable, ErrorMessageConvertible, Sendable {
+    enum ValidationWarning: Hashable, DiagnosticMessageConvertible, CustomStringConvertible, Sendable {
         /// The component does not have any schedules associated with it
         case componentNotScheduled(Component)
         
-        var errorMessage: ErrorMessage {
+        var description: String {
+            diagnostic.message
+        }
+        
+        var diagnostic: DiagnosticMessage {
             switch self {
             case .componentNotScheduled(let component):
-                ErrorMessage("Study Component: Missing Schedule") {
-                    ErrorMessage.Item("componentId", value: component.id)
+                DiagnosticMessage("Study Component: Missing Schedule") {
+                    DiagnosticMessage.Item("componentId", value: component.id)
                 }
             }
         }
     }
     
-    enum ValidationIssue: Hashable, ErrorMessageConvertible, Sendable {
+    enum ValidationIssue: Hashable, DiagnosticMessageConvertible, CustomStringConvertible, Sendable {
         /// The study definition contains multiple components with the same id
         case conflictingComponents(id: UUID, [Component])
         /// The study definition contains multiple schedules with the same id
@@ -39,30 +43,34 @@ extension StudyDefinition {
         /// A component contained a file ref that couldn't be resolved in the study bundle
         case unableToFindFileRef(StudyBundle.FileReference, Component)
         
-        var errorMessage: ErrorMessage {
+        var description: String {
+            diagnostic.message
+        }
+        
+        var diagnostic: DiagnosticMessage {
             switch self {
             case let .conflictingComponents(id, components):
-                ErrorMessage("Study: Conflicting Components with same id") {
-                    ErrorMessage.Item("id", value: id)
+                DiagnosticMessage("Study: Conflicting Components with same id") {
+                    DiagnosticMessage.Item("id", value: id)
                     for (idx, component) in components.enumerated() {
-                        ErrorMessage.Item("component[\(idx)]", value: component.id)
+                        DiagnosticMessage.Item("component[\(idx)]", value: component.id)
                     }
                 }
             case let .conflictingSchedules(id, schedules):
-                ErrorMessage("Study: Conflicting Schedules with same id") {
-                    ErrorMessage.Item("id", value: id)
+                DiagnosticMessage("Study: Conflicting Schedules with same id") {
+                    DiagnosticMessage.Item("id", value: id)
                     for (idx, schedule) in schedules.enumerated() {
-                        ErrorMessage.Item("schedule[\(idx)]", value: schedule.id)
+                        DiagnosticMessage.Item("schedule[\(idx)]", value: schedule.id)
                     }
                 }
             case let .scheduleReferencingUnknownComponent(schedule):
-                ErrorMessage("Study component schedule references unknown schedule") {
-                    ErrorMessage.Item("schedule", value: schedule)
+                DiagnosticMessage("Study component schedule references unknown schedule") {
+                    DiagnosticMessage.Item("schedule", value: schedule)
                 }
             case let .unableToFindFileRef(fileRef, component):
-                ErrorMessage("Study component: unable to resolve file ref") {
-                    ErrorMessage.Item("fileRef", value: fileRef)
-                    ErrorMessage.Item("component", value: component.id)
+                DiagnosticMessage("Study component: unable to resolve file ref") {
+                    DiagnosticMessage.Item("fileRef", value: fileRef)
+                    DiagnosticMessage.Item("component", value: component.id)
                 }
             }
         }
@@ -106,10 +114,8 @@ extension StudyDefinition {
                 result.issues.insert(.unableToFindFileRef(fileRefToCheck, component))
             }
         }
-        for schedule in componentSchedules {
-            if self.component(withId: schedule.componentId) == nil {
-                result.issues.insert(.scheduleReferencingUnknownComponent(schedule))
-            }
+        for schedule in componentSchedules where self.component(withId: schedule.componentId) == nil {
+            result.issues.insert(.scheduleReferencingUnknownComponent(schedule))
         }
         return result
     }
