@@ -127,10 +127,12 @@ extension StudyDefinition {
                 /// - parameter weekday: the day of the week at which the schedule should repeat.
                 ///     specifying `nil` causes the schedule to repeat weekly relative to the study enrollment date.
                 case weekly(interval: Int = 1, weekday: Locale.Weekday?, hour: Int, minute: Int = 0, second: Int = 0)
+                // swiftlint:disable:previous enum_case_associated_values_count
                 /// A repetition pattern that will take effect monthly, at the specified `day` and time.
                 /// - parameter day: the day of the month at which the schedule should repeat.
                 ///     specifying `nil` causes the schedule to repeat monthly relative to the study enrollment date.
                 case monthly(interval: Int = 1, day: Int?, hour: Int, minute: Int = 0, second: Int = 0)
+                // swiftlint:disable:previous enum_case_associated_values_count
             }
         }
         
