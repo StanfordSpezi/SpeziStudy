@@ -14,7 +14,6 @@ import SpeziHealthKitBulkExport
 extension StudyDefinition {
     /// Study Component which initiates background Health data collection
     public struct HealthDataCollectionComponent: Identifiable, StudyDefinitionElement {
-        
         /// Defines a ``StudyDefinition/HealthDataCollectionComponent``'s collection of historical Health data.
         public enum HistoricalDataCollection: StudyDefinitionElement {
             /// The component should not collect historical data, i.e. should limit its collection only to new data added to the Health Store.
@@ -58,6 +57,7 @@ extension StudyDefinition.HealthDataCollectionComponent {
         case optionalSampleTypes
     }
     
+    // swiftlint:disable:next missing_docs
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
@@ -66,6 +66,7 @@ extension StudyDefinition.HealthDataCollectionComponent {
         optionalSampleTypes = try container.decodeIfPresent(SampleTypesCollection.self, forKey: .optionalSampleTypes) ?? []
     }
     
+    // swiftlint:disable:next missing_docs
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)

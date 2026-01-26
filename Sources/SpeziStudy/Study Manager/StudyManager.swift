@@ -580,7 +580,7 @@ extension StudyManager {
         }
         for sampleType in collectedSampleTypes.optional {
             // optional types only get registered for collection if they are already authorized.
-            if await healthKit.didAskForAuthorization(toRead: [sampleType]) {
+            if await healthKit.didAskForAuthorization(toRead: [sampleType]) { // swiftlint:disable:this for_where
                 await imp(sampleType)
             }
         }
