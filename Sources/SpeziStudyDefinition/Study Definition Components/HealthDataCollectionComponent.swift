@@ -24,20 +24,27 @@ extension StudyDefinition {
             case enabled(ExportSessionStartDate)
         }
         public var id: UUID
+        /// The sample types that should be collected when enrolled in the study.
         public var sampleTypes: SampleTypesCollection
-        public var historicalDataCollection: HistoricalDataCollection
+        /// Additional, optional sample types that should be collected when enrolled in the study.
+        ///
+        /// The difference between optional sample types defined via this property and those sample types defined via the ``sampleTypes`` property
+        /// is that SpeziStudy will not prompt the user for authorization to access any of the optional sample types.
+        /// Instead, they will only be included in the data collection if the user has already granted read access.
+        /// This allows the app to control when and how the user should be prompted for authorization.
         public var optionalSampleTypes: SampleTypesCollection
+        public var historicalDataCollection: HistoricalDataCollection
         
         public init(
             id: UUID,
             sampleTypes: SampleTypesCollection,
-            historicalDataCollection: HistoricalDataCollection,
-            optionalSampleTypes: SampleTypesCollection
+            optionalSampleTypes: SampleTypesCollection,
+            historicalDataCollection: HistoricalDataCollection
         ) {
             self.id = id
             self.sampleTypes = sampleTypes
-            self.historicalDataCollection = historicalDataCollection
             self.optionalSampleTypes = optionalSampleTypes
+            self.historicalDataCollection = historicalDataCollection
         }
     }
 }
