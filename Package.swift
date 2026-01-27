@@ -26,13 +26,14 @@ let package = Package(
         .library(name: "SpeziStudyDefinition", targets: ["SpeziStudyDefinition"])
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/FHIRModels.git", from: "0.7.0"),
+        .package(url: "https://github.com/apple/FHIRModels.git", from: "0.8.0"),
         .package(url: "https://github.com/StanfordSpezi/Spezi.git", from: "1.8.1"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", from: "2.4.2"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", from: "1.1.0"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", from: "2.7.2"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", from: "1.3.2"),
         .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", from: "1.2.14"),
         .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", from: "2.1.0"),
-        .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4")
+        .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4"),
+        .package(url: "https://github.com/apple/swift-algorithms.git", from: "1.2.1")
     ] + swiftLintPackage(),
     targets: [
         .target(
@@ -59,7 +60,8 @@ let package = Package(
                 .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
                 .product(name: "SpeziLocalStorage", package: "SpeziStorage"),
                 .product(name: "SpeziScheduler", package: "SpeziScheduler"),
-                .product(name: "SpeziSchedulerUI", package: "SpeziScheduler")
+                .product(name: "SpeziSchedulerUI", package: "SpeziScheduler"),
+                .product(name: "Algorithms", package: "swift-algorithms")
             ],
             swiftSettings: [.enableUpcomingFeature("ExistentialAny")],
             plugins: [] + swiftLintPlugin()
