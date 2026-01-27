@@ -568,7 +568,7 @@ extension StudyManager {
     private func startBackgroundHealthDataCollection(for enrollments: some Collection<StudyEnrollment>) async throws {
         func imp<Sample>(_ sampleType: some AnySampleType<Sample>) async {
             let sampleType = SampleType(sampleType)
-            await healthKit.addHealthDataCollector(CollectSample(
+            await healthKit.addHealthDataCollector(CollectSamples(
                 sampleType,
                 start: .automatic,
                 continueInBackground: true
