@@ -138,9 +138,9 @@ struct StudyBundleTests {
             studyRevision: 0,
             metadata: StudyDefinition.Metadata(
                 id: studyId,
-                title: "Test Study",
-                explanationText: "This is our TestStudy",
-                shortExplanationText: "This is our TestStudy",
+                title: .init([.enUS: "Test Study"]),
+                explanationText: .init([.enUS: "This is our TestStudy"]),
+                shortExplanationText: .init([.enUS: "This is our TestStudy"]),
                 participationCriterion: .ageAtLeast(18) && !.ageAtLeast(60) && (.isFromRegion(.unitedStates) || .isFromRegion(.unitedKingdom)) && .speaksLanguage(.english),
                 // swiftlint:disable:previous line_length
                 enrollmentConditions: .requiresInvitation(verificationEndpoint: try #require(URL(string: "https://mhc.stanford.edu/api/enroll"))),

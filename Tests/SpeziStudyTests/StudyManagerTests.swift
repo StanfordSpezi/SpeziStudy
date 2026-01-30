@@ -46,9 +46,9 @@ final class StudyManagerTests {
             studyRevision: 0,
             metadata: .init(
                 id: UUID(),
-                title: "",
-                explanationText: "",
-                shortExplanationText: "",
+                title: .init(),
+                explanationText: .init(),
+                shortExplanationText: .init(),
                 participationCriterion: true,
                 enrollmentConditions: .none
             ),

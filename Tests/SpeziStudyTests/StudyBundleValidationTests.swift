@@ -28,9 +28,9 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             studyRevision: 0,
             metadata: .init(
                 id: UUID(),
-                title: "",
-                explanationText: "",
-                shortExplanationText: "",
+                title: .init(),
+                explanationText: .init(),
+                shortExplanationText: .init(),
                 participationCriterion: true,
                 enrollmentConditions: .none
             ),
@@ -301,9 +301,9 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             studyRevision: 0,
             metadata: .init(
                 id: UUID(),
-                title: "",
-                explanationText: "",
-                shortExplanationText: "",
+                title: .init(),
+                explanationText: .init(),
+                shortExplanationText: .init(),
                 participationCriterion: true,
                 enrollmentConditions: .none
             ),
@@ -610,9 +610,9 @@ extension StudyBundleValidationTests {
             studyRevision: 0,
             metadata: .init(
                 id: UUID(),
-                title: "",
-                explanationText: "",
-                shortExplanationText: "",
+                title: .init(),
+                explanationText: .init(),
+                shortExplanationText: .init(),
                 participationCriterion: true,
                 enrollmentConditions: .none
             ),
