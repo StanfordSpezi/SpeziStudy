@@ -23,18 +23,18 @@ extension StudyDefinition {
         /// The study's user-visible title.
         ///
         /// E.g., "MyHeart Counts"
-        public var title: LocalizationsDictionary<String>
+        public var title: LocalizedDictionary<String>
         /// The study's user-visible short title
         ///
         /// E.g., "MHC"
-        public var shortTitle: LocalizationsDictionary<String>
+        public var shortTitle: LocalizedDictionary<String>
         /// Icon that will be used for this study.
         public var icon: Icon?
         /// Long-form explanation of and/or introduction to the study.
         /// Is presented to the user
-        public var explanationText: LocalizationsDictionary<String>
+        public var explanationText: LocalizedDictionary<String>
         /// Text that is presented to the user when they eg browse a list of studies they can enroll in
-        public var shortExplanationText: LocalizationsDictionary<String>
+        public var shortExplanationText: LocalizedDictionary<String>
         
         /// Other studies this study depends on.
         ///
@@ -53,11 +53,11 @@ extension StudyDefinition {
         /// Creates a new `Metadata` object.
         public init(
             id: UUID,
-            title: LocalizationsDictionary<String>,
-            shortTitle: LocalizationsDictionary<String> = .init([.enUS: ""]),
+            title: LocalizedDictionary<String>,
+            shortTitle: LocalizedDictionary<String> = .init([.enUS: ""]),
             icon: Icon? = nil, // swiftlint:disable:this function_default_parameter_at_end
-            explanationText: LocalizationsDictionary<String>,
-            shortExplanationText: LocalizationsDictionary<String>,
+            explanationText: LocalizedDictionary<String>,
+            shortExplanationText: LocalizedDictionary<String>,
             studyDependency: StudyDefinition.ID? = nil, // swiftlint:disable:this function_default_parameter_at_end
             participationCriterion: ParticipationCriterion,
             enrollmentConditions: EnrollmentConditions,
