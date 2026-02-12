@@ -27,10 +27,10 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/FHIRModels.git", from: "0.8.0"),
-        .package(url: "https://github.com/StanfordSpezi/Spezi.git", from: "1.8.1"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", branch: "localizations-dictionary"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", from: "1.3.2"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", from: "1.2.14"),
+        .package(url: "https://github.com/StanfordSpezi/Spezi.git", from: "1.10.1"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", branch: "localizations-dictionary"), // TODO
+        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", branch: "lukas/linux-support"), // TODO
+        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", from: "1.2.18"),
         .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", from: "2.1.0"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4"),
         .package(url: "https://github.com/apple/swift-algorithms.git", from: "1.2.1")
