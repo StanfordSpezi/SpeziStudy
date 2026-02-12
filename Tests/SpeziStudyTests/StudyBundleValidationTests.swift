@@ -46,7 +46,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             ],
             componentSchedules: []
         )
-        let tmpUrl = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
+        let tmpUrl = URL.temporaryDirectory.appending(component: "\(UUID().uuidString).\(StudyBundle.fileExtension)", directoryHint: .isDirectory)
         defer {
             try? FileManager.default.removeItem(at: tmpUrl)
         }
@@ -316,7 +316,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             componentSchedules: []
         )
         do {
-            let tmpUrl = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
+            let tmpUrl = URL.temporaryDirectory.appending(component: "\(UUID().uuidString).\(StudyBundle.fileExtension)", directoryHint: .isDirectory)
             defer {
                 try? FileManager.default.removeItem(at: tmpUrl)
             }
@@ -626,7 +626,7 @@ extension StudyBundleValidationTests {
             },
             componentSchedules: []
         )
-        let tmpUrl = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
+        let tmpUrl = URL.temporaryDirectory.appending(component: "\(UUID().uuidString).\(StudyBundle.fileExtension)", directoryHint: .isDirectory)
         defer {
             try? FileManager.default.removeItem(at: tmpUrl)
         }

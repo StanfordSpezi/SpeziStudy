@@ -121,8 +121,12 @@ extension StudyDefinition {
             switch component {
             case .healthDataCollection(let component):
                 component
-            case .informational, .questionnaire, .timedWalkingTest, .customActiveTask:
+            case .informational, .questionnaire, .timedWalkingTest:
                 nil
+            #if canImport(Darwin)
+            case .customActiveTask:
+                nil
+            #endif
             }
         }
     }
@@ -164,9 +168,15 @@ extension StudyBundle {
                 using: localeMatchingBehaviour
             )?.title?.value?.string
         case .timedWalkingTest(let component):
+            #if canImport(Darwin)
             String(localized: component.test.displayTitle)
+            #else
+            nil
+            #endif
+        #if canImport(Darwin)
         case .customActiveTask(let component):
             String(localized: component.activeTask.title)
+        #endif
         case .healthDataCollection:
             nil
         }
@@ -192,8 +202,10 @@ extension StudyBundle {
             nil
         case .healthDataCollection:
             nil
+        #if canImport(Darwin)
         case .customActiveTask(let component):
             component.activeTask.subtitle.map { String(localized: $0) }
+        #endif
         }
     }
     

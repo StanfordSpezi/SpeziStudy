@@ -26,15 +26,17 @@ struct StudyBundleTests {
     func displayTitles() throws {
         let bundle = try Self.testStudyBundle
         let components = bundle.studyDefinition.components
-        let expectedNames: [String?] = [
+        var expectedNames: [String?] = [
             "Informational Component #1",
             "Informational Component #2",
             "Social Support",
-            nil, // health collection
-            "Six-Minute Walk Test",
-            "12-Minute Run Test",
-            "8.5-Minute Walk Test"
+            nil // health collection
         ]
+        #if canImport(Darwin)
+        expectedNames.append(contentsOf: ["Six-Minute Walk Test", "12-Minute Run Test", "8.5-Minute Walk Test"])
+        #else
+        expectedNames.append(contentsOf: [nil, nil, nil] as [String?])
+        #endif
         #expect(components.count == expectedNames.count)
         for (component, expectedName) in zip(components, expectedNames) {
             #expect(bundle.displayTitle(for: component, in: Self.locale) == expectedName)
@@ -46,7 +48,7 @@ struct StudyBundleTests {
         let bundle1 = try Self.testStudyBundle
         let bundle2 = try Self.testStudyBundle
         #expect(bundle1 == bundle2)
-        let bundle3Url = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
+        let bundle3Url = URL.temporaryDirectory.appending(component: "\(UUID().uuidString).\(StudyBundle.fileExtension)", directoryHint: .isDirectory)
         try bundle1.copy(to: bundle3Url)
         let bundle3 = try StudyBundle(bundleUrl: bundle3Url)
         #expect(bundle3 != bundle1)
@@ -202,7 +204,7 @@ struct StudyBundleTests {
                 )
             ]
         )
-        let url = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
+        let url = URL.temporaryDirectory.appending(component: "\(UUID().uuidString).\(StudyBundle.fileExtension)", directoryHint: .isDirectory)
         return try StudyBundle.writeToDisk(at: url, definition: definition, files: [
             StudyBundle.FileResourceInput(
                 fileRef: .init(category: .consent, filename: "Consent", fileExtension: "md"),
