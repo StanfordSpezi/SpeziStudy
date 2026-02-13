@@ -41,7 +41,7 @@ func dependencies() -> [PackageDescription.Package.Dependency] {
     var dependencies: [PackageDescription.Package.Dependency] = [
         .package(url: "https://github.com/apple/FHIRModels.git", from: "0.8.0"),
         .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", branch: "localizations-dictionary"), // TODO
-        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", revision: "22da093bad44ec9c13ad1953f1506bd677f65b96"), // TODO
+        .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", branch: "lukas/linux-support"), // TODO
         .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", from: "1.2.18"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.6.2")
