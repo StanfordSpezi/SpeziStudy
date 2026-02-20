@@ -59,7 +59,7 @@ func dependencies() -> [PackageDescription.Package.Dependency] {
 func targets() -> [Target] { // swiftlint:disable:this function_body_length
     var targets: [Target] = []
 
-    var speziStudyDefinitionDependencies: [Target.Dependency] = [
+    let speziStudyDefinitionDependencies: [Target.Dependency] = [
         .product(name: "ModelsR4", package: "FHIRModels"),
         .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
         .product(name: "SpeziHealthKitBulkExport", package: "SpeziHealthKit"),
