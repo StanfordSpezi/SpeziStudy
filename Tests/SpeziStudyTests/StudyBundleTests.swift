@@ -26,17 +26,19 @@ struct StudyBundleTests {
     func displayTitles() throws {
         let bundle = try Self.testStudyBundle
         let components = bundle.studyDefinition.components
-        var expectedNames: [String?] = [
-            "Informational Component #1",
-            "Informational Component #2",
-            "Social Support",
+        let expectedNames: [String?] = Array {
+            "Informational Component #1"
+            "Informational Component #2"
+            "Social Support"
             nil // health collection
-        ]
-        #if canImport(Darwin)
-        expectedNames.append(contentsOf: ["Six-Minute Walk Test", "12-Minute Run Test", "8.5-Minute Walk Test"])
-        #else
-        expectedNames.append(contentsOf: [nil, nil, nil] as [String?])
-        #endif
+            #if canImport(Darwin)
+            "Six-Minute Walk Test"
+            "12-Minute Run Test"
+            "8.5-Minute Walk Test"
+            #else
+            [nil, nil, nil]
+            #endif
+        }
         #expect(components.count == expectedNames.count)
         for (component, expectedName) in zip(components, expectedNames) {
             #expect(bundle.displayTitle(for: component, in: Self.locale) == expectedName)

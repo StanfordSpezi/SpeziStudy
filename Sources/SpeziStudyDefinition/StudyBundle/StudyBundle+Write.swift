@@ -82,11 +82,7 @@ extension StudyBundle {
         try fileManager.createDirectory(at: bundleUrl, withIntermediateDirectories: true)
         do {
             let data = try JSONEncoder().encode(definition)
-            #if canImport(UniformTypeIdentifiers)
-            let definitionUrl = bundleUrl.appendingPathComponent("definition", conformingTo: .json)
-            #else
             let definitionUrl = bundleUrl.appendingPathComponent("definition.json")
-            #endif
             try data.write(to: definitionUrl)
         }
         for input in files {

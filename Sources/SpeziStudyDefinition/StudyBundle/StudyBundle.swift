@@ -83,11 +83,7 @@ public struct StudyBundle: Identifiable, Sendable {
         try Self.assertIsStudyBundleUrl(bundleUrl)
         self.bundleUrl = bundleUrl
         do {
-            #if canImport(UniformTypeIdentifiers)
-            let definitionUrl = bundleUrl.appendingPathComponent("definition", conformingTo: .json)
-            #else
             let definitionUrl = bundleUrl.appendingPathComponent("definition.json")
-            #endif
             let data = try Data(contentsOf: definitionUrl)
             self.studyDefinition = try JSONDecoder().decode(
                 StudyDefinition.self,
