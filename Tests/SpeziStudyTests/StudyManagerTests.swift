@@ -8,6 +8,7 @@
 
 // swiftlint:disable type_body_length multiline_function_chains
 
+#if canImport(Darwin)
 import Foundation
 import Spezi
 import SpeziHealthKit
@@ -46,9 +47,9 @@ final class StudyManagerTests {
             studyRevision: 0,
             metadata: .init(
                 id: UUID(),
-                title: "",
-                explanationText: "",
-                shortExplanationText: "",
+                title: .init(),
+                explanationText: .init(),
+                shortExplanationText: .init(),
                 participationCriterion: true,
                 enrollmentConditions: .none
             ),
@@ -360,3 +361,4 @@ final class StudyManagerTests {
         try? FileManager.default.removeItem(at: StudyManager.studyBundlesDirectory)
     }
 }
+#endif

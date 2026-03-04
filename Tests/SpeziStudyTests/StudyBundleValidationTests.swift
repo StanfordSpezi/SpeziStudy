@@ -28,9 +28,9 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             studyRevision: 0,
             metadata: .init(
                 id: UUID(),
-                title: "",
-                explanationText: "",
-                shortExplanationText: "",
+                title: .init(),
+                explanationText: .init(),
+                shortExplanationText: .init(),
                 participationCriterion: true,
                 enrollmentConditions: .none
             ),
@@ -46,7 +46,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             ],
             componentSchedules: []
         )
-        let tmpUrl = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
+        let tmpUrl = URL.temporaryDirectory.appending(component: "\(UUID().uuidString).\(StudyBundle.fileExtension)", directoryHint: .isDirectory)
         defer {
             try? FileManager.default.removeItem(at: tmpUrl)
         }
@@ -301,9 +301,9 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             studyRevision: 0,
             metadata: .init(
                 id: UUID(),
-                title: "",
-                explanationText: "",
-                shortExplanationText: "",
+                title: .init(),
+                explanationText: .init(),
+                shortExplanationText: .init(),
                 participationCriterion: true,
                 enrollmentConditions: .none
             ),
@@ -316,7 +316,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             componentSchedules: []
         )
         do {
-            let tmpUrl = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
+            let tmpUrl = URL.temporaryDirectory.appending(component: "\(UUID().uuidString).\(StudyBundle.fileExtension)", directoryHint: .isDirectory)
             defer {
                 try? FileManager.default.removeItem(at: tmpUrl)
             }
@@ -610,9 +610,9 @@ extension StudyBundleValidationTests {
             studyRevision: 0,
             metadata: .init(
                 id: UUID(),
-                title: "",
-                explanationText: "",
-                shortExplanationText: "",
+                title: .init(),
+                explanationText: .init(),
+                shortExplanationText: .init(),
                 participationCriterion: true,
                 enrollmentConditions: .none
             ),
@@ -626,7 +626,7 @@ extension StudyBundleValidationTests {
             },
             componentSchedules: []
         )
-        let tmpUrl = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .speziStudyBundle)
+        let tmpUrl = URL.temporaryDirectory.appending(component: "\(UUID().uuidString).\(StudyBundle.fileExtension)", directoryHint: .isDirectory)
         defer {
             try? FileManager.default.removeItem(at: tmpUrl)
         }
