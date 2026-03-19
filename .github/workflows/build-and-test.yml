@@ -22,6 +22,8 @@ concurrency:
 jobs:
   build_and_test:
     uses: ./.github/workflows/swift-package.yml
+    # with:
+      # run_linux_tests: true
     secrets: inherit
 
 # jobs:
