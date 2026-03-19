@@ -70,6 +70,7 @@ jobs:
         config: [Debug, Release]
       fail-fast: false
     with:
+      runs_on_labels: '["blacksmith-4vcpu-ubuntu-2404"]'
       build_configuration: ${{ matrix.config }}
       artifact_name: ${{ format('SpeziStudy-Package-Linux-{0}.lcov', matrix.config) }}
   uploadcoveragereport:
