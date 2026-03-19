@@ -22,8 +22,9 @@ concurrency:
 jobs:
   build_and_test:
     uses: ./.github/workflows/swift-package.yml
-    # with:
-      # run_linux_tests: true
+    with:
+      run_linux_tests: true
+      linux_runners: '["blacksmith-4vcpu-ubuntu-2404"]'
     secrets: inherit
 
 # jobs:
