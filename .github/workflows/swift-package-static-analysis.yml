@@ -1,5 +1,5 @@
 #
-# This source file is part of the Stanford Spezi open source project
+# This source file is part of the Stanford Biodesign Digital Health Group open-source organization
 #
 # SPDX-FileCopyrightText: 2025 Stanford University and the project authors (see CONTRIBUTORS.md)
 #
@@ -40,7 +40,7 @@ jobs:
     uses: StanfordBDHG/.github/.github/workflows/markdown-link-check.yml@v2
   breaking_changes:
     name: Diagnose Breaking Changes
-    uses: ./.github/workflows/spezi-breaking-changes.yml
+    uses: ./.github/workflows/swift-package-breaking-changes.yml
     if: ${{ inputs.diagnose_breaking_changes && github.ref_name != 'main' }}
     with:
       library_products: ${{ inputs.library_products }}
