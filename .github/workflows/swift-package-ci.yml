@@ -32,7 +32,7 @@ jobs:
   build_and_test:
     name: Build & Test
     needs: setup
-    uses: ./.github/workflows/spezi-package-test.yml
+    uses: ./.github/workflows/swift-package-test.yml
     with:
       package_name: ${{ needs.setup.outputs.package_name }}
       platform_matrix: ${{ needs.setup.outputs.platform_matrix }}
