@@ -24,6 +24,10 @@ on:
         type: boolean
         default: true
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   reuse_action:
     name: REUSE Compliance Check
@@ -38,9 +42,6 @@ jobs:
     name: Diagnose Breaking Changes
     uses: ./.github/workflows/spezi-breaking-changes.yml
     if: ${{ inputs.diagnose_breaking_changes && github.ref_name != 'main' }}
-    permissions:
-      contents: read
-      pull-requests: write
     with:
       library_products: ${{ inputs.library_products }}
       platform_name: ${{ inputs.platform_name }}

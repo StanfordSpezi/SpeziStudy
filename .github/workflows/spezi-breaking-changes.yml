@@ -64,7 +64,11 @@ jobs:
             echo
           } > "$summary"
 
-          readarray -t library_products < <(echo '${{ inputs.library_products }}' | jq -r '.[]')
+          library_products=()
+          while IFS= read -r product; do
+            [[ -n "$product" ]] || continue
+            library_products+=("$product")
+          done < <(echo '${{ inputs.library_products }}' | jq -r '.[]')
 
           if [[ "${#library_products[@]}" -eq 0 ]]; then
             echo "No library products found in inputs"
