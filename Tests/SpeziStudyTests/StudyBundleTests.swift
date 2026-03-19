@@ -147,7 +147,6 @@ struct StudyBundleTests {
                 shortExplanationText: .init([.enUS: "This is our TestStudy"]),
                 participationCriterion: .ageAtLeast(18) && !.ageAtLeast(60) && (.isFromRegion(.unitedStates) || .isFromRegion(.unitedKingdom)) && .speaksLanguage(.english),
                 // swiftlint:disable:previous line_length
-                enrollmentConditions: .requiresInvitation(verificationEndpoint: try #require(URL(string: "https://mhc.stanford.edu/api/enroll"))),
                 consentFileRef: .init(category: .consent, filename: "Consent", fileExtension: "md")
             ),
             components: [

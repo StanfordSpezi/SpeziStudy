@@ -44,9 +44,6 @@ extension StudyDefinition {
         /// The criteria which need to be satisfied by a person wishing to participate in the study
         public var participationCriterion: ParticipationCriterion
         
-        /// The condition by which it is determined whether someone who satisfies the ``participationCriterion`` is allowed to enroll into the study.
-        public var enrollmentConditions: EnrollmentConditions
-        
         /// The study's consent file.
         public var consentFileRef: StudyBundle.FileReference?
         
@@ -60,7 +57,6 @@ extension StudyDefinition {
             shortExplanationText: LocalizationsDictionary<String>,
             studyDependency: StudyDefinition.ID? = nil, // swiftlint:disable:this function_default_parameter_at_end
             participationCriterion: ParticipationCriterion,
-            enrollmentConditions: EnrollmentConditions,
             consentFileRef: StudyBundle.FileReference? = nil
         ) {
             self.id = id
@@ -71,7 +67,6 @@ extension StudyDefinition {
             self.shortExplanationText = shortExplanationText
             self.studyDependency = studyDependency
             self.participationCriterion = participationCriterion
-            self.enrollmentConditions = enrollmentConditions
             self.consentFileRef = consentFileRef
         }
     }

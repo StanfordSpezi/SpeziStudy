@@ -50,8 +50,7 @@ final class StudyManagerTests {
                 title: .init(),
                 explanationText: .init(),
                 shortExplanationText: .init(),
-                participationCriterion: true,
-                enrollmentConditions: .none
+                participationCriterion: true
             ),
             components: [
                 .informational(.init(

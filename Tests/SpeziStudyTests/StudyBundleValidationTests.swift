@@ -31,8 +31,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
                 title: .init(),
                 explanationText: .init(),
                 shortExplanationText: .init(),
-                participationCriterion: true,
-                enrollmentConditions: .none
+                participationCriterion: true
             ),
             components: [
                 .informational(.init(
@@ -83,7 +82,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
                 StudyBundle.FileResourceInput(
                     fileRef: .init(category: .questionnaire, filename: "Valid", fileExtension: "json"),
                     localization: .enGB,
-                    contentsOf: try #require(Bundle.module.url(forResource: "Valid+en-UK", withExtension: "json"))
+                    contentsOf: try #require(Bundle.module.url(forResource: "Valid+en-GB", withExtension: "json"))
                 )
             ]
         )
@@ -142,7 +141,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             try makeTestStudy(articles: [], questionnaires: [
                 .init(fileRef: .init(category: .questionnaire, filename: "Invalid3", fileExtension: "json"), localizations: [
                     .init(key: .enUS, url: try #require(Bundle.module.url(forResource: "Invalid3+en-US", withExtension: "json"))),
-                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "Invalid3+en-UK", withExtension: "json")))
+                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "Invalid3+en-GB", withExtension: "json")))
                 ])
             ])
         }
@@ -194,7 +193,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             try makeTestStudy(articles: [], questionnaires: [
                 .init(fileRef: .init(category: .questionnaire, filename: "Invalid1", fileExtension: "json"), localizations: [
                     .init(key: .enUS, url: try #require(Bundle.module.url(forResource: "Invalid1+en-US", withExtension: "json"))),
-                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "Invalid1+en-UK", withExtension: "json")))
+                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "Invalid1+en-GB", withExtension: "json")))
                 ])
             ])
         }
@@ -229,7 +228,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             try makeTestStudy(articles: [], questionnaires: [
                 .init(fileRef: .init(category: .questionnaire, filename: "Invalid2", fileExtension: "json"), localizations: [
                     .init(key: .enUS, url: try #require(Bundle.module.url(forResource: "Invalid2+en-US", withExtension: "json"))),
-                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "Invalid2+en-UK", withExtension: "json")))
+                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "Invalid2+en-GB", withExtension: "json")))
                 ])
             ])
         }
@@ -269,7 +268,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             try makeTestStudy(articles: [], questionnaires: [
                 .init(fileRef: .init(category: .questionnaire, filename: "Empty", fileExtension: "json"), localizations: [
                     .init(key: .enUS, url: try #require(Bundle.module.url(forResource: "Empty+en-US", withExtension: "json"))),
-                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "Empty+en-UK", withExtension: "json")))
+                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "Empty+en-GB", withExtension: "json")))
                 ])
             ])
         }
@@ -304,8 +303,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
                 title: .init(),
                 explanationText: .init(),
                 shortExplanationText: .init(),
-                participationCriterion: true,
-                enrollmentConditions: .none
+                participationCriterion: true
             ),
             components: [
                 .informational(.init(
@@ -405,7 +403,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             try makeTestStudy(articles: [], questionnaires: [
                 .init(fileRef: .init(category: .questionnaire, filename: "TestSurvey", fileExtension: "json"), localizations: [
                     .init(key: .enUS, url: try #require(Bundle.module.url(forResource: "TestSurvey+en-US", withExtension: "json"))),
-                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "TestSurvey+en-UK", withExtension: "json")))
+                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "TestSurvey+en-GB", withExtension: "json")))
                 ])
             ])
         }
@@ -440,7 +438,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             try makeTestStudy(articles: [], questionnaires: [
                 .init(fileRef: .init(category: .questionnaire, filename: "Invalid5", fileExtension: "json"), localizations: [
                     .init(key: .enUS, url: try #require(Bundle.module.url(forResource: "Invalid5+en-US", withExtension: "json"))),
-                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "Invalid5+en-UK", withExtension: "json")))
+                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "Invalid5+en-GB", withExtension: "json")))
                 ])
             ])
         }
@@ -485,7 +483,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
             try makeTestStudy(articles: [], questionnaires: [
                 .init(fileRef: .init(category: .questionnaire, filename: "Invalid6", fileExtension: "json"), localizations: [
                     .init(key: .enUS, url: try #require(Bundle.module.url(forResource: "Invalid6+en-US", withExtension: "json"))),
-                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "Invalid6+en-UK", withExtension: "json")))
+                    .init(key: .enGB, url: try #require(Bundle.module.url(forResource: "Invalid6+en-GB", withExtension: "json")))
                 ])
             ])
         }
@@ -613,8 +611,7 @@ extension StudyBundleValidationTests {
                 title: .init(),
                 explanationText: .init(),
                 shortExplanationText: .init(),
-                participationCriterion: true,
-                enrollmentConditions: .none
+                participationCriterion: true
             ),
             components: Array {
                 for article in articles {
