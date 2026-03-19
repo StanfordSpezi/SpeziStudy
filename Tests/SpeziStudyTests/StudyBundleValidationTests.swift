@@ -100,7 +100,7 @@ struct StudyBundleValidationTests { // swiftlint:disable:this type_body_length
         switch error {
         case .failedValidation(let issues):
             let fileRef = StudyBundle.FileReference(category: .informationalArticle, filename: "a1", fileExtension: "md")
-            #expect(issues == [
+            #expect(Set(issues) == [
                 .article(.documentMetadataMissingId(fileRef: .init(fileRef: fileRef, localization: .enUS))),
                 .article(.documentMetadataMissingId(fileRef: .init(fileRef: fileRef, localization: .esUS)))
             ])
