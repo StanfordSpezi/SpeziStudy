@@ -50,7 +50,7 @@ func dependencies() -> [PackageDescription.Package.Dependency] {
     #if canImport(Darwin)
     dependencies.append(contentsOf: [
         .package(url: "https://github.com/StanfordSpezi/Spezi.git", from: "1.10.1"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", from: "2.1.0"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", from: "2.1.4"),
         .package(url: "https://github.com/apple/swift-algorithms.git", from: "1.2.1")
     ])
     #endif
