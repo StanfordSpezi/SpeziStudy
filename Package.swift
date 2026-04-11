@@ -43,14 +43,14 @@ func dependencies() -> [PackageDescription.Package.Dependency] {
         .package(url: "https://github.com/apple/FHIRModels.git", from: "0.8.0"),
         .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", from: "2.7.4"),
         .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", from: "1.4.0"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", from: "1.2.18"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", from: "1.2.19"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.4"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.6.2")
     ]
     #if canImport(Darwin)
     dependencies.append(contentsOf: [
         .package(url: "https://github.com/StanfordSpezi/Spezi.git", from: "1.10.1"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", from: "2.1.0"),
+        .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", from: "2.1.4"),
         .package(url: "https://github.com/apple/swift-algorithms.git", from: "1.2.1")
     ])
     #endif
