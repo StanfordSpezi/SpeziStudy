@@ -40,6 +40,7 @@ func products() -> [Product] {
 
 func dependencies() -> [PackageDescription.Package.Dependency] {
     var dependencies: [PackageDescription.Package.Dependency] = [
+        .package(url: "https://github.com/apple/FHIRModels.git", "0.8.0"..<"0.9.0"),
         .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", from: "2.7.4"),
         .package(url: "https://github.com/StanfordSpezi/SpeziHealthKit.git", from: "1.4.0"),
         .package(url: "https://github.com/StanfordSpezi/SpeziScheduler.git", from: "1.2.19"),
@@ -60,6 +61,7 @@ func targets() -> [Target] { // swiftlint:disable:this function_body_length
     var targets: [Target] = []
 
     let speziStudyDefinitionDependencies: [Target.Dependency] = [
+        .product(name: "ModelsR4", package: "FHIRModels"),
         .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
         .product(name: "SpeziHealthKitBulkExport", package: "SpeziHealthKit"),
         .product(name: "SpeziFoundation", package: "SpeziFoundation"),
@@ -80,8 +82,9 @@ func targets() -> [Target] { // swiftlint:disable:this function_body_length
     targets.append(.target(
         name: "SpeziStudy",
         dependencies: [
-            "SpeziStudyDefinition",
+            .target(name: "SpeziStudyDefinition"),
             .product(name: "Spezi", package: "Spezi"),
+            .product(name: "ModelsR4", package: "FHIRModels"),
             .product(name: "SpeziHealthKit", package: "SpeziHealthKit"),
             .product(name: "SpeziLocalStorage", package: "SpeziStorage"),
             .product(name: "SpeziScheduler", package: "SpeziScheduler"),
@@ -94,11 +97,12 @@ func targets() -> [Target] { // swiftlint:disable:this function_body_length
     #endif
 
     var speziStudyTestsDependencies: [Target.Dependency] = [
-        "SpeziStudyDefinition"
+        .target(name: "SpeziStudyDefinition"),
+        .product(name: "ModelsR4", package: "FHIRModels")
     ]
     #if canImport(Darwin)
     speziStudyTestsDependencies.append(contentsOf: [
-        "SpeziStudy",
+        .target(name: "SpeziStudy"),
         .product(name: "SpeziTesting", package: "Spezi")
     ])
     #endif
