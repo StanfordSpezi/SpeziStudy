@@ -145,34 +145,38 @@ public final class StudyManager: Module, EnvironmentAccessible, Sendable {
     public func configure() { // swiftlint:disable:this function_body_length
         typealias Task = _Concurrency.Task
         Task { @MainActor in
-            let enrollments = try modelContext.fetch(FetchDescriptor<StudyEnrollment>())
-            try registerStudyTasksWithScheduler(for: enrollments)
-            try await setupStudyBackgroundComponents(for: enrollments)
-            try removeOrphanedTasks()
-            try removeOrphanedStudyBundles()
-            #if targetEnvironment(simulator)
-            if autosaveTask == nil {
-                autosaveTask = Task.detached {
-                    while true {
-                        await MainActor.run {
-                            try? self.modelContext.save()
+            do {
+                let enrollments = try modelContext.fetch(FetchDescriptor<StudyEnrollment>())
+                try registerStudyTasksWithScheduler(for: enrollments)
+                try await setupStudyBackgroundComponents(for: enrollments)
+                try removeOrphanedTasks()
+                try removeOrphanedStudyBundles()
+                #if targetEnvironment(simulator)
+                if autosaveTask == nil {
+                    autosaveTask = Task.detached {
+                        while true {
+                            await MainActor.run {
+                                try? self.modelContext.save()
+                            }
+                            try? await Task.sleep(for: .seconds(0.25))
                         }
-                        try? await Task.sleep(for: .seconds(0.25))
                     }
                 }
-            }
-            #endif
-            outcomesObserverToken = scheduler.observeNewOutcomes { [weak self] outcome in
-                guard let self,
-                      let studyContext = outcome.task.studyContext,
-                      let studyBundle = self.studyEnrollments.first(where: { $0.studyId == studyContext.studyId })?.studyBundle else {
-                    return
+                #endif
+                outcomesObserverToken = scheduler.observeNewOutcomes { [weak self = self] outcome in
+                    guard let self,
+                          let studyContext = outcome.task.studyContext,
+                          let studyBundle = self.studyEnrollments.first(where: { $0.studyId == studyContext.studyId })?.studyBundle else {
+                        return
+                    }
+                    self.handleStudyLifecycleEvent(
+                        .completedTask(componentId: studyContext.componentId),
+                        for: studyBundle,
+                        at: .now
+                    )
                 }
-                self.handleStudyLifecycleEvent(
-                    .completedTask(componentId: studyContext.componentId),
-                    for: studyBundle,
-                    at: .now
-                )
+            } catch {
+                logger.error("Failed to configure the StudyManager: \(error)")
             }
         }
         
